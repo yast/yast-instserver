@@ -56,7 +56,6 @@ symbol WriteDialog() {
     string old_name = Instserver::Config["old_name"]:"";
     if (haskey(Instserver::Configs, old_name) && old_name != "")
     {
-
         Instserver::Configs = filter(string k, map v, Instserver::Configs, ``(k!=old_name));
         remove(Instserver::Config, "old_name");
     }
@@ -104,7 +103,6 @@ any SummaryDialog() {
         }
         /* configure the selected device */
         else if(ret == `configure_button) {
-	    // TODO FIXME: check for change of the configuration
             any selected = UI::QueryWidget(`id(`detected_selbox), `CurrentItem);
             if(selected == `other) {
                 ret = `other;
@@ -112,6 +110,7 @@ any SummaryDialog() {
             else {
                 ret = `configure;
             }
+            Instserver::Config["directory"] = (string)selected;
             break;
         }
         else if(ret == `next) {
@@ -140,7 +139,7 @@ any OverviewDialog() {
 
     term contents = Wizard_hw::ConfiguredContent(
 	/* Table header */
-	`header(_("Product"), _("Locations")),
+	`header(_("Configuration"), _("Product")),
 	overview, nil, nil, nil, nil );
 
     contents = Wizard_hw::SpacingAround(contents, 1.5, 1.5, 1.0, 1.0);

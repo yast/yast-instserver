@@ -139,7 +139,7 @@ global boolean SetupNFS(string dir, string options) {
 global list DetectMedia() {
     if (ServerSettings["directory"]:"" != "")
     {
-        string f = sformat("find %1 -name %2 | grep -v yast", ServerSettings["directory"]:"", "content");
+        string f = sformat("find %1 -maxdepth 2 -name %2 | grep -v yast", ServerSettings["directory"]:"", "content");
         map ret = (map)SCR::Execute (.target.bash_output, f);
         list found = splitstring(ret["stdout"]:"", "\n");
         found = filter(string s, found, ``(s!=""));
@@ -227,9 +227,10 @@ global boolean Read() {
     list media = DetectMedia();
     foreach(string c, media, ``{
             map ret = ReadContentFile(c);
-            if (ret != $[])
-            {
             string d = dirname(c);
+            string config_name = basename(d);
+            if (ret != $[] && !haskey(Configs, config_name))
+            {
             Available[d]= ret;
             }
             });
@@ -372,19 +373,32 @@ global map Export () {
 global list Summary() {
     /* Configuration summary text for autoyast */
     string sum = "";
+    Available = filter( string d, map avail, Available, ``(!haskey(Configs, basename(d))));
     list unconf = maplist(string d, map avail, Available, ``{
-            return(`item(`id(d), avail["LABEL"]:"" + "(" + avail["DEFAULTBASE"]:"" + ")" )) ;
+            string dir = basename(d);
+            return(`item(`id(dir), avail["LABEL"]:"" + "(" + avail["DEFAULTBASE"]:"" + ")" )) ;
             });
 
-    return [ _("Configuration summary ..."), unconf ];
+    sum = Summary::OpenList(sum);
+    foreach(string name , map cfg, Configs , ``{
+            string source = cfg["LABEL"]:"";
+            sum = Summary::AddListItem(sum, source);
+            });
+    sum = Summary::CloseList(sum);
+    return [ sum, unconf ];
 }
 
 /**
- * Create an overview table with all configured cards
+ * Create an overview table with all configured data
  * @return table items
  */
 global list Overview() {
-    return [];
+    y2milestone("Configs: %1", Configs);
+    list overview = maplist(string name , map cfg, Configs , ``{
+            return(`item(`id(name), name, cfg["PRODUCT"]:"" + " " + cfg["VERSION"]:""));
+            });
+    return overview;
+
 }
 
 

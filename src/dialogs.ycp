@@ -106,6 +106,9 @@ any CopyCDs( string dir) {
 
 
         string tgt = sformat("%1/%2/CD%3", dir, content["DISTPRODUCT"]:"", current_cd );
+        string shorttgt = sformat("%1/CD%2",  content["DISTPRODUCT"]:"", current_cd );
+
+        list cmds = [];
         // Copy stuff here.
         // Now, we check if this product on the CD is based on some other product. If
         // yes, then it will be copied into  a sub-directory and not in the requested
@@ -119,6 +122,12 @@ any CopyCDs( string dir) {
             baseproduct = false;
             // Create product dir
             SCR::Execute(.target.mkdir, tgt );
+            if (current_cd == 1)
+            {
+                foreach(string symlink , ["content", "media.1" ], ``{
+                    cmds=add(cmds, sformat("pushd %1 && ln -sf %2/%3 && popd ", dir, shorttgt, symlink));
+                    });
+            }
         }
         else if (content["PRODUCT"]:"dummy" == base && content["VERSION"]:"dummy" == basever )
         {
@@ -132,8 +141,20 @@ any CopyCDs( string dir) {
             tgt = sformat("%1/CD%2", current_cd );
             SCR::Execute(.target.mkdir, tgt);
         }
+        // temp copy commands
         string cpcmd = sformat("cp -a %1/media.%2 %3", cdpath, current_cd, tgt);
         SCR::Execute(.target.bash, cpcmd);
+        cpcmd = sformat("cp  %1/content %3", cdpath, current_cd, tgt);
+        SCR::Execute(.target.bash, cpcmd);
+
+
+        if (size(cmds) > 0 ) {
+            foreach(string cmd , cmds, ``{
+                    SCR::Execute(.target.bash, cmd);
+                    });
+            cmds = [];
+        }
+
 
         SCR::Execute (.target.umount, Installation::sourcedir);
 
@@ -162,16 +183,18 @@ any Configure1Dialog () {
     /* Instserver configure1 dialog caption */
     string caption = _("Source Configuration");
 
-    symbol data = `dir;
-    symbol protocol = `nfs;
     string dir = Instserver::Config["directory"]:"";
     boolean slp = Instserver::Config["slp"]:false;
+    boolean promptmore = false;
 
     /* Instserver configure1 dialog contents */
     term contents =
         `Top(
                 `VBox(
                     `Left(`TextEntry(`id(`dir), _("Directory:"), dir)),
+                    `Left(
+                        `CheckBox(`id(`prompt), _("Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
+                        ),
                     `Left(
                         `CheckBox(`id(`slp), _("Announce as Installation Service with SLP"), slp )
                         )
@@ -191,13 +214,34 @@ any Configure1Dialog () {
 	    if(ReallyAbort()) break;
 	    else continue;
 	}
-        else if(ret == `next || ret == `back) {
+        else if(ret == `back ) {
+            break;
+        }
+        else if(ret == `next ) {
             dir = (string)UI::QueryWidget(`id(`dir), `Value);
             slp  = (boolean)UI::QueryWidget(`id(`slp), `Value);
             Instserver::Config["directory"] = dir;
             Instserver::Config["slp"] = slp;
             string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
-            CopyCDs(target);
+            symbol ret = `none;
+            if (SCR::Read(.target.size, target + "/content") != -1 )
+            {
+                Popup::Message(_("Contents already exist in this directory, not copying CDs."));
+                ret = `next;
+            }
+            else
+            {
+                ret = (symbol)CopyCDs(target);
+            }
+
+            if (ret == `next)
+            {
+                map content = (map)SCR::Read(.content_file, target + "/content");
+                y2milestone("content: %1", content);
+                Instserver::Config["name"] = dir;
+                Instserver::Config = (map)union(Instserver::Config, content);
+            }
+            Instserver::modified = true;
             break;
         }
         else {
@@ -234,7 +278,19 @@ any Configure2Dialog () {
 	    if(ReallyAbort()) break;
 	    else continue;
 	}
-        else if(ret == `next || ret == `back) {
+        else if(ret == `back) {
+            break;
+        }
+        else if(ret == `next) {
+
+            string name = Instserver::Config["name"]:"";
+            string old_name = Instserver::Config["old_name"]:"";
+            if (haskey(Instserver::Configs, old_name) && old_name != "")
+            {
+                Instserver::Configs = filter(string k, map v, Instserver::Configs, ``(k!=old_name));
+                remove(Instserver::Config, "old_name");
+            }
+            Instserver::Configs[name] = Instserver::Config;
             break;
         }
         else {
