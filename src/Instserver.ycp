@@ -44,7 +44,7 @@ global map<string, map<string, any> > Configs = $[];
 global map ServerSettings = $[];
 
 /* Configuration Repository */
-global string Rep = "/var/lib/YaST2/instserver";
+global string Rep = "/etc/YaST2/instserver";
 
 /* config file */
 string ConfigFile = Rep + "/instserver.xml";
