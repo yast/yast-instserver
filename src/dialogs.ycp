@@ -21,7 +21,7 @@ include "instserver/routines.ycp";
 
 
 
-any CopyCDs( string dir) {
+any CopyCDs( string dir, symbol stype) {
     import "Installation";
     boolean is_mounted = false;
     string default_device = "/dev/cdrom";
@@ -64,6 +64,7 @@ any CopyCDs( string dir) {
                 break;
             }
 
+            y2milestone("mount faild");
             // cant mount /dev/cdrom popup
             symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
             if (pop == `retry)
@@ -86,6 +87,7 @@ any CopyCDs( string dir) {
 
         if (size(media) == 0 )
         {
+            y2milestone("wrong CD or non suse CD");
             SCR::Execute (.target.umount, Installation::sourcedir);
             symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
             if (pop == `retry)
@@ -96,6 +98,10 @@ any CopyCDs( string dir) {
             {
                 y2debug("skipping media");
                 current_cd = current_cd + 1;
+                if (total_cds == current_cd )
+                {
+                    break;
+                }
             }
             continue;
         }
@@ -104,6 +110,7 @@ any CopyCDs( string dir) {
             if (media[2]:"" != "")
             {
                 total_cds = tointeger(media[2]:"-1");
+                y2milestone("total cds expected: %1", total_cds);
             }
             content = ReadContentFile(cdpath + "/content");
             if (content["PRODUCT"]:"dummy" != base && content["VERSION"]:"dummy" != basever  && !standalone)
@@ -129,6 +136,8 @@ any CopyCDs( string dir) {
 
         string tgt = sformat("%1/%2/CD%3", dir, content["DISTPRODUCT"]:"", current_cd );
         string shorttgt = sformat("%1/CD%2",  content["DISTPRODUCT"]:"", current_cd );
+        y2debug("tgt: %1", tgt );
+        y2debug("shorttgt: %1", shorttgt );
 
         list cmds = [];
         // Copy stuff here.
@@ -160,15 +169,21 @@ any CopyCDs( string dir) {
         {
             // else, we create CD1, CD2, etc.
             baseproduct = true;
-            tgt = sformat("%1/CD%2", current_cd );
+            if (stype == `onedir)
+                tgt = sformat("%1/", dir);
+            else
+                tgt = sformat("%1/CD%2", dir, current_cd );
+            y2debug("tgt: %1", tgt );
             SCR::Execute(.target.mkdir, tgt);
         }
+
         // temp copy commands
-        string cpcmd = sformat("cp -a %1/media.%2 %3", cdpath, current_cd, tgt);
+        Popup::ShowFeedback(_("Copying CD Content to local directory"), _("This may take a while..."));
+        //string cpcmd = sformat("cp -pR %1/* %2", cdpath,  tgt);
+        string cpcmd = sformat("cp -pR %1/media.%2 %3", cdpath, current_cd, tgt);
         SCR::Execute(.target.bash, cpcmd);
         cpcmd = sformat("cp  %1/content %3", cdpath, current_cd, tgt);
         SCR::Execute(.target.bash, cpcmd);
-
 
         if (size(cmds) > 0 ) {
             foreach(string cmd , cmds, ``{
@@ -176,6 +191,7 @@ any CopyCDs( string dir) {
                     });
             cmds = [];
         }
+        Popup::ClearFeedback();
 
 
         SCR::Execute (.target.umount, Installation::sourcedir);
@@ -192,6 +208,7 @@ any CopyCDs( string dir) {
         {
             current_cd = current_cd + 1;
         }
+        Instserver::standalone = standalone;
     }
     return `next;
 }
@@ -207,6 +224,7 @@ any Configure1Dialog () {
 
     string dir = Instserver::Config["directory"]:"";
     boolean slp = Instserver::Config["slp"]:false;
+    symbol stype = Instserver::Config["dir-type"]:`cddir;
     boolean promptmore = false;
 
     /* Instserver configure1 dialog contents */
@@ -214,6 +232,16 @@ any Configure1Dialog () {
         `Top(
                 `VBox(
                     `Left(`TextEntry(`id(`dir), _("Source Name:"), dir)),
+                    `VBox(
+                        `RadioButtonGroup (
+                            `id (`stype),
+                            `VBox(
+                                `Left(`RadioButton(`id(`cddir), _("Copy CDs into sub-directories (CD1, CD2, ...)"), stype == `cddir )),
+                                `Left(`RadioButton(`id(`onedir), _("Copy all CDs into one directory "), stype == `onedir))
+                                )
+                            ),
+                        `VSpacing(1)
+                        ),
                     `Left(
                         `CheckBox(`id(`prompt), _("Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
                         ),
@@ -244,6 +272,9 @@ any Configure1Dialog () {
             slp  = (boolean)UI::QueryWidget(`id(`slp), `Value);
             Instserver::Config["directory"] = dir;
             Instserver::Config["slp"] = slp;
+            stype =  (symbol)UI::QueryWidget(`id(`stype) , `CurrentButton);
+            Instserver::Config["dir-type"] = stype;
+
             string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
             symbol ret = `none;
             if (SCR::Read(.target.size, target + "/content") != -1 )
@@ -253,12 +284,23 @@ any Configure1Dialog () {
             }
             else
             {
-                ret = (symbol)CopyCDs(target);
+                ret = (symbol)CopyCDs(target, stype);
             }
 
             if (ret == `next)
             {
-                map content = (map)SCR::Read(.content_file, target + "/content");
+                map content = $[];
+                string contentpath = "";
+                if (Instserver::standalone && stype == `cddir)
+                    contentpath = sformat("%1/CD1/content", target);
+                else
+                    contentpath = sformat("%1/content", target);
+
+                if (SCR::Read(.target.size, contentpath) > 0 )
+                    content = (map)SCR::Read(.content_file, contentpath );
+                else
+                    y2error("cant read content file, something nasty happened");
+
                 y2milestone("content: %1", content);
                 Instserver::Config["name"] = dir;
                 Instserver::Config = (map)union(Instserver::Config, content);
@@ -276,46 +318,6 @@ any Configure1Dialog () {
     return ret;
 }
 
-/**
- * Configure2 dialog
- * @return dialog result
- */
-any Configure2Dialog () {
-
-    /* Instserver configure2 dialog caption */
-    string caption = _("Instserver Configuration");
-
-    /* Instserver configure2 dialog contents */
-    term contents = `Label (_("Second part of configuration of instserver"));
-
-    Wizard::SetContentsButtons(caption, contents, HELPS["c2"]:"",
-	    Label::BackButton(), Label::NextButton());
-
-    any ret = nil;
-    while(true) {
-
-	ret = UI::UserInput();
-
-	/* abort? */
-	if(ret == `abort || ret == `cancel) {
-	    if(ReallyAbort()) break;
-	    else continue;
-	}
-        else if(ret == `back) {
-            break;
-        }
-        else if(ret == `next) {
-
-            break;
-        }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
-    }
-
-    return ret;
-}
 
 /**
  * Server dialog
@@ -326,24 +328,23 @@ any ServerDialog () {
     /* Instserver configure2 dialog caption */
     string caption = _("Initial Setup - Servers");
 
-    string dir = "";
-    symbol source = `http;
-    string nfsoptions = "ro,root_squash,sync";
-    string wildcard = "";
+    string dir = Instserver::ServerSettings["directory"]:"";
+    symbol source = Instserver::ServerSettings["service"]:`http;
 
     term c1 =
         `HBox(
-                 `VBox(
-                        `VSquash(
-                            `HBox(
-                                `TextEntry(`id(`dir), _("Di&rectory to contain sources:"), dir),
-                                `VBox(
-                                    `VSpacing(),
-                                    `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
-                                    )
+                `VBox(
+                    `Left(`CheckBox(`id(`dry), _("Do not configure the net&work service."))),
+                    `VSquash(
+                        `HBox(
+                            `TextEntry(`id(`dir), _("Di&rectory to contain sources:"), dir),
+                            `VBox(
+                                `VSpacing(),
+                                `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
                                 )
                             )
-                     )
+                        )
+                    )
              );
 
     term buttons =
@@ -356,22 +357,7 @@ any ServerDialog () {
                         _("&Configure as FTP Source"), source == `ftp)),
                 // radio button label
                 `Left (`RadioButton (`id (`nfs), `opt (`notify),
-                        _("&Configure as NFS Source"), source == `nfs)),
-                `HBox(
-                    `HWeight(10, `Empty()),
-                    `HWeight(80,
-                        `VBox(
-                            `HBox(
-                                `HWeight(2,`TextEntry(`id(`wildcard), _("&Hosts wildcard"), wildcard)),
-                                `HWeight(1, `Empty())
-                                ),
-                            `HBox(
-                                `HWeight(2,`TextEntry(`id(`nfsoptions), _("&Options"), nfsoptions)),
-                                `HWeight(1, `Empty())
-                                )
-                            )
-                        )
-                    )
+                        _("&Configure as NFS Source"), source == `nfs))
 
               );
 
@@ -395,21 +381,6 @@ any ServerDialog () {
     while(true) {
 
         source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
-        if (source == `ftp )
-        {
-            UI::ChangeWidget(`id(`nfsoptions), `Enabled , false);
-            UI::ChangeWidget(`id(`wildcard), `Enabled , false);
-        }
-        else if (source == `nfs )
-        {
-            UI::ChangeWidget(`id(`nfsoptions), `Enabled , true);
-            UI::ChangeWidget(`id(`wildcard), `Enabled , true);
-        }
-        else if (source == `http )
-        {
-            UI::ChangeWidget(`id(`nfsoptions), `Enabled , false);
-            UI::ChangeWidget(`id(`wildcard), `Enabled , false);
-        }
         ret = UI::UserInput();
         dir = (string)UI::QueryWidget(`id(`dir), `Value);
 
@@ -428,31 +399,78 @@ any ServerDialog () {
             continue;
         }
 
-        else if(ret == `next || ret == `back) {
+        else if(ret == `back ) {
+            break;
+        }
+        else if(ret == `next ) {
             boolean r = false;
-            if (source == `nfs)
+            if (dir == "")
             {
-                nfsoptions = (string)UI::QueryWidget(`id(`nfsoptions), `Value);
-                wildcard = (string)UI::QueryWidget(`id(`wildcard), `Value);
-                r = Instserver::SetupNFS(dir , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
-                if (!r)
-                {
-                    Report::Error(_("Error occured while configuring NFS"));
-                    continue;
-                }
-                Instserver::ServerSettings["service"] = source;
-                Instserver::ServerSettings["directory"] = dir;
+                Report::Error(_("Directory path for the installation server missing."));
+                continue;
             }
-            else if (source == `ftp )
+            Instserver::ServerSettings["service"] = source;
+            Instserver::ServerSettings["directory"] = dir;
+            Instserver::modified = true;
+            ret = source;
+            break;
+        }
+        else {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * NFS dialog
+ * @return dialog result
+ */
+any NfsDialog () {
+
+    /* Instserver configure2 dialog caption */
+    string caption = _("Installation Server - NFS");
+
+    string nfsoptions = "ro,root_squash,sync";
+    string wildcard = "*";
+
+    /* Instserver nfs dialog contents */
+    term contents =
+        `Top (
+                `VBox(
+                        `Left(`TextEntry(`id(`wildcard), _("&Hosts wildcard"), wildcard)),
+                        `Left(`TextEntry(`id(`nfsoptions), _("&Options"), nfsoptions))
+                    )
+             );
+
+
+    Wizard::SetContentsButtons(caption, contents, HELPS["nfs"]:"nfs",
+	    Label::BackButton(), Label::NextButton());
+
+    any ret = nil;
+    while(true) {
+
+        ret = UI::UserInput();
+
+	/* abort? */
+	if(ret == `abort || ret == `cancel) {
+	    if(ReallyAbort()) break;
+	    else continue;
+        }
+        else if(ret == `back ) {
+            break;
+        }
+        else if(ret == `next ) {
+            boolean r = false;
+            nfsoptions = (string)UI::QueryWidget(`id(`nfsoptions), `Value);
+            wildcard = (string)UI::QueryWidget(`id(`wildcard), `Value);
+            r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
+            if (!r)
             {
-                r = Instserver::SetupFTP(dir , "/srv/ftp" );
-                if (!r)
-                {
-                    Report::Error(_("Error occured while configuring FTP"));
-                    continue;
-                }
-                Instserver::ServerSettings["service"] = source;
-                Instserver::ServerSettings["directory"] = dir;
+                Report::Error(_("Error occured while configuring NFS"));
+                continue;
             }
             Instserver::modified = true;
             break;
@@ -465,6 +483,116 @@ any ServerDialog () {
 
     return ret;
 }
+
+
+/**
+ * Ftp dialog
+ * @return dialog result
+ */
+any FtpDialog () {
+
+    /* Instserver configure2 dialog caption */
+    string caption = _("Installation Server - FTP");
+
+
+    /* Instserver nfs dialog contents */
+    term contents =
+        `Top (
+                `VBox(
+                    `Empty()
+                    )
+             );
+
+
+    Wizard::SetContentsButtons(caption, contents, HELPS["ftp"]:"ftp",
+	    Label::BackButton(), Label::NextButton());
+
+    any ret = nil;
+    while(true) {
+
+        ret = UI::UserInput();
+
+	/* abort? */
+	if(ret == `abort || ret == `cancel) {
+	    if(ReallyAbort()) break;
+	    else continue;
+        }
+        else if(ret == `back ) {
+            break;
+        }
+        else if(ret == `next ) {
+            boolean r = false;
+            r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , "/srv/ftp" );
+            if (!r)
+            {
+                Report::Error(_("Error occured while configuring FTP"));
+                continue;
+            }
+            Instserver::modified = true;
+            break;
+        }
+        else {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * Http dialog
+ * @return dialog result
+ */
+any HttpDialog () {
+
+    /* Instserver configure2 dialog caption */
+    string caption = _("Installation Server - HTTP");
+
+    string alias = Instserver::ServerSettings["alias"]:"";
+    /* Instserver nfs dialog contents */
+    term contents =
+        `Top (
+                `VBox(
+                    `Left(`TextEntry(`id(`alias), _("Alias for the Installation Server Directory"), alias ))
+                    )
+             );
+
+
+    Wizard::SetContentsButtons(caption, contents, HELPS["http"]:"http",
+	    Label::BackButton(), Label::NextButton());
+
+    any ret = nil;
+    while(true) {
+
+        ret = UI::UserInput();
+
+	/* abort? */
+	if(ret == `abort || ret == `cancel) {
+	    if(ReallyAbort()) break;
+	    else continue;
+        }
+        else if(ret == `back ) {
+            break;
+        }
+        else if(ret == `next ) {
+            alias = (string)UI::QueryWidget(`id(`alias), `Value);
+            if (!Instserver::SetupHTTP(Instserver::ServerSettings["directory"]:"", alias))
+            {
+                Popup::Error(_("Error creating HTTPD configuration"));
+            }
+            Instserver::modified = true;
+            break;
+        }
+        else {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    return ret;
+}
+
 
 /* EOF */
 }

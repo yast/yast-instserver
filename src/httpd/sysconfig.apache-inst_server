@@ -11,4 +11,4 @@
 # a directory tree containing copies of the installation Media. The YaST module
 # inst_server can be used to conveniently configure the Installation Server.
 #
-INST_SERVER="no"
+INSTALLATION_SERVER="no"

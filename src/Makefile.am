@@ -1,12 +1,14 @@
 # Makefile.am for instserver/src
+#
+
+SUBDIRS = httpd
 
 yncludedir = @yncludedir@/instserver
 YCPCFLAGS = -I ./include
 
 client_DATA =			\
 	instserver.ycp		\
-	instserver_auto.ycp	\
-	instserver_proposal.ycp
+	instserver_auto.ycp
 
 ynclude_DATA =			\
 	helps.ycp		\

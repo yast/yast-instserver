@@ -47,6 +47,10 @@ global string FirstDialog = "summary";
 
 global list Detected = [];
 
+
+
+global boolean standalone = true;
+
 /**
  * Prototypes
  */
@@ -75,7 +79,7 @@ global boolean AbortFunction = Modified();
 
 /**
  * Abort function
- * @return blah blah lahjk
+ * @return boolean
  */
 global define boolean Abort() ``{
     if(AbortFunction != nil)
@@ -93,11 +97,18 @@ global boolean Modified() {
 }
 
 
-
-
+/**
+  * Mount directory to avoid symlinks
+  * @param string directory to bind
+  * @param string bind to
+  * @return boolean
+  */
 boolean MountBind( string dir, string ftproot) {
+    y2debug("Calling MountBind with: %1 %2", dir, ftproot );
     list fstab = (list)SCR::Read(.etc.fstab);
-    list existing = filter(map f, fstab, ``(f["spec"]:"" == dir));
+    y2debug("fstab: %1", fstab );
+    list existing = filter(map f, fstab, ``(f["spec"]:"" == deletechars(dir, " ")));
+    y2debug("existing: %1", existing );
     if (size(existing)> 0 )
     {
         return false;
@@ -115,6 +126,10 @@ boolean MountBind( string dir, string ftproot) {
     return true;
 }
 
+
+/**
+ * Configure service using _auto
+ */
 boolean ConfigureService(string module_auto, any resource) {
     boolean ret = false;
     ret = (boolean)Call::Function(module_auto, ["Import", resource   ]);
@@ -122,6 +137,9 @@ boolean ConfigureService(string module_auto, any resource) {
     return ret;
 }
 
+/**
+ * Read service data using _auto
+ */
 any ReadServiceSettings(string module_auto) {
     boolean r  = (boolean)Call::Function(module_auto, ["Read"]);
     any ret = Call::Function(module_auto, ["Export"]);
@@ -129,9 +147,15 @@ any ReadServiceSettings(string module_auto) {
     return ret;
 }
 
+/**
+ * Setup FTP server
+ * @param string inst server root
+ * @param string ftp server root
+ * @return boolean
+ */
 global boolean SetupFTP(string dir, string ftproot) {
 
-    string help = _("The FTP Installation Server requires an FTP server. The vsftpd package
+    string help = _("The FTP Installation Server requires an FTP server package. The vsftpd package
 will now be installed.");
     if ( !Require::AreAllPackagesInstalled( [ "xinetd", "vsftpd" ] ) ) {
         y2debug("some packages are not installed");
@@ -165,6 +189,69 @@ will now be installed.");
     return true;
 }
 
+/**
+ * Write Apache config
+ * @param string state : Yes/No
+ * @return void
+ */
+define void RunSuseConfigApache( string state ) ``{
+    SCR::Write( .sysconfig.apache.INSTALLATION_SERVER, state );
+    if( !SCR::Write( .sysconfig.apache, nil ) ) {
+        Popup::Error( _("Unable to write /etc/sysconfig/apache") );
+        return;
+    }
+    if( SCR::Execute( .target.bash, "/sbin/SuSEconfig --module apache" ) != 0 ) {
+        Popup::Error( _("'SuSEconfig --module apache' failed.") );
+    }
+}
+
+
+/**
+ * Setup HTTP server
+ * @param string inst server root
+ * @param string alias
+ * @return boolean
+ */
+global boolean SetupHTTP(string dir, string alias) {
+
+    string help = _("The HTTP Installation Server requires an HTTP server package. The apache package
+will now be installed.");
+    if ( !Require::AreAllPackagesInstalled( [ "apache" ] ) ) {
+        y2debug("some packages are not installed");
+    }
+
+    if ( !Require::RequireAndConflict( [ "apache"  ], [], help ) ) {
+        y2error("Error while installing packages");
+        return false;
+    }
+
+    string conf = (string)SCR::Read(.target.string, "/etc/httpd/inst_server.conf.in");
+    list<string> confline = splitstring(conf, "\n");
+
+    confline = maplist(string line, confline, ``{
+            any res = regexpsub(line , "(ALIAS_CONFIGLINE)", sformat("Alias %1 %2", alias , dir ));
+            if (res != nil)
+                return ((string)res);
+            else
+                return (line);
+            });
+
+    y2debug("conf: %1", confline);
+
+    conf = mergestring(confline, "\n");
+    if (!SCR::Write(.target.string, "/etc/httpd/inst_server.conf", conf ))
+    {
+        y2error("Error writing apache config file");
+    }
+    RunSuseConfigApache("yes");
+
+    Service::Enable("apache");
+    if (Service::Status("apache") == 0 )
+        Service::Reload("apache");
+    else
+        Service::Start("apache");
+    return true;
+}
 
 
 /**
