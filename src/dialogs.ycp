@@ -191,7 +191,7 @@ any Configure1Dialog () {
     term contents =
         `Top(
                 `VBox(
-                    `Left(`TextEntry(`id(`dir), _("Directory:"), dir)),
+                    `Left(`TextEntry(`id(`dir), _("Source Name:"), dir)),
                     `Left(
                         `CheckBox(`id(`prompt), _("Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
                         ),
@@ -201,7 +201,7 @@ any Configure1Dialog () {
                     )
             );
 
-    Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"",
+    Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"initial",
 	    Label::BackButton(), Label::NextButton());
 
     any ret = nil;
@@ -241,6 +241,7 @@ any Configure1Dialog () {
                 Instserver::Config["name"] = dir;
                 Instserver::Config = (map)union(Instserver::Config, content);
             }
+            Instserver::UpdateConfig();
             Instserver::modified = true;
             break;
         }
@@ -283,14 +284,6 @@ any Configure2Dialog () {
         }
         else if(ret == `next) {
 
-            string name = Instserver::Config["name"]:"";
-            string old_name = Instserver::Config["old_name"]:"";
-            if (haskey(Instserver::Configs, old_name) && old_name != "")
-            {
-                Instserver::Configs = filter(string k, map v, Instserver::Configs, ``(k!=old_name));
-                remove(Instserver::Config, "old_name");
-            }
-            Instserver::Configs[name] = Instserver::Config;
             break;
         }
         else {
@@ -312,7 +305,9 @@ any ServerDialog () {
     string caption = _("Initial Setup - Servers");
 
     string dir = "";
-    symbol source = `nfs;
+    symbol source = `http;
+    string nfsoptions = "ro,root_squash,sync";
+    string wildcard = "";
 
     term c1 =
         `HBox(
@@ -339,7 +334,23 @@ any ServerDialog () {
                         _("&Configure as FTP Source"), source == `ftp)),
                 // radio button label
                 `Left (`RadioButton (`id (`nfs), `opt (`notify),
-                        _("&Configure as NFS Source"), source == `nfs))
+                        _("&Configure as NFS Source"), source == `nfs)),
+                `HBox(
+                    `HWeight(10, `Empty()),
+                    `HWeight(80,
+                        `VBox(
+                            `HBox(
+                                `HWeight(2,`TextEntry(`id(`wildcard), _("&Hosts wildcard"), wildcard)),
+                                `HWeight(1, `Empty())
+                                ),
+                            `HBox(
+                                `HWeight(2,`TextEntry(`id(`nfsoptions), _("&Options"), nfsoptions)),
+                                `HWeight(1, `Empty())
+                                )
+                            )
+                        )
+                    )
+
               );
 
     /* Instserver configure2 dialog contents */
@@ -361,24 +372,47 @@ any ServerDialog () {
     any ret = nil;
     while(true) {
 
-        ret = UI::UserInput();
         source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
-        if (source == `ftp && dir == "")
+        if (source == `ftp )
         {
-            UI::ChangeWidget(`id(`dir), `Value, "/srv/ftp");
+            UI::ChangeWidget(`id(`nfsoptions), `Enabled , false);
+            UI::ChangeWidget(`id(`wildcard), `Enabled , false);
         }
+        else if (source == `nfs )
+        {
+            UI::ChangeWidget(`id(`nfsoptions), `Enabled , true);
+            UI::ChangeWidget(`id(`wildcard), `Enabled , true);
+        }
+        else if (source == `http )
+        {
+            UI::ChangeWidget(`id(`nfsoptions), `Enabled , false);
+            UI::ChangeWidget(`id(`wildcard), `Enabled , false);
+        }
+        ret = UI::UserInput();
         dir = (string)UI::QueryWidget(`id(`dir), `Value);
 
 	/* abort? */
 	if(ret == `abort || ret == `cancel) {
 	    if(ReallyAbort()) break;
 	    else continue;
-	}
+        }
+        else if (ret ==`select_dir)
+        {
+            any new_dir = UI::AskForExistingDirectory( dir, _("Select Directory"));
+            if (new_dir != nil)
+            {
+                UI::ChangeWidget(`id(`dir), `Value, (string) new_dir);
+            }
+            continue;
+        }
+
         else if(ret == `next || ret == `back) {
             boolean r = false;
             if (source == `nfs)
             {
-                r = Instserver::SetupNFS(dir , "" );
+                nfsoptions = (string)UI::QueryWidget(`id(`nfsoptions), `Value);
+                wildcard = (string)UI::QueryWidget(`id(`wildcard), `Value);
+                r = Instserver::SetupNFS(dir , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
                 if (!r)
                 {
                     Report::Error(_("Error occured while configuring NFS"));
@@ -398,6 +432,7 @@ any ServerDialog () {
                 Instserver::ServerSettings["service"] = source;
                 Instserver::ServerSettings["directory"] = dir;
             }
+            Instserver::modified = true;
             break;
         }
         else {

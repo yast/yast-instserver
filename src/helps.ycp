@@ -16,6 +16,24 @@ textdomain "installation server";
  */
 map HELPS = $[
 
+
+    "initial": _("<p><b><big>Creating a new Configuration</big></b><br>
+</p>") +
+    _("<p>To create a new installation server using the configured
+protocol (NFS, FTP or HTTP), select a name for the installation server (or source). 
+This name will be used to create a directory under which all product CDs are copied
+and managed.</p> 
+") +
+    _("<p>You can let YaST prompt you for additional CDs if those have to be copied 
+after the main CDs have been copied, i.e.  Service Pack CDs or any 
+additional add-on CDs</p>") +
+
+    _("<p><b><big>SLP Support</big></b></p>") +
+
+    _("<p>SLP (Service Location Protocol) makes it easier finding installation server. 
+If checked, the installation server will be announced on the network using SLP.</p>"),
+
+
     /* Read dialog help 1/2 */
     "read" : _("<p><b><big>Initializing Configuration</big></b><br>
 Please wait...<br></p>
@@ -45,7 +63,9 @@ Configure Installation Server here.<br></p>
 
     /* Summary dialog help 2/3 */
     _("<p><b><big>Adding an Installation Server:</big></b><br>
-Choose a Source from the list of detected Sources.
+<p>YaST searches for unconfigured directories inside 
+the source repository and makes them available for configuration, </p>
+Choose a Source from the list of found Sources. 
 Then press <b>Configure</b>.</p>
 ") +
 

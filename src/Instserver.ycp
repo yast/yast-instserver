@@ -44,7 +44,7 @@ string ConfigFile = Rep + "/instserver.xml";
 global string FirstDialog = "summary";
 
 
-global map Available = $[];
+global list Detected = [];
 
 /**
  * Prototypes
@@ -114,10 +114,17 @@ boolean MountBind( string dir, string ftproot) {
     return true;
 }
 
-boolean ConfigureService(string module_auto, map resource) {
+boolean ConfigureService(string module_auto, any resource) {
     boolean ret = false;
     ret = (boolean)Call::Function(module_auto, ["Import", resource   ]);
     ret = (boolean)Call::Function(module_auto, ["Write",  resource  ]);
+    return ret;
+}
+
+any ReadServiceSettings(string module_auto) {
+    boolean r  = (boolean)Call::Function(module_auto, ["Read"]);
+    any ret = Call::Function(module_auto, ["Export"]);
+
     return ret;
 }
 
@@ -167,23 +174,28 @@ will now be installed.");
  */
 global boolean SetupNFS(string dir, string options) {
 
-    import "NfsServer";
-    boolean ret = false;
-    NfsServer::Read();
-    list<map> oldexp = NfsServer::exports;
+    map resource = (map)ReadServiceSettings("nfs_server_auto");
+    list<map> oldexp = resource["nfs_exports"]:[];
+    y2milestone("oldexp: %1", oldexp );
 
     list oldexists = filter(map e, oldexp, ``(e["mountpoint"]:"" == dir) );
     if (size(oldexists) > 0 ) {
-        boolean yesno = Popup::YesNo("Directory is already exported via NFS, continue anyway?");
-        if (!yesno)
-            return false;
+        boolean yesno = Popup::YesNo("Directory is already exported via NFS, 
+Leave NFS exports unmodified?");
+        if (yesno)
+        {
+            return true;
+        }
+        else
+        {
+            oldexp = filter(map e, oldexp, ``(e["mountpoint"]:"" != dir) );
+        }
     }
     list<map> exports = oldexp;
     map nfs = $[];
     nfs["start_nfsserver"] = true;
     list allowed = [];
     if (size(options) == 0 ) {
-        // FIXME: Calculate mask and allow clients in the same network.
         options = "*(ro,root_squash,sync)";
     }
     allowed=add(allowed, options);
@@ -193,17 +205,14 @@ global boolean SetupNFS(string dir, string options) {
     exports=add(exports, ex);
     nfs["nfs_exports"] = exports;
 
-    NfsServer::Import(nfs);
-    Progress::off();
-    NfsServer::write_only = true;
-    ret = NfsServer::Write();
-    Progress::on();
+    ConfigureService("nfs_server_auto", nfs);
+
     Service::Enable("nfsserver");
     if (Service::Status("nfsserver") == 0 )
         Service::Reload("nfsserver");
     else
         Service::Start("nfsserver");
-    return ret;
+    return true;
 }
 
 
@@ -256,6 +265,19 @@ global list DetectMedia() {
     }
 }
 
+global define map FindAvailable() ``{
+    map Available = $[];
+    foreach(string c, Detected, ``{
+            map ret = ReadContentFile(c);
+            string d = dirname(c);
+            string config_name = basename(d);
+            if (ret != $[] && !haskey(Configs, config_name))
+            {
+            Available[d]= ret;
+            }
+            });
+    return Available;
+}
 
 
 /**
@@ -323,16 +345,7 @@ global boolean Read() {
     Progress::NextStage();
 
 
-    list media = DetectMedia();
-    foreach(string c, media, ``{
-            map ret = ReadContentFile(c);
-            string d = dirname(c);
-            string config_name = basename(d);
-            if (ret != $[] && !haskey(Configs, config_name))
-            {
-            Available[d]= ret;
-            }
-            });
+    Detected = DetectMedia();
 
     /* Error message */
     if(false) Report::Error(_("Cannot read current settings."));
@@ -429,6 +442,20 @@ global boolean Write() {
 }
 
 
+global define void UpdateConfig() ``{
+    y2debug("current config: %1", Configs );
+    string name = Config["name"]:"";
+    string old_name = Config["old_name"]:"";
+    if (haskey(Instserver::Configs, old_name) && old_name != "")
+    {
+        Configs = filter(string k, map v, Configs, ``(k!=old_name));
+        remove(Config, "old_name");
+    }
+    Configs[name] = Config;
+    y2debug("current config: %1", Configs );
+    return;
+}
+
 
 /**
  * Create XML Configuration
@@ -479,7 +506,7 @@ global map Export () {
 global list Summary() {
     /* Configuration summary text for autoyast */
     string sum = "";
-    Available = filter( string d, map avail, Available, ``(!haskey(Configs, basename(d))));
+    map Available = filter( string d, map avail, FindAvailable(), ``(!haskey(Configs, basename(d))));
     list unconf = maplist(string d, map avail, Available, ``{
             string dir = basename(d);
             return(`item(`id(dir), avail["LABEL"]:"" + "(" + avail["DEFAULTBASE"]:"" + ")" )) ;
@@ -487,6 +514,7 @@ global list Summary() {
 
     sum = Summary::AddHeader(sum, _("Configured Sources"));
     sum = Summary::OpenList(sum);
+
     foreach(string name , map cfg, Configs , ``{
             string source = cfg["LABEL"]:"" + "<br><b>Architecture: </b>" + cfg["DEFAULTBASE"]:"";
             sum = Summary::AddListItem(sum, source);

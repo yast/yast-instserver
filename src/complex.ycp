@@ -52,14 +52,6 @@ symbol ReadDialog() {
  */
 symbol WriteDialog() {
     Wizard::RestoreHelp(HELPS["write"]:"");
-    string name = Instserver::Config["name"]:"";
-    string old_name = Instserver::Config["old_name"]:"";
-    if (haskey(Instserver::Configs, old_name) && old_name != "")
-    {
-        Instserver::Configs = filter(string k, map v, Instserver::Configs, ``(k!=old_name));
-        remove(Instserver::Config, "old_name");
-    }
-    Instserver::Configs[name] = Instserver::Config;
 
     // Instserver::AbortFunction = PollAbort;
     boolean ret = Instserver::Write();
@@ -110,6 +102,7 @@ any SummaryDialog() {
             else {
                 ret = `configure;
             }
+            Instserver::Config = $[];
             Instserver::Config["directory"] = (selected!=nil) ? (string)selected : "";
             break;
         }
@@ -172,6 +165,15 @@ any OverviewDialog() {
         }
         /* delete */
         else if(ret == `delete_button) {
+            y2debug("Deleting: %1", current);
+            Instserver::Configs = filter(string k, map v, Instserver::Configs, ``(k!=current));
+            overview = Instserver::Overview();
+            UI::ChangeWidget(`id(`table), `Items, overview);
+            if (size(overview) == 0 )
+            {
+                UI::ChangeWidget(`id(`edit_button), `Enabled, false);
+                UI::ChangeWidget(`id(`delete_button), `Enabled, false);
+            }
             continue;
         }
         else if(ret == `next || ret == `back) {
