@@ -47,10 +47,8 @@ options, see the manual page for <em>exports</em> (man exports(5))
 </p>
 ") +
 
-    _("<p>The source will be available at the following URL:</p>
-<p><pre>nfs://&lt;Host IP&gt;/&lt;Source Name&gt;</pre>
-</p>
-"),
+    _("<p>The source will be available at the following URL:
+<pre>nfs://Host_IP/Source_Name</pre></p>"),
     "ftp": _("<p><b><big>FTP Server Configuration</big></b><br>
 </p>") +
 
@@ -135,8 +133,8 @@ Configure the installation server here.<br></p>
 
     /* Summary dialog help 2/3 */
     _("<p><b><big>Adding an Installation Server:</big></b><br>
-<p>YaST searches for unconfigured directories inside 
-the source repository and makes them available for configuration. </p>
+YaST searches for unconfigured directories inside 
+the source repository and makes them available for configuration.
 Choose a source from the list of found sources. 
 Then press <b>Configure</b>.</p>
 ") +

@@ -541,9 +541,9 @@
         term contents =
             `HVSquash(
 		      `VBox(
-			    `Left(`TextEntry(`id(`dir), _("Source Name:"), dir)),
+			    `Left(`TextEntry(`id(`dir), _("Source &Name:"), dir)),
 			    `VSpacing(1),
-			    `Left(`CheckBox(`id(`iso), `opt(`notify),  _("Use ISO Images Instead of CDs"), iso )),
+			    `Left(`CheckBox(`id(`iso), `opt(`notify),  _("Use &ISO Images Instead of CDs"), iso )),
 			    `VSquash(
 				     `HBox(
 					   `TextEntry(`id(`isodir),  _("Di&rectory with CD Images:"), isodir),
@@ -555,10 +555,10 @@
 				     ),
 			    `VSpacing(1),
 			    `Left(
-				  `CheckBox(`id(`prompt), _("Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
+				  `CheckBox(`id(`prompt), _("&Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
 				  ),
 			    `Left(
-				  `CheckBox(`id(`slp), _("Announce as Installation Service with SLP"), slp )
+				  `CheckBox(`id(`slp), _("A&nnounce as Installation Service with SLP"), slp )
 				  )
                             )
 		      );
@@ -901,8 +901,8 @@ Not copying CDs."));
         term contents =
             `HVSquash(
 		      `VBox(
-			    `Left(`TextEntry(`id(`ftproot), _("FTP Server Root Directory:"), ftproot )),
-			    `Left(`TextEntry(`id(`ftpalias), _("Directory Alias:"), ftpalias ))
+			    `Left(`TextEntry(`id(`ftproot), _("&FTP Server Root Directory:"), ftproot )),
+			    `Left(`TextEntry(`id(`ftpalias), _("&Directory Alias:"), ftpalias ))
 			    )
 		      );
 
@@ -964,7 +964,7 @@ Not copying CDs."));
         term contents =
             `HVSquash(
 		      `VBox(
-			    `Left(`TextEntry(`id(`alias), _("Directory Alias"), alias ))
+			    `Left(`TextEntry(`id(`alias), _("&Directory Alias"), alias ))
 			    )
 		      );
 
