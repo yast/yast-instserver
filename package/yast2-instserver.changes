@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Mar  2 05:40:33 CET 2004 - nashif@suse.de
+
+- Renamed agent to avoid conflict
+- 2.9.3
+
+-------------------------------------------------------------------
 Mon Mar  1 16:12:04 CET 2004 - nashif@suse.de
 
 - Merged proofread texts
