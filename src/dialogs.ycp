@@ -679,7 +679,7 @@
                 Instserver::ServerSettings["ftpalias"] = ftpalias;
                 if (!Instserver::ServerSettings["dry"]:false)
                 {
-                    r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , ftproot );
+                    r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , ftproot , ftpalias);
                     if (!r)
                     {
                         Popup::Error(_("Error occurred while configuring FTP."));
