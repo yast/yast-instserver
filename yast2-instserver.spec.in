@@ -29,6 +29,6 @@ Summary:	Configuration of instserver
 @desktopdir@/instserver.desktop
 %doc @docdir@
 /var/lib/YaST2/instserver
-/etc/httpd/conf.d/inst_server.conf.in
+/etc/apache2/conf.d/inst_server.conf.in
 @scrconfdir@/*.scr
 @agentdir@/ag_*
