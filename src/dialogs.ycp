@@ -13,6 +13,7 @@
 
     import "Installation";
     import "Label";
+    import "Popup";
     import "Wizard";
     import "Instserver";
 
@@ -549,7 +550,7 @@
                 boolean r = false;
                 if (dir == "")
                 {
-                    Report::Error(_("Directory path for the installation server missing."));
+                    Popup::Error(_("Directory path for the installation server missing."));
                     continue;
                 }
                 Instserver::ServerSettings["service"] = source;
@@ -612,7 +613,7 @@
                 r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
                 if (!r)
                 {
-                    Report::Error(_("Error occured while configuring NFS"));
+                    Popup::Error(_("Error occured while configuring NFS"));
                     continue;
                 }
                 Instserver::modified = true;
@@ -668,7 +669,7 @@
                 r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , "/srv/ftp" );
                 if (!r)
                 {
-                    Report::Error(_("Error occured while configuring FTP"));
+                    Popup::Error(_("Error occured while configuring FTP"));
                     continue;
                 }
                 Instserver::modified = true;
