@@ -9,7 +9,7 @@
 
 {
 
-textdomain "installation server";
+textdomain "instserver";
 
 /**
  * All helps are here
