@@ -114,7 +114,7 @@ global list<string> createLinks (string dir, string product, list<string> files)
 			       f,f,dir, shorttgt, symlink));
 
     });
-    cmds=add(cmds, sformat("mkdir %1/yast", dir));
+    cmds=add(cmds, sformat("mkdir -p %1/yast", dir));
 
     y2debug("cmds: %1", cmds );
     return cmds;
@@ -140,47 +140,64 @@ global boolean createOrderFiles(string dir)
 	list<string> oentries = splitstring(ofile, "\n");
 	string iofile = (string)SCR::Read(.target.string, instorder_path );
 	list<string> ioentries = splitstring(iofile, "\n");
+
+        // clean empty lines
+        oentries=filter(string l, oentries, ``(l!=""));
+        ioentries=filter(string l, ioentries, ``(l!=""));
+
 	string proddir = sformat("/%1/CD1", products[0, "name"]:"" );
 	if (issubstring(tolower(products[0, "name"]:""), "service-pack" ))
 	{
 	    oentries = add( oentries, mergestring([  proddir, proddir ], "\t"));
-	    ioentries = (list<string>) union(  (list<string>)[ mergestring([  proddir, proddir ], "\t") ], ioentries);
+	    ioentries = (list<string>) union(  (list<string>)[  proddir ], ioentries);
 	}
 	else
 	{
 	    oentries = add( oentries, mergestring([  proddir, proddir ], "\t"));
-	    ioentries = add( ioentries, mergestring([  proddir, proddir ], "\t"));
+            // FIX: instorder only needs first column of the order file in the right
+            // order
+	    ioentries = add( ioentries, proddir);
 	}
+        ioentries = add( ioentries, "");
+        oentries = add( oentries, "");
+
 	SCR::Write(.target.string, dir + "/yast/order",  mergestring(oentries, "\n"));
 	SCR::Write(.target.string, dir + "/yast/instorder",  mergestring(ioentries, "\n"));
-	    
-    }    
+    }
     else if (size(products) > 1 )
     {
         SCR::Execute(.target.mkdir, dir + "/yast");
         // create order
-        list<map> order = filter(map p, products, ``(!p["baseproduct"]:false));	
+        list<map> order = filter(map p, products, ``(!p["baseproduct"]:false));
         order = (list<map>)union(order, filter(map p, products, ``(p["baseproduct"]:false)));
-	
+
         y2debug("order: %1", order );
-	
+
         list<map> instorder = filter(map p, products, ``(p["baseproduct"]:false));
         instorder = (list<map>)union(instorder, filter(map p, products, ``(!p["baseproduct"]:false)));
-	
+
+        // HACK: support sles8 too
+        list<map> ul = filter(map u, instorder ,
+                ``(issubstring(tolower(u["name"]:""), "unitedlinux")));
+        if (size(ul) == 0) {
+            instorder = order;
+        }
         y2debug("instorder: %1", instorder );
-	
+
         list<string> file = [];
         foreach (map p, order , ``{
                 string proddir = sformat("/%1/CD1", p["name"]:"" );
                 file = add(file, mergestring([  proddir, proddir ], "\t"));
-                SCR::Write(.target.string, dir + "/yast/order",  mergestring(file, "\n"));
                 });
+        file = add(file , "");
+        SCR::Write(.target.string, dir + "/yast/order",  mergestring(file, "\n"));
         file = [];
         foreach (map p, instorder , ``{
                 string proddir = sformat("/%1/CD1", p["name"]:"" );
-                file = add(file, mergestring([  proddir, proddir ], "\t"));
-                SCR::Write(.target.string, dir + "/yast/instorder",  mergestring(file, "\n"));
+                file = add(file, proddir);
                 });
+        file = add(file , "");
+        SCR::Write(.target.string, dir + "/yast/instorder",  mergestring(file, "\n"));
     }
     products = [];
     return true;
@@ -246,8 +263,9 @@ any ReadServiceSettings(string module_auto) {
  */
 global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 
-    string help = _("The FTP Installation Server requires an FTP server package. 
-The vsftpd package will now be installed.");
+    string help = _("The FTP installation server requires an FTP server package. The vsftpd package
+will now be installed.
+");
     if ( !Require::AreAllPackagesInstalled( [ "xinetd", "vsftpd" ] ) ) {
         y2debug("some packages are not installed");
     }
@@ -316,7 +334,7 @@ define void RunSuseConfigApache( boolean enable ) ``{
  */
 global boolean SetupHTTP(string dir, string alias) {
 
-    string help = _("The HTTP Installation Server requires an HTTP server package. The apache2 package
+    string help = _("The HTTP installation server requires an HTTP server package. The apache2 package
 will now be installed.");
     if ( !Require::AreAllPackagesInstalled( [ "apache2" ] ) ) {
         y2debug("some packages are not installed");
@@ -440,7 +458,10 @@ global boolean WriteSLPReg (map cm) {
 
     map<string, string> attr = $[];
     foreach(string a, ["LABEL", "VERSION", "VENDOR", "DEFAULTBASE", "BASEPRODUCT", "BASEVERSION"], ``{
-        attr[tolower(a)] =  cm[a]:"";
+        if (cm[a]:"" != "" )
+        {
+            attr[tolower(a)] =  cm[a]:"";
+        }
         });
 
     attr["description"] = cm["LABEL"]:"" + " " +
@@ -450,7 +471,7 @@ global boolean WriteSLPReg (map cm) {
 
     string regfile =  sformat("YaST-%1.reg",  cm["name"]:"" );
     boolean ret = SLP::RegFile(serv, attr, regfile );
-    
+
     return ret;
 }
 
@@ -643,11 +664,11 @@ global boolean Write() {
             {
                 WriteSLPReg(cm);
 		slpreload = true;
-            } else {		
+            } else {
 		string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
-		if (SCR::Read(.target.size, regfile) > 0 ) 
+		if (SCR::Read(.target.size, regfile) > 0 )
 		    SCR::Execute(.target.remove, regfile);
-		    
+
 	    }
         });
 
@@ -659,10 +680,15 @@ global boolean Write() {
 	    SCR::Execute(.target.remove, regfile);
 	}
     });
-    
+
     if (slpreload)
-	Service::Reload("slpd");
-    
+    {
+        if (Service::Status("slpd") == 0 )
+	    Service::Reload("slpd");
+        else
+	    Service::Start("slpd");
+    }
+
     if(Abort()) return false;
     /* Progress finished */
     Progress::NextStage();

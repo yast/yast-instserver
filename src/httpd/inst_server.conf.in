@@ -3,7 +3,7 @@
     Alias @ALIAS@ @SERVERDIR@
     <Directory @SERVERDIR@>
 
-        Options +Indexes
+        Options +Indexes +FollowSymLinks
         IndexOptions +NameWidth=*
 
         Order allow,deny
