@@ -23,6 +23,10 @@ module_DATA =			\
 
 EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
 
+install-data-local:
+	install -d -m 755 $(DESTDIR)/var/lib/YaST2/instserver
+
+
 include:
 	mkdir include && ln -sf ../ include/instserver
 

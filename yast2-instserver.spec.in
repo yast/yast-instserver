@@ -28,3 +28,4 @@ Summary:	Configuration of instserver
 @moduledir@/Instserver.*
 @desktopdir@/instserver.desktop
 %doc @docdir@
+/var/lib/YaST2/instserver
