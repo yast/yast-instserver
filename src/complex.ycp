@@ -110,7 +110,7 @@ any SummaryDialog() {
             else {
                 ret = `configure;
             }
-            Instserver::Config["directory"] = (string)selected;
+            Instserver::Config["directory"] = (selected!=nil) ? (string)selected : "";
             break;
         }
         else if(ret == `next) {
@@ -152,6 +152,7 @@ any OverviewDialog() {
 
 	ret = UI::UserInput();
 
+        string current = (string) UI::QueryWidget(`id(`table), `CurrentItem );
 	/* abort? */
 	if(ret == `abort || ret == `cancel) {
 	    if(ReallyAbort()) break;
@@ -159,19 +160,18 @@ any OverviewDialog() {
 	}
         /* add */
         else if(ret == `add_button) {
-	    /* FIXME */
+            Instserver::Config = $[];
             ret = `add;
             break;
         }
         /* edit */
         else if(ret == `edit_button) {
-	    /* FIXME */
+            Instserver::Config = Instserver::Configs[current]:$[];
             ret = `edit;
             break;
         }
         /* delete */
         else if(ret == `delete_button) {
-	    /* FIXME */
             continue;
         }
         else if(ret == `next || ret == `back) {

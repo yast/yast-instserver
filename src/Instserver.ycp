@@ -133,6 +133,22 @@ global boolean SetupNFS(string dir, string options) {
 }
 
 
+global boolean WriteSLPReg (map cm) {
+
+    list<string> slp = [];
+    if (ServerSettings["service"]:`none == `nfs)
+    {
+        slp=add(slp, sformat("service:YaST-Source:nfs://$HOSTNAME%1/%2,en,65535", ServerSettings["directory"]:"", cm["name"]:""));
+    }
+    foreach(string a, ["LABEL", "VERSION", "VENDOR", "DEFAULTBASE", "BASEPRODUCT", "BASEVERSION"], ``{
+        slp=add(slp, sformat("%1=%2", tolower(a), cm[a]:"" ));
+        });
+
+    string all = mergestring(slp, "\n");
+    SCR::Execute(.target.bash,  sformat("touch /etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" ));
+    boolean ret =(boolean) SCR::Write(.target.string,    sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" ), all);
+    return ret;
+}
 
 
 
@@ -311,6 +327,11 @@ global boolean Write() {
     // run SuSEconfig
     if(Abort()) return false;
     Progress::NextStage ();
+
+    foreach(string cn, map cm, Configs, ``{
+            if (cm["slp"]:false)
+                WriteSLPReg(cm);
+        });
     /* Error message */
     if(false) Report::Error (_("SuSEconfig script failed."));
     sleep(sl);
@@ -366,6 +387,8 @@ global map Export () {
 }
 
 
+
+
 /**
  * Create a textual summary and a list of unconfigured cards
  * @return summary of the current configuration
@@ -379,9 +402,10 @@ global list Summary() {
             return(`item(`id(dir), avail["LABEL"]:"" + "(" + avail["DEFAULTBASE"]:"" + ")" )) ;
             });
 
+    sum = Summary::AddHeader(sum, _("Configured Sources"));
     sum = Summary::OpenList(sum);
     foreach(string name , map cfg, Configs , ``{
-            string source = cfg["LABEL"]:"";
+            string source = cfg["LABEL"]:"" + "<br><b>Architecture: </b>" + cfg["DEFAULTBASE"]:"";
             sum = Summary::AddListItem(sum, source);
             });
     sum = Summary::CloseList(sum);
