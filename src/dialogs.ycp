@@ -102,7 +102,7 @@
 	    symbol pop = `none;
 	    if (iso)
 	    {
-		mount_options = "-oloop ";
+		mount_options = "-oloop,ro ";
 	    }
 
 	    // Loop for all CDs
@@ -348,12 +348,12 @@
 		{
 		    cmds = add(cmds, sformat("cp -pR %1/media.%2 %3", cdpath,
 					     current_cd, tgt) );
-		    cmds = add(cmds, sformat("cp  %1/content %3", cdpath,
-					     current_cd, tgt));
+		    cmds = add(cmds, sformat("cp  %1/content %2", cdpath, tgt));
 		}
 		else
 		{
-		    cmds = add(cmds, sformat("cp -pR %1/* %2", cdpath,  tgt) );
+		    //cmds = add(cmds, sformat("cp -pR %1/* %2", cdpath,  tgt) );
+		    cmds = add(cmds, sformat("cd %1 && tar cf - . | (cd %2  && tar xBf -)", cdpath,  tgt) );
 		}
 		list<string> files= [];
 		// Link files
