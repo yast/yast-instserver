@@ -824,7 +824,8 @@ Not copying CDs."));
                     if (!r)
                     {
                         Popup::Error(_("Error occurred while configuring FTP."));
-                        continue;
+                        ret = `back;
+                        break;
                     }
                 }
                 Instserver::modified = true;
@@ -882,6 +883,8 @@ Not copying CDs."));
                     if (!Instserver::SetupHTTP(Instserver::ServerSettings["directory"]:"", alias))
                     {
                         Popup::Error(_("Error creating HTTPD configuration."));
+                        ret = `back;
+                        break;
                     }
                 }
                 Instserver::modified = true;
