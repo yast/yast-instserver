@@ -58,8 +58,6 @@ global list<map> products = [];
 
 global list<string> Detected = [];
 
-
-
 global boolean standalone = false;
 
 /**
@@ -86,7 +84,7 @@ global boolean AbortFunction = Modified();
  * Abort function
  * @return boolean
  */
-global define boolean Abort() ``{
+global define boolean Abort() {
     if(AbortFunction != nil)
 	return (boolean)eval(AbortFunction);
     return false;
@@ -219,9 +217,9 @@ boolean MountBind( string dir, string ftproot)
     y2debug("Calling MountBind with: %1 %2", dir, ftproot );
     list<map> fstab = (list<map>)SCR::Read(.etc.fstab);
     y2debug("fstab: %1", fstab );
-    list<map> existing = filter(map f, fstab, ``(f["spec"]:"" == deletechars(dir, " ")));
-    y2debug("existing: %1", existing );
-    if (size(existing)> 0 )
+    list<map> exists = filter(map f, fstab, ``(f["spec"]:"" == deletechars(dir, " ")));
+    y2debug("existing: %1", exists );
+    if (size(exists)> 0 )
     {
         return false;
     }
@@ -357,8 +355,8 @@ will now be installed.");
         if (findfirstof(alias, "/") != 0 )
             alias = "/" + alias;
         confline = maplist(string line, confline, ``{
-                any res = regexpsub(line , "(.*)@ALIAS@(.*)", sformat("\\1%1/\\2", alias ));
-                res = regexpsub((res!=nil) ?(string)res:line , "(.*)@SERVERDIR@(.*)", sformat("\\1%1/\\2", dir ));
+                any res = regexpsub(line , "(.*)@ALIAS@(.*)", sformat("\\1%1\\2", alias ));
+                res = regexpsub((res!=nil) ?(string)res:line , "(.*)@SERVERDIR@(.*)", sformat("\\1%1\\2", dir ));
                 if (res != nil)
                 return ((string)res);
                 else
