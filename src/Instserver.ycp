@@ -211,7 +211,7 @@ any ReadServiceSettings(string module_auto) {
  * @param string ftp server root
  * @return boolean
  */
-global boolean SetupFTP(string dir, string ftproot) {
+global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 
     string help = _("The FTP Installation Server requires an FTP server package. The vsftpd package
 will now be installed.");
@@ -223,10 +223,19 @@ will now be installed.");
         y2error("Error while installing packages");
         return false;
     }
-    if (!issubstring(dir, ftproot))
+    string a = "";
+    if (!issubstring(dir, a))
     {
+        if (ftpalias != "")
+        {
+            a = ftproot + "/" + ftpalias;
+            SCR::Execute(.target.bash,"mkdir -p " + a);
+        }
         y2debug("binding dir");
         MountBind(dir, ftproot);
+    } else {
+        // FIXME
+        y2warning("not implemented");
     }
 
     y2debug("configuring services");

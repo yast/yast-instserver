@@ -16,6 +16,17 @@ textdomain "installation server";
  */
 map HELPS = $[
 
+
+    "server": _("<p><b><big>Network Server Configuration</big></b><br>
+</p>") +
+
+    _("<p>Select one of the server options and specify where all the sources
+should be hosted on the local system.
+</p>") +
+    _("<p>If you have one the services already running and you wish to do the
+server configuration manually, make sure to check the option not to configure 
+the services.
+</p>"),
     "nfs": _("<p><b><big>NFS Server Configuration</big></b><br>
 </p>") +
 
@@ -34,6 +45,24 @@ options, see the manual page for <em>exports</em> (man exports(5) )
 
     _("<p>The source will be available using the following URL:</p>
 <p><pre>nfs://&lt;Host IP&gt;/&lt;Source Name&gt;</pre>
+</p>"),
+    "ftp": _("<p><b><big>FTP Server Configuration</big></b><br>
+</p>") +
+
+    _("<p>To complete this configuration, an FTP Server has to be 
+installed and started.</p>
+") +
+
+    _("<p>If the Installation Server directory you have choosen is outside
+of the FTP server hierarchy, then a mount entry will be added to <em>/etc/fstab</em>
+which will make the Installation Server directory available under the
+FTP server (using <em>--bind</em> option of <em>mount</em>).
+</p>") +
+
+    _("<p>The Installation Server will be available to clients using the following URL:
+</p>") +
+
+    _("<p><pre>ftp://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</pre>
 </p>"),
     "http": _("<p><b><big>HTTP Server Configuration</big></b><br>
 </p>") +
