@@ -261,9 +261,13 @@ will now be installed.");
  * @param string state : Yes/No
  * @return void
  */
-define void RunSuseConfigApache( string state ) ``{
+define void RunSuseConfigApache( boolean enable ) ``{
     string flags = (string) SCR::Read( .sysconfig.apache2.APACHE_SERVER_FLAGS );
-    SCR::Write( .sysconfig.apache2.APACHE_SERVER_FLAGS, flags + " inst_server" );
+    if (!issubstring(flags,"inst_server") && enable)
+        SCR::Write( .sysconfig.apache2.APACHE_SERVER_FLAGS, flags + " inst_server" );
+    else if (issubstring(flags,"inst_server") && !enable)
+        SCR::Write( .sysconfig.apache2.APACHE_SERVER_FLAGS, regexpsub(flags, "(.*)inst_server(.*)", "\1 \2" ) );
+
     if( !SCR::Write( .sysconfig.apache2, nil ) ) {
         Popup::Error( _("Unable to write /etc/sysconfig/apache2") );
         return;
@@ -290,29 +294,33 @@ will now be installed.");
         return false;
     }
 
-    string conf = (string)SCR::Read(.target.string, "/etc/httpd/inst_server.conf.in");
-    list<string> confline = splitstring(conf, "\n");
-
-    if (findlastof(alias, "/") != size(alias) -1 )
-       alias = alias + "/";
-    if (findfirstof(alias, "/") != 0 )
-       alias = "/" + alias;
-    confline = maplist(string line, confline, ``{
-            any res = regexpsub(line , "(ALIAS_CONFIGLINE)", sformat("Alias %1 %2/", alias , dir ));
-            if (res != nil)
-                return ((string)res);
-            else
-                return (line);
-            });
-
-    y2debug("conf: %1", confline);
-
-    conf = mergestring(confline, "\n");
-    if (!SCR::Write(.target.string, "/etc/apache2/inst_server.conf", conf ))
+    if ((integer)SCR::Read(.target.size, "/etc/apache2/conf.d/inst_server.conf.in") > 0 )
     {
-        y2error("Error writing apache2 config file");
+        string conf = (string)SCR::Read(.target.string, "/etc/apache2/conf.d/inst_server.conf.in");
+        list<string> confline = splitstring(conf, "\n");
+
+        if (findfirstof(alias, "/") != 0 )
+            alias = "/" + alias;
+        confline = maplist(string line, confline, ``{
+                any res = regexpsub(line , "(.*)@ALIAS@(.*)", sformat("\\1%1/\\2", alias ));
+                res = regexpsub((res!=nil) ?(string)res:line , "(.*)@SERVERDIR@(.*)", sformat("\\1%1/\\2", dir ));
+                if (res != nil)
+                return ((string)res);
+                else
+                return (line);
+                });
+
+        y2debug("conf: %1", confline);
+
+        conf = mergestring(confline, "\n");
+        if (!SCR::Write(.target.string, "/etc/apache2/conf.d/inst_server.conf", conf ))
+        {
+            y2error("Error writing apache2 config file");
+        }
+    } else {
+        return false;
     }
-    RunSuseConfigApache("yes");
+    RunSuseConfigApache(true);
 
     Service::Enable("apache2");
     if (Service::Status("apache2") == 0 )

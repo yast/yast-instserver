@@ -1,6 +1,6 @@
 # httpd configuration for Installation Server included by httpd.conf
 <IfDefine inst_server>
-    @ALIAS_CONFIGLINE@
+    Alias @ALIAS@ @SERVERDIR@
     <Directory @SERVERDIR@>
 
         Options +Indexes
