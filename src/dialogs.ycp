@@ -19,6 +19,7 @@
 
     include "instserver/helps.ycp";
     include "instserver/routines.ycp";
+    include "instserver/complex.ycp";
 
 
 
@@ -78,7 +79,6 @@
 	    // free mount point
 	    SCR::Execute (.target.umount, Installation::sourcedir);
 
-
 	    string default_device = "/dev/cdrom";
 	    string mount_options = "";
 	    any result = nil;
@@ -97,19 +97,32 @@
             string prompt_version = "";
             integer prompt_totalcds = 0;
             string medianame = "";
-            boolean medianame_found = false;
+            boolean doublesided = false;
+            list medianames = [];
+            boolean failed = false;
+            boolean cds_copied = false;
+
+            string media_id = "";
+
+            boolean restart = false;
 
 	    symbol pop = `none;
+
+            // Fix for mounting ISO images over NFS
 	    if (iso)
 	    {
 		mount_options = "-oloop,ro ";
-	    }
+	    } 
+            else
+            {
+		mount_options = "";
+            }
 
 	    // Loop for all CDs
 	    while (true)
 	    {
 		string msg = "";
-		if (!baseproduct && standalone && prompt_string == "")
+		if (!baseproduct && standalone && size(medianames) == 0)
 		{
 		    // %1 is the current cd number
 		    if (!iso)
@@ -119,44 +132,75 @@
 		}
 		else
 		{
-		    // %2 %3 are the product name and version
-                    string cd_prompt = _("Insert CD %1 of %2-%3.");
-                    string iso_prompt = _("Select ISO image %1 of %2-%3.");
+		    // %2 is the product name and version
+                    string cd_prompt = _("Insert CD %1 of %2.");
+                    string iso_prompt = _("Select ISO image %1 of %2.");
                     integer prompt_for_cd = 0;
-                    string pname = "";
-                    string pver = "";
 
-                    pname = prompt_string;
-                    if (!promptmore)
-                    {
-                        prompt_for_cd = prompt_totalcds + current_cd;
-                    }
-                    else
+                    if (promptmore  || (!standalone && !baseproduct) && !restart)
                     {
                         prompt_for_cd = current_cd;
                     }
-
-
-                    if (prompt_version != "")
-                        pver = prompt_version;
                     else
-                        pver = base;
-                    pver="";
+                    {
+                        prompt_for_cd = prompt_totalcds + current_cd;
+                    }
 
 		    if (!iso)
                     {
-                        if (!medianame_found)
-			    msg = sformat(cd_prompt, prompt_for_cd, pname, pver );
+                        if (size(medianames) == 0)
+                        {
+			    msg = sformat(cd_prompt, prompt_for_cd,
+                                    prompt_string );
+                        }
                         else
-                            msg =sformat("Insert\n%1%2", pname,
-                                    prompt_for_cd);
+                        {
+                            string m = "";
+                            y2milestone("medianames: %1, totalcds: %2",
+                                    size(medianames), total_cds );
+                            if (size(medianames) > 1 )
+                            {
+                                y2milestone("all media names available");
+                                m = medianames[prompt_for_cd - 1]:"";
+                            }
+                            else
+                            {
+                                prompt_string =
+                                    substring(regexpsub(medianames[0]:"",
+                                                "(.*)CD.", "\\1CD%1"), 7,
+                                            size(medianames[0]:""));
+                                m = sformat(prompt_string, prompt_for_cd);
+                            }
+                            msg =sformat("Insert\n%1", m);
+                        }
                     }
 		    else
                     {
-                        if (!medianame_found)
-			    msg = sformat(iso_prompt, prompt_for_cd, pname, pver );
+                        if (size(medianames) == 0)
+                        {
+			    msg = sformat(iso_prompt, prompt_for_cd,
+                                    prompt_string );
+                        }
                         else
-                            msg = sformat("Select %1%2", pname, prompt_for_cd);
+                        {
+                            string m = "";
+                            y2milestone("medianames: %1, totalcds: %2",
+                                    size(medianames), total_cds );
+                            if (size(medianames) > 1 )
+                            {
+                                y2milestone("all media names available");
+                                m = medianames[prompt_for_cd - 1]:"";
+                            }
+                            else
+                            {
+                                prompt_string =
+                                    regexpsub(medianames[0]:"",
+                                                "(.*)CD.", "\\1CD%1");
+                                y2debug("prompt string: %1)", prompt_string);
+                                m = sformat(prompt_string, prompt_for_cd);
+                            }
+                            msg = sformat("Select %1", m);
+                        }
                     }
 		}
 
@@ -166,8 +210,10 @@
 		    default_device = (string)CDPopup(msg, iso);
 		    if  ( default_device == "")
 		    {
-			if (total_cds == current_cd )
+                        y2debug("total_cds: %1, current_cd: %2", total_cds, current_cd);
+			if (total_cds == current_cd)
 			{
+                            failed = !cds_copied;
 			    break;
 			}
 			else
@@ -203,7 +249,6 @@
 		{
 		    // cant mount /dev/cdrom popup
 		    y2error("mount faild");
-		    // FIXME
 		    continue;
 		}
 		y2debug("mounted cdrom");
@@ -212,7 +257,7 @@
 		y2debug("media: %1", media);
 		map content = $[];
 
-		if (size(media) == 0 )
+		if (size(media) == 0  || (media_id != media[1]:"" && media_id!="") )
 		{
 		    y2debug("wrong CD or non suse CD");
 		    SCR::Execute (.target.umount, Installation::sourcedir);
@@ -221,33 +266,62 @@
 		else
 		{
 		    content = ReadContentFile(cdpath + "/content");
-		    if (media[2]:"" != "")
+                    y2debug("Content file: %1", content);
+		    if (media[2]:"" != "" && media[2]:"" != "doublesided")
 		    {
 			total_cds = tointeger(media[2]:"-1");
+                        media_id = media[1]:"";
 			y2debug("total cds expected: %1", total_cds);
 		    }
+
+                    y2debug("base: %1 basever: %2", base, basever );
+
+                    // Bug 47599: CD2 of SP1 not copied
 		    if (content["PRODUCT"]:"dummy" != base && content["VERSION"]:"dummy" != basever  && !standalone)
 		    {
-			SCR::Execute (.target.umount, Installation::sourcedir);
-			continue;
+                        /*
+                         *  Check if this CD set is based on the base product (CORE)
+                         */
+                        if ( content["BASEPRODUCT"]:"dummy" != base && content["BASEVERSION"]:"dummy" != basever )
+                        {
+			    SCR::Execute (.target.umount, Installation::sourcedir);
+			    continue;
+                        }
 		    }
                     foreach(string m, media, ``{
-                            if (substring(m, 0, 5 ) == "MEDIA" &&
-                                !medianame_found)
+                            if (m == "doublesided")
+                            doublesided = true;
+
+                            if (substring(m, 0, 5 ) == "MEDIA" )
                             {
-                                integer pos = findfirstof(m, " ");
-                                medianame = substring(m, pos + 1 ,
-                                    size(m));
-                                pos = findlastof( medianame, "01234567890");
-                                medianame = substring(medianame, 0, pos);
-                                medianame_found = true;
-                                prompt_string = medianame;
+                            if (doublesided)
+                                medianame = regexpsub(m, "(.*)SIDE A(.*)", "\\1SIDE %1\\2");
+                            else
+                                medianame = regexpsub(m, "(.*)CD.", "\\1CD%1");
+
+                            medianames=add(medianames, substring(m,7,
+                                    size(m)));
                             }
                             });
+                    y2milestone("medianames: %1", medianames);
 		}
 
 
 		string distprod = content["LABEL"]:"";
+                string flags = content["FLAGS"]:"";
+                list<string> flaglist = splitstring(flags, " ");
+
+                // Detect SP
+                if (contains(flaglist, "SP"))
+                {
+                    Instserver::is_service_pack = true;
+                    y2milestone("Service Pack detected..");
+                } else {
+                    Instserver::is_service_pack = false;
+                }
+
+
+                
 		list<string> l = splitstring(distprod, " ");
 		distprod = mergestring(l, "-");
 		string tgt = sformat("%1/%2/CD%3", dir, distprod, current_cd );
@@ -267,8 +341,11 @@
 		if ( tolower(content["BASEPRODUCT"]:"") != "" && content["BASEVERSION"]:"" != "")
 		{
                     // first sles cd goes in here.
+                    // Also any non base products, i.e. SDK and SP
 		    map basecontent = $[];
-		    if (promptmore)
+
+                    // Read content file if source already exists.
+		    if (promptmore || Instserver::is_service_pack)
 		    {
 			basecontent = ReadContentFile(dir + "/content");
 			if (tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
@@ -277,16 +354,24 @@
 			    // Same base product => OK
 			    y2milestone("matching base product");
 			}
+                        else
+                        {
+                            y2error("No match for base product");
+                            media_id = "";
+                            continue;
+                        }
 		    }
 		    base = content["BASEPRODUCT"]:""; // i.e. SUSE CORE
 		    basever = content["BASEVERSION"]:""; // i.e. 9
 
 		    // its not standalone
 		    standalone = false;
+                    
 		    // and its not a base product
 		    baseproduct = false;
 
-                    if (prompt_string == "")
+                    // No media names, so we have to create the string for media request
+                    if (size(medianames) == 0)
                     {
                         prompt_string = content["LABEL"]:"";
                         prompt_version = content["VERSION"]:"";
@@ -295,6 +380,7 @@
                     {
                         prompt_version = "";
                     }
+
                     prompt_totalcds = total_cds;
 
 		    if ( current_cd == 1 )
@@ -307,6 +393,7 @@
 		    SCR::Execute(.target.mkdir, tgt );
 		    y2debug("config=%1, products=%2", Instserver::Config,
 			    Instserver::products);
+
 		}
 		else if (content["PRODUCT"]:"dummy" == base && content["VERSION"]:"dummy" == basever )
 		{
@@ -330,6 +417,15 @@
 		    }
 		    standalone = true;
 		    baseproduct = true;
+                    if (size(medianames) == 0)
+                    {
+                        prompt_string = content["LABEL"]:"";
+                        prompt_version = content["VERSION"]:"";
+                    }
+                    else
+                    {
+                        prompt_version = "";
+                    }
 		    // else, we create CD1, CD2, etc.
 		    if (stype == `onedir)
 			tgt = sformat("%1/", dir);
@@ -348,13 +444,15 @@
 		{
 		    cmds = add(cmds, sformat("cp -pR %1/media.%2 %3", cdpath,
 					     current_cd, tgt) );
-		    cmds = add(cmds, sformat("cp  %1/content %2", cdpath, tgt));
+		    cmds = add(cmds, sformat("cp  %1/content %2", cdpath,
+					      tgt));
 		}
 		else
 		{
-		    //cmds = add(cmds, sformat("cp -pR %1/* %2", cdpath,  tgt) );
-		    cmds = add(cmds, sformat("cd %1 && tar cf - . | (cd %2  && tar xBf -)", cdpath,  tgt) );
+                    cmds = add(cmds, sformat("cd %1 && tar cf - . | (cd %2  && tar xBf -)", cdpath,  tgt) );
 		}
+
+
 		list<string> files= [];
 		// Link files
 		if (!standalone && current_cd == 1)
@@ -377,6 +475,7 @@
                         SCR::Execute(.target.bash, cmd);
 		    });
 		    cmds = [];
+                    cds_copied= true;
 		}
 
 
@@ -387,7 +486,15 @@
 		if (total_cds == current_cd && !standalone && !baseproduct &&
                         !promptmore)
 		{
+                    y2debug("Restarting...");
+                    restart = true;
 		    current_cd = 1;
+                    media_id = "";
+                    if (size(medianames) == 0)
+                    {
+                        prompt_string = base;
+                        prompt_version = basever;
+                    }
 		}
 		else if ( total_cds == current_cd && ( standalone || baseproduct) )
 		{
@@ -404,6 +511,11 @@
 		}
 		Instserver::standalone = standalone;
 	    }
+            if (failed)
+            {
+                return `abort;
+            }
+
 	    return `next;
 	}
 
@@ -508,7 +620,7 @@
                         || size (dir) > 127
                         )
                 {
-                    string errmsg = dgettext("autoinst", "Invalid file name.
+                    string errmsg = _("Invalid file name.
 Names can only contain letters, numbers, and underscore,
 must begin with letter, and must be
 127 characters long or less.
@@ -519,13 +631,14 @@ must begin with letter, and must be
                 else {
                     target = Instserver::ServerSettings["directory"]:"" + "/" +
                         dir;
-                    if (SCR::Execute(.target.bash, "mkdir -p " + target) != 0 )
+                    string mkdircmd = "mkdir -p " + target;
+                    y2debug("executing: %1", mkdircmd );
+                    if (SCR::Execute(.target.bash, mkdircmd) != 0 )
                     {
-                        Popup::Error(sformat(_("Error while creating 'source' directoy.
+                        Popup::Error(sformat(_("Error while creating 'source' directory.
 Verify that the directory 
- %2 
-is writable and try again."), target,
-                                    Instserver::ServerSettings["directory"]:""));
+ %1
+is writable and try again."), Instserver::ServerSettings["directory"]:""));
                         continue;
                     }
 
