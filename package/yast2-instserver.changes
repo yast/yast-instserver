@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Feb  9 19:07:09 CET 2005 - nashif@suse.de
+
+- Save configuration data into /etc/YaST2/instserver
+
+-------------------------------------------------------------------
 Mon Nov 15 04:36:34 CET 2004 - nashif@suse.de
 
 - Fixed sformat syntax
