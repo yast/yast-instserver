@@ -1,9 +1,11 @@
 #
-# Makefile.am for devtools/devtools/skeletons/config/agents
+# Makefile.am for y2c_autoinst/agents
 #
 
-agent_SCRIPTS =
+agent_SCRIPTS = \
+	ag_content
 
-scrconf_DATA =
+scrconf_DATA = $(wildcard *.scr)
 
-EXTRA_DIST = $(agent_SCRIPTS) $(scrconf_DATA)
+
+EXTRA_DIST = $(scrconf_DATA)  $(agent_SCRIPTS)
