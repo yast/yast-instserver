@@ -386,16 +386,16 @@ global boolean WriteSLPReg (map cm) {
     string serv = "";
     if (ServerSettings["service"]:`none == `nfs)
     {
-        serv =  sformat("service:YaST-Source:nfs://$HOSTNAME%1/%2%3,en,65535", ServerSettings["directory"]:"", cm["name"]:"",
+        serv =  sformat("service:install.suse:nfs://$HOSTNAME%1/%2%3,en,65535", ServerSettings["directory"]:"", cm["name"]:"",
                 (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1" );
     }
     else if (ServerSettings["service"]:`none == `ftp)
     {
-        serv =  sformat("service:YaST-Source:ftp://$HOSTNAME/%1%2,en,65535",  cm["name"]:"", (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
+        serv =  sformat("service:install.suse:ftp://$HOSTNAME/%1%2,en,65535",  cm["name"]:"", (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
     else if (ServerSettings["service"]:`none == `http)
     {
-        serv = sformat("service:YaST-Source:http://$HOSTNAME/%1/%2%3,en,65535", ServerSettings["alias"]:"", cm["name"]:"",
+        serv = sformat("service:install.suse:http://$HOSTNAME/%1/%2%3,en,65535", ServerSettings["alias"]:"", cm["name"]:"",
                 (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
 
