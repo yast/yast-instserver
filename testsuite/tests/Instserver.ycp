@@ -1,0 +1,13 @@
+{
+
+// testedfiles: Instserver.ycp
+
+include "testsuite.ycp";
+TESTSUITE_INIT([], nil);
+
+import "Instserver";
+
+DUMP("Instserver::Modified");
+TEST(``(Instserver::Modified()), [], nil);
+
+}

@@ -1,0 +1,30 @@
+@HEADER-COMMENT@
+# neededforbuild yast2-devel-packages
+
+@HEADER@
+Requires:	yast2
+
+BuildArchitectures:	noarch
+
+Summary:	Configuration of instserver
+
+%description
+-
+
+@PREP@
+
+@BUILD@
+
+@INSTALL@
+
+@CLEAN@
+
+%files
+%defattr(-,root,root)
+%dir @yncludedir@/instserver
+@yncludedir@/instserver/*
+@clientdir@/instserver.ycp
+@clientdir@/instserver_*.ycp
+@moduledir@/Instserver.*
+@desktopdir@/instserver.desktop
+%doc @docdir@

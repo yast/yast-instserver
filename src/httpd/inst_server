@@ -1,0 +1,3 @@
+Variable:INST_SERVER
+Text:inst_server
+Include:/etc/httpd/inst_server.conf

@@ -1,0 +1,73 @@
+/**
+ * File:	clients/instserver.ycp
+ * Package:	Configuration of instserver
+ * Summary:	Main file
+ * Authors:	Anas Nashif <nashif@suse.de>
+ *
+ * $Id$
+ *
+ * Main file for instserver configuration. Uses all other files.
+ */
+
+{
+
+/***
+ * <h3>Configuration of instserver</h3>
+ */
+
+textdomain "instserver";
+
+/* The main () */
+y2milestone ("----------------------------------------");
+y2milestone ("Instserver module started");
+
+import "Progress";
+import "Report";
+import "Summary";
+
+import "CommandLine";
+include "instserver/wizards.ycp";
+
+map cmdline_description = $[
+    "id" 	: "instserver",
+    /* Command line help text for the Xinstserver module */
+    "help"	: _("Configuration of instserver"),
+    "guihandler"        : InstserverSequence,
+    "initialize"        : Instserver::Read,
+    "finish"            : Instserver::Write,
+    "actions"           : $[
+	// FIXME TODO: fill the functionality description here
+    ],
+    "options"		: $[
+	// FIXME TODO: fill the option descriptions here
+    ],
+    "mapping"		: $[
+	// FIXME TODO: fill the mappings of actions and options here
+    ]
+];
+
+/* is this proposal or not? */
+boolean propose = false;
+list args = WFM::Args();
+if(size(args) > 0) {
+    if(is(WFM::Args(0), path) && WFM::Args(0) == .propose) {
+        y2milestone("Using PROPOSE mode");
+        propose = true;
+    }
+}
+
+/* main ui function */
+any ret = nil;
+
+if(propose) ret = InstserverAutoSequence();
+else ret = CommandLine::Run(cmdline_description);
+y2debug("ret=%1", ret);
+
+/* Finish */
+y2milestone("Instserver module finished");
+y2milestone("----------------------------------------");
+
+return ret;
+
+/* EOF */
+}

@@ -1,0 +1,95 @@
+/**
+ * File:	include/instserver/dialogs.ycp
+ * Package:	Configuration of instserver
+ * Summary:	Dialogs definitions
+ * Authors:	Anas Nashif <nashif@suse.de>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "instserver";
+
+import "Label";
+import "Wizard";
+import "Instserver";
+
+include "instserver/helps.ycp";
+
+/**
+ * Configure1 dialog
+ * @return dialog result
+ */
+any Configure1Dialog () {
+
+    /* Instserver configure1 dialog caption */
+    string caption = _("Instserver Configuration");
+
+    /* Instserver configure1 dialog contents */
+    term contents = `Label (_("First part of configuration of instserver"));
+
+    Wizard::SetContentsButtons(caption, contents, HELPS["c1"]:"",
+	    Label::BackButton(), Label::NextButton());
+
+    any ret = nil;
+    while(true) {
+
+	ret = UI::UserInput();
+
+	/* abort? */
+	if(ret == `abort || ret == `cancel) {
+	    if(ReallyAbort()) break;
+	    else continue;
+	}
+        else if(ret == `next || ret == `back) {
+            break;
+        }
+        else {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * Configure2 dialog
+ * @return dialog result
+ */
+any Configure2Dialog () {
+
+    /* Instserver configure2 dialog caption */
+    string caption = _("Instserver Configuration");
+
+    /* Instserver configure2 dialog contents */
+    term contents = `Label (_("Second part of configuration of instserver"));
+
+    Wizard::SetContentsButtons(caption, contents, HELPS["c2"]:"",
+	    Label::BackButton(), Label::NextButton());
+
+    any ret = nil;
+    while(true) {
+
+	ret = UI::UserInput();
+
+	/* abort? */
+	if(ret == `abort || ret == `cancel) {
+	    if(ReallyAbort()) break;
+	    else continue;
+	}
+        else if(ret == `next || ret == `back) {
+            break;
+        }
+        else {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    return ret;
+}
+
+/* EOF */
+}

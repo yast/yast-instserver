@@ -1,0 +1,107 @@
+
+
+  <section id="inst_server">
+    <title>Installation Server</title>
+    
+    <para>
+      User intervention depends much on how the server side of a network installation is
+      prepared. In a full network installation, you  have only to turn the
+      client on to initiate the auto-installation process.
+    </para>
+    
+    <para>
+      The installation server should export the  &company-suse;  Linux distribution's files
+      via &nfs;. Create a directory on a filesystem with enough free space
+      (several gigabytes) and copy the contents of the CD-ROMs into this
+      directory. This directory is then to be exported via
+      &nfs; (via an appropriate entry in
+      <filename>/etc/exports</filename>) or it should be made available via
+      other supported installation protocols like &http; and &ftp;. The following steps describe how to
+      create an installation repository:
+      
+    </para>
+    <para>
+      Login on the machine designated as installation server and create a
+      directory to hold the  &company-suse;  Linux distribution files,
+      i.e. <filename> /usr/local/SuSE/current</filename>. 
+    </para>
+    <para>
+      In our example <filename>/usr/local/SuSE/current</filename> is the base directory for the  &company-suse;  Linux
+      distribution. The location of this directory can be specified  in the <emphasis>info</emphasis> file or on
+      the command line of the kernel (see  below) using the
+      <emphasis>install</emphasis>
+      keyword. (i.e. <emphasis>install=nfs://192.168.1.1/usr/local/SuSE/current</emphasis>)
+    </para>
+    <para>
+      Now copy the files from  all CDs into the
+      <emphasis>current</emphasis> directory or just copy those CDs
+      required for the installation. Make sure that all packages needed for
+      the installation are copied. Use the following command to copy the CDs:
+
+    </para>
+    <screen>
+mount /media/cdrom
+cd /media/cdrom && cp -va . /usr/local/SuSE/current ; cd -
+umount /media/cdrom
+    </screen>
+    <para>
+      Repeat this sequence for all other CDs. The directory
+      can have 2 different structures which can be used for installation:
+    </para>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  The content of all CDs is copied into one directory and thus
+	  creating single directory structure with the data directory
+	  <emphasis>suse</emphasis> which includs all the
+	  packages. This type of source structure is recommended as it
+	  is easier to manage and will provide a true, single source
+	  installation medium.
+	</para>
+	<para>
+	  To make the directory look like a single medium for the client,
+	  it is possible to re-create  the package database available on the
+	  first CD using the script <command>create_package_descr</command>
+	  which is available in <filename>/usr/bin/</filename>. Install the
+	  package <emphasis>autoyast2-utils</emphasis> to make this script
+	  available on your system.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Copy the CDs into sub-directories named after the CD number,
+	  i.e. CD1, CD2, etc.
+	</para>
+	<para>
+	  Using this source structure you will still be able to perform &nfs;
+	  installations, but the single directories will be treated as if
+	  they were different mediums. 
+	</para>
+      </listitem>
+    </itemizedlist>
+    <para>
+      After you have copied the CDs into the installation directory, make
+      sure it is exported via &nfs; or available using other installation
+      protocols. You can achieve this with &yast2;  using the
+      &nfs; server module.
+    </para>
+    <para>
+      Additionally, you need to make the following services  start every
+      time the system boots (Other installation protocols need different services).
+    </para>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  nfsserver
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  portmap
+	</para>
+      </listitem>
+    </itemizedlist>
+    
+    
+
+  </section>

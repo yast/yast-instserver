@@ -1,0 +1,25 @@
+- manage installation sources
+- Manage different architectures
+- Manage different installation protocls
+- SLP support
+- Create server configuration for 
+    * HTTP Install Server
+    * NFS Install Server
+    * FTP Install Server
+- Manage Multiple Sources
+
+Workflow:
+
+- Copy files from Media
+    * Keep Source structure AS IS
+    * After Copying parts of the source (CDs) are ro if possible
+    * All Changes happen using symlinks and copies.
+    * Support loop mounts of sources instead of copying them to system
+- Make Source accessible via network.
+- Announce Source via SLP
+- Source View (Package Manager Feature)
+- Manage Custom Sources
+    * Custom, non suse packages
+    * create package databases
+    * product names, versions etc.
+
