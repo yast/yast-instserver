@@ -1,0 +1,7 @@
+# httpd configuration for YOU server included by httpd.conf
+
+<IfModule mod_alias.c>
+
+  ALIAS_CONFIGLINE
+
+</IfModule>
