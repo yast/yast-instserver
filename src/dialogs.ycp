@@ -9,63 +9,36 @@
 
 {
 
-textdomain "instserver";
+    textdomain "instserver";
 
-import "Label";
-import "Wizard";
-import "Instserver";
-
-include "instserver/helps.ycp";
-include "instserver/routines.ycp";
-
-
-
-
-any CopyCDs( string dir, symbol stype) {
     import "Installation";
-    boolean is_mounted = false;
-    string default_device = "/dev/cdrom";
-    string alternate_device = default_device;
+    import "Label";
+    import "Wizard";
+    import "Instserver";
 
-    any result = nil;
+    include "instserver/helps.ycp";
+    include "instserver/routines.ycp";
 
-    // free mount point
-    SCR::Execute (.target.umount, Installation::sourcedir);
 
-    // CD is mounted. Check contents.
-    string cdpath = Installation::sourcedir;
 
-    integer current_cd = 1;
-    integer total_cds = 1;
-    boolean standalone = true;
-    boolean baseproduct = false;
-    string base = "";
-    string basever = "";
 
-    // Loop for all CDs
-    while (true)
+    any CDPopup (string msg, boolean iso)
     {
-        string msg = "";
-        if (standalone)
+        if (iso)
         {
-            msg = sformat(_("Please insert the %1. CD-ROM, then press continue."), current_cd );
+            any f = UI::AskForExistingFile( Instserver::ServerSettings["iso-dir"]:"", "*.iso", msg );
+            y2milestone("file: %1", f);
+            if (f!= nil)
+            {
+                return f;
+            }
+            else
+            {
+                return "";
+            }
         }
         else
         {
-            msg = sformat(_("Please insert the %1. CD-ROM of %2-%3."), current_cd, base, basever );
-        }
-
-        // try to mount device
-        while (SCR::Execute (.target.mount, [ default_device, Installation::sourcedir]) == false)
-        {
-            if ((alternate_device != default_device)
-                    && (SCR::Execute (.target.mount, [ alternate_device, Installation::sourcedir]) == true))
-            {
-                break;
-            }
-
-            y2milestone("mount faild");
-            // cant mount /dev/cdrom popup
             symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
             if (pop == `retry)
             {
@@ -74,525 +47,696 @@ any CopyCDs( string dir, symbol stype) {
             else if (pop == `no)
             {
                 y2debug("skipping media");
-                current_cd = current_cd + 1;
-                continue;
+                return `skip;
             }
         }
+    }
 
-        is_mounted = true;
-        y2milestone("mounted cdrom");
 
-        list media = ReadMediaFile( sformat("%1/media.%2/media", cdpath, current_cd ));
-        map content = $[];
+    any CopyCDs( string dir, symbol stype, boolean iso)
+    {
 
-        if (size(media) == 0 )
+        boolean is_mounted = false;
+        string default_device = "/dev/cdrom";
+        string alternate_device = default_device;
+
+        string mount_options = "";
+        if (iso)
+            mount_options = "-oloop ";
+
+        any result = nil;
+
+        // free mount point
+        SCR::Execute (.target.umount, Installation::sourcedir);
+
+        // CD is mounted. Check contents.
+        string cdpath = Installation::sourcedir;
+
+        integer current_cd = 1;
+        integer total_cds = 1;
+        boolean standalone = true;
+        boolean baseproduct = false;
+        string base = "";
+        string basever = "";
+
+        symbol pop = `none;
+        // Loop for all CDs
+        while (true)
         {
-            y2milestone("wrong CD or non suse CD");
-            SCR::Execute (.target.umount, Installation::sourcedir);
-            symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
-            if (pop == `retry)
+            string msg = "";
+            if (standalone)
             {
-                return `abort;
+                // %1 is the current cd number
+                if (!iso)
+                    msg = sformat(_("Please insert CD %1, then press continue."), current_cd );
+                else
+                    msg = sformat(_("Select ISO image %1, then press continue."), current_cd );
             }
-            else if (pop == `no)
+            else
             {
-                y2debug("skipping media");
-                current_cd = current_cd + 1;
-                if (total_cds == current_cd )
+                // %2 %3 are the product name and version
+                if (!iso)
+                    msg = sformat(_("Please insert CD %1 of %2-%3."), current_cd, base, basever );
+                else
+                    msg = sformat(_("Select ISO image %1 of %2-%3."), current_cd, base, basever );
+            }
+
+
+            if (iso)
+            {
+                default_device = (string)CDPopup(msg, iso);
+                if  ( default_device == "")
                 {
-                    break;
+                    if (total_cds == current_cd )
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        current_cd = current_cd + 1;
+                        continue;
+                    }
                 }
             }
-            continue;
-        }
-        else
-        {
-            if (media[2]:"" != "")
+            else
             {
-                total_cds = tointeger(media[2]:"-1");
-                y2milestone("total cds expected: %1", total_cds);
-            }
-            content = ReadContentFile(cdpath + "/content");
-            if (content["PRODUCT"]:"dummy" != base && content["VERSION"]:"dummy" != basever  && !standalone)
-            {
-                SCR::Execute (.target.umount, Installation::sourcedir);
-                symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
-                if (pop == `retry)
+                pop = (symbol)CDPopup(msg, iso);
+                if (pop == `skip)
+                {
+                    if (total_cds == current_cd )
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        current_cd = current_cd + 1;
+                        continue;
+                    }
+                }
+                else if ( pop == `abort)
                 {
                     return `abort;
                 }
-                else if (pop == `no)
+            }
+
+            // try to mount device
+            while (SCR::Execute (.target.mount, [ default_device, Installation::sourcedir], mount_options) == false)
+            {
+                if ((alternate_device != default_device)
+                        && (SCR::Execute (.target.mount, [ alternate_device, Installation::sourcedir], mount_options) == true))
                 {
-                    y2debug("skipping media");
-                    if (total_cds == current_cd )
-                        break;
-                    else
-                        current_cd = current_cd + 1;
+                    break;
                 }
+
+                y2milestone("mount faild");
+                // cant mount /dev/cdrom popup
                 continue;
-           }
-        }
-
-
-        string tgt = sformat("%1/%2/CD%3", dir, content["DISTPRODUCT"]:"", current_cd );
-        string shorttgt = sformat("%1/CD%2",  content["DISTPRODUCT"]:"", current_cd );
-        y2debug("tgt: %1", tgt );
-        y2debug("shorttgt: %1", shorttgt );
-
-        list cmds = [];
-        // Copy stuff here.
-        // Now, we check if this product on the CD is based on some other product. If
-        // yes, then it will be copied into  a sub-directory and not in the requested
-        // root.
-        if ( content["BASEPRODUCT"]:"" != "SuSE Linux" && content["BASEVERSION"]:"" != "")
-        {
-            // This product is based on some other product
-            base = content["BASEPRODUCT"]:"";
-            basever = content["BASEVERSION"]:"";
-            standalone = false;
-            baseproduct = false;
-            // Create product dir
-            SCR::Execute(.target.mkdir, tgt );
-            if (current_cd == 1)
-            {
-                foreach(string symlink , ["content", "media.1" ], ``{
-                    cmds=add(cmds, sformat("pushd %1 && ln -sf %2/%3 && popd ", dir, shorttgt, symlink));
-                    });
             }
-        }
-        else if (content["PRODUCT"]:"dummy" == base && content["VERSION"]:"dummy" == basever )
-        {
-            baseproduct = true;
-            SCR::Execute(.target.mkdir, tgt );
-        }
-        else
-        {
-            // else, we create CD1, CD2, etc.
-            baseproduct = true;
-            if (stype == `onedir)
-                tgt = sformat("%1/", dir);
+            is_mounted = true;
+            y2milestone("mounted cdrom");
+
+            list media = ReadMediaFile( sformat("%1/media.%2/media", cdpath, current_cd ));
+            y2debug("media: %1", media);
+            map content = $[];
+
+            if (size(media) == 0 )
+            {
+                y2debug("wrong CD or non suse CD");
+                SCR::Execute (.target.umount, Installation::sourcedir);
+                continue;
+            }
             else
-                tgt = sformat("%1/CD%2", dir, current_cd );
+            {
+                if (media[2]:"" != "")
+                {
+                    total_cds = tointeger(media[2]:"-1");
+                    y2milestone("total cds expected: %1", total_cds);
+                }
+                content = ReadContentFile(cdpath + "/content");
+                if (content["PRODUCT"]:"dummy" != base && content["VERSION"]:"dummy" != basever  && !standalone)
+                {
+                    SCR::Execute (.target.umount, Installation::sourcedir);
+                    continue;
+                }
+            }
+
+
+            string distprod = content["DISTPRODUCT"]:"";
+            string tgt = sformat("%1/%2/CD%3", dir, distprod, current_cd );
+            string shorttgt = sformat("%1/CD%2",  distprod, current_cd );
             y2debug("tgt: %1", tgt );
-            SCR::Execute(.target.mkdir, tgt);
-        }
+            y2debug("shorttgt: %1", shorttgt );
 
-        // temp copy commands
-        Popup::ShowFeedback(_("Copying CD Content to local directory"), _("This may take a while..."));
-        //string cpcmd = sformat("cp -pR %1/* %2", cdpath,  tgt);
-        string cpcmd = sformat("cp -pR %1/media.%2 %3", cdpath, current_cd, tgt);
-        SCR::Execute(.target.bash, cpcmd);
-        cpcmd = sformat("cp  %1/content %3", cdpath, current_cd, tgt);
-        SCR::Execute(.target.bash, cpcmd);
+            list cmds = [];
 
-        if (size(cmds) > 0 ) {
-            foreach(string cmd , cmds, ``{
-                    SCR::Execute(.target.bash, cmd);
-                    });
-            cmds = [];
-        }
-        Popup::ClearFeedback();
-
-
-        SCR::Execute (.target.umount, Installation::sourcedir);
-
-        if (total_cds == current_cd && !standalone && !baseproduct)
-        {
-            current_cd = 1;
-        }
-        else if (total_cds == current_cd && ( standalone || baseproduct))
-        {
-            break;
-        }
-        else
-        {
-            current_cd = current_cd + 1;
-        }
-        Instserver::standalone = standalone;
-    }
-    return `next;
-}
-
-/**
- * Configure1 dialog
- * @return dialog result
- */
-any Configure1Dialog () {
-
-    /* Instserver configure1 dialog caption */
-    string caption = _("Source Configuration");
-
-    string dir = Instserver::Config["directory"]:"";
-    boolean slp = Instserver::Config["slp"]:false;
-    symbol stype = Instserver::Config["dir-type"]:`cddir;
-    boolean promptmore = false;
-
-    /* Instserver configure1 dialog contents */
-    term contents =
-        `Top(
-                `VBox(
-                    `Left(`TextEntry(`id(`dir), _("Source Name:"), dir)),
-                    `VBox(
-                        `RadioButtonGroup (
-                            `id (`stype),
-                            `VBox(
-                                `Left(`RadioButton(`id(`cddir), _("Copy CDs into sub-directories (CD1, CD2, ...)"), stype == `cddir )),
-                                `Left(`RadioButton(`id(`onedir), _("Copy all CDs into one directory "), stype == `onedir))
-                                )
-                            ),
-                        `VSpacing(1)
-                        ),
-                    `Left(
-                        `CheckBox(`id(`prompt), _("Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
-                        ),
-                    `Left(
-                        `CheckBox(`id(`slp), _("Announce as Installation Service with SLP"), slp )
-                        )
-                    )
-            );
-
-    Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"initial",
-	    Label::BackButton(), Label::NextButton());
-
-    any ret = nil;
-    while(true) {
-
-	ret = UI::UserInput();
-
-	/* abort? */
-	if(ret == `abort || ret == `cancel) {
-	    if(ReallyAbort()) break;
-	    else continue;
-	}
-        else if(ret == `back ) {
-            break;
-        }
-        else if(ret == `next ) {
-            dir = (string)UI::QueryWidget(`id(`dir), `Value);
-            slp  = (boolean)UI::QueryWidget(`id(`slp), `Value);
-            Instserver::Config["directory"] = dir;
-            Instserver::Config["slp"] = slp;
-            stype =  (symbol)UI::QueryWidget(`id(`stype) , `CurrentButton);
-            Instserver::Config["dir-type"] = stype;
-
-            string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
-            symbol ret = `none;
-            if (SCR::Read(.target.size, target + "/content") != -1 )
+            // Copy stuff here.
+            // Now, we check if this product on the CD is based on some other product. If
+            // yes, then it will be copied into  a sub-directory and not in the requested
+            // root.
+            if ( content["BASEPRODUCT"]:"" != "SuSE Linux" && content["BASEVERSION"]:"" != "")
             {
-                Popup::Message(_("Contents already exist in this directory, not copying CDs."));
-                ret = `next;
+                // This product is based on some other product
+                base = content["BASEPRODUCT"]:"";
+                basever = content["BASEVERSION"]:"";
+                Instserver::Config["dir-type"] = `onedir;
+
+                // its not standalone
+                standalone = false;
+                // and its not a base product
+                baseproduct = false;
+
+                if ( current_cd == 1 )
+                {
+                    map proddata = $["standalone": false, "baseproduct": false , "name": distprod ];
+                    Instserver::products = add(Instserver::products, proddata );
+                }
+
+                // Create product dir
+                SCR::Execute(.target.mkdir, tgt );
+            }
+            else if (content["PRODUCT"]:"dummy" == base && content["VERSION"]:"dummy" == basever )
+            {
+                if ( current_cd == 1 )
+                {
+                    map proddata = $["standalone": true, "baseproduct": true , "name": distprod ];
+                    Instserver::products = add(Instserver::products, proddata );
+                }
+                standalone = true;
+                baseproduct = true;
+                SCR::Execute(.target.mkdir, tgt );
             }
             else
             {
-                ret = (symbol)CopyCDs(target, stype);
+                if ( current_cd == 1 )
+                {
+                    map proddata = $["standalone": true, "baseproduct": true , "name": distprod ];
+                    Instserver::products = add(Instserver::products, proddata );
+                }
+                standalone = true;
+                baseproduct = true;
+                // else, we create CD1, CD2, etc.
+                if (stype == `onedir)
+                    tgt = sformat("%1/", dir);
+                else
+                    tgt = sformat("%1/CD%2", dir, current_cd );
+                y2debug("tgt: %1", tgt );
+                SCR::Execute(.target.mkdir, tgt);
             }
 
-            if (ret == `next)
+            Popup::ShowFeedback(_("Copying CD Content to local directory"), _("This may take a while..."));
+
+
+            // Do actual copying of data
+            if (Instserver::test)
             {
-                map content = $[];
-                string contentpath = "";
-                if (Instserver::standalone && stype == `cddir)
-                    contentpath = sformat("%1/CD1/content", target);
-                else
-                    contentpath = sformat("%1/content", target);
-
-                if (SCR::Read(.target.size, contentpath) > 0 )
-                    content = (map)SCR::Read(.content_file, contentpath );
-                else
-                    y2error("cant read content file, something nasty happened");
-
-                y2milestone("content: %1", content);
-                Instserver::Config["name"] = dir;
-                Instserver::Config = (map)union(Instserver::Config, content);
+                string cpcmd = sformat("cp -pR %1/media.%2 %3", cdpath, current_cd, tgt);
+                SCR::Execute(.target.bash, cpcmd);
+                cpcmd = sformat("cp  %1/content %3", cdpath, current_cd, tgt);
+                SCR::Execute(.target.bash, cpcmd);
             }
-            Instserver::UpdateConfig();
-            Instserver::modified = true;
-            break;
+            else
+            {
+                string cpcmd = sformat("cp -pR %1/* %2", cdpath,  tgt);
+                SCR::Execute(.target.bash, cpcmd);
+            }
+
+            // Link files
+            if (!standalone && current_cd == 1)
+            {
+                cmds = Instserver::createLinks( dir, distprod);
+            }
+            if (size(cmds) > 0 ) {
+                foreach(string cmd , cmds, ``{
+                        SCR::Execute(.target.bash, cmd);
+                        });
+                cmds = [];
+            }
+
+
+            Popup::ClearFeedback();
+
+
+            SCR::Execute (.target.umount, Installation::sourcedir);
+
+            if (total_cds == current_cd && !standalone && !baseproduct)
+            {
+                current_cd = 1;
+            }
+            else if (total_cds == current_cd && ( standalone || baseproduct))
+            {
+                break;
+            }
+            else
+            {
+                current_cd = current_cd + 1;
+            }
+            Instserver::standalone = standalone;
         }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
+        return `next;
     }
 
-    return ret;
-}
 
 
-/**
- * Server dialog
- * @return dialog result
- */
-any ServerDialog () {
+    /**
+    * Configure1 dialog
+        * @return dialog result
+        */
+        any Configure1Dialog () {
 
-    /* Instserver configure2 dialog caption */
-    string caption = _("Initial Setup - Servers");
+            /* Instserver configure1 dialog caption */
+            string caption = _("Source Configuration");
 
-    string dir = Instserver::ServerSettings["directory"]:"";
-    symbol source = Instserver::ServerSettings["service"]:`http;
+            string dir = Instserver::Config["directory"]:"";
+            string isodir = Instserver::ServerSettings["iso-dir"]:"";
+            boolean slp = Instserver::Config["slp"]:false;
+            symbol stype = Instserver::Config["dir-type"]:`cddir;
+            boolean promptmore = false;
+            boolean iso = false;
 
-    term c1 =
-        `HBox(
-                `VBox(
-                    `Left(`CheckBox(`id(`dry), _("Do not configure the net&work service."))),
-                    `VSquash(
-                        `HBox(
-                            `TextEntry(`id(`dir), _("Di&rectory to contain sources:"), dir),
+            /* Instserver configure1 dialog contents */
+            term contents =
+                `HVSquash(
+                        `VBox(
+                            `Left(`TextEntry(`id(`dir), _("Source Name:"), dir)),
+                            `VSpacing(1),
+                            `Left(`CheckBox(`id(`iso), `opt(`notify),  _("Use ISO images instead of CDs."), iso )),
+                            `VSquash(
+                                `HBox(
+                                    `TextEntry(`id(`isodir),  _("Di&rectory with CD images:"), isodir),
+                                    `VBox(
+                                        `VSpacing(),
+                                        `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
+                                        )
+                                    )
+                                ),
+                            `VSpacing(1),
                             `VBox(
-                                `VSpacing(),
-                                `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
+                                `RadioButtonGroup (
+                                    `id (`stype),
+                                    `VBox(
+                                        `Left(`RadioButton(`id(`cddir), _("Copy CDs into sub-directories (CD1, CD2, ...)"), stype == `cddir )),
+                                        `Left(`RadioButton(`id(`onedir), _("Copy all CDs into one directory "), stype == `onedir))
+                                        )
+                                    ),
+                                `VSpacing(1)
+                                ),
+                            `Left(
+                                `CheckBox(`id(`prompt), _("Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
+                                ),
+                            `Left(
+                                `CheckBox(`id(`slp), _("Announce as Installation Service with SLP"), slp )
+                                )
+                            )
+                        );
+
+            Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"initial",
+                    Label::BackButton(), Label::NextButton());
+
+            any ret = nil;
+            while(true) {
+
+                boolean iso =  (boolean)UI::QueryWidget(`id(`iso) , `Value);
+                if (iso)
+                {
+                    UI::ChangeWidget(`id(`isodir), `Enabled, true);
+                    UI::ChangeWidget(`id(`select_dir), `Enabled, true);
+                }
+                else
+                {
+                    UI::ChangeWidget(`id(`isodir), `Enabled, false);
+                    UI::ChangeWidget(`id(`select_dir), `Enabled, false);
+                }
+
+                if (Instserver::Config["detected"]:false )
+                {
+                    UI::ChangeWidget(`id(`stype), `Enabled, false);
+                    UI::ChangeWidget(`id(`prompt), `Enabled, false);
+                }
+                ret = UI::UserInput();
+
+                /* abort? */
+                if(ret == `abort || ret == `cancel) {
+                    if(ReallyAbort()) break;
+                    else continue;
+                }
+                else if (ret ==`select_dir)
+                {
+                    any new_dir = UI::AskForExistingDirectory( isodir, _("Select Directory"));
+                    if (new_dir != nil)
+                    {
+                        UI::ChangeWidget(`id(`isodir), `Value, (string) new_dir);
+                    }
+                    continue;
+                }
+                else if(ret == `back ) {
+                    break;
+                }
+                else if(ret == `next ) {
+                    dir = (string)UI::QueryWidget(`id(`dir), `Value);
+                    if (dir=="")
+                    {
+                        Popup::Error(_("Installation Server name missing."));
+                        continue;
+                    }
+                    Instserver::ServerSettings["iso-dir"] = (string)UI::QueryWidget(`id(`isodir), `Value);
+                    slp  = (boolean)UI::QueryWidget(`id(`slp), `Value);
+                    stype =  (symbol)UI::QueryWidget(`id(`stype) , `CurrentButton);
+
+                    string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
+                    symbol ret = `none;
+                    if (SCR::Read(.target.size, target + "/content") != -1 )
+                    {
+                        Popup::Message(_("Contents already exist in this directory, not copying CDs."));
+                        ret = `next;
+                    }
+                    else
+                    {
+                        ret = (symbol)CopyCDs(target, stype, iso);
+                    }
+
+                    if (ret == `next)
+                    {
+                        map content = $[];
+                        string contentpath = "";
+                        if (stype == `cddir)
+                        {
+                            contentpath = sformat("%1/CD1/content", target);
+                        }
+                        else
+                        {
+                            contentpath = sformat("%1/content", target);
+                        }
+
+                        Instserver::createOrderFiles(target);
+
+                        if (SCR::Read(.target.size, contentpath) > 0 )
+                        {
+                            content = (map)SCR::Read(.content_file, contentpath );
+                        }
+                        else
+                            y2error("cant read content file, something nasty happened: %1", contentpath);
+
+
+                        y2milestone("content: %1", content);
+                        Instserver::Config["name"] = dir;
+                        Instserver::Config = (map)union(Instserver::Config, content);
+                        Instserver::Config["directory"] = dir;
+                        Instserver::Config["slp"] = slp;
+                        Instserver::Config["dir-type"] = stype;
+                    }
+                    else
+                    {
+                        Instserver::Config = $[];
+                    }
+                    Instserver::UpdateConfig();
+                    Instserver::modified = true;
+                    break;
+                }
+                else {
+                    y2error("unexpected retcode: %1", ret);
+                    continue;
+                }
+            }
+
+            return ret;
+        }
+
+
+    /**
+     * Server dialog
+     * @return dialog result
+     */
+    any ServerDialog () {
+
+        /* Instserver configure2 dialog caption */
+        string caption = _("Initial Setup - Servers");
+
+        string dir = Instserver::ServerSettings["directory"]:"";
+        symbol source = Instserver::ServerSettings["service"]:`http;
+
+        term c1 =
+            `HBox(
+                    `VBox(
+                        `Left(`CheckBox(`id(`dry), _("Do not configure the net&work service."))),
+                        `VSquash(
+                            `HBox(
+                                `TextEntry(`id(`dir), _("Di&rectory to contain sources:"), dir),
+                                `VBox(
+                                    `VSpacing(),
+                                    `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
+                                    )
                                 )
                             )
                         )
-                    )
-             );
+                 );
 
-    term buttons =
-        `VBox (
-                // radio button label
-                `Left (`RadioButton (`id (`http), `opt (`notify),
-                        _("&Configure a HTTP Source"), source == `http)),
-                // radio button label
-                `Left (`RadioButton (`id (`ftp), `opt (`notify),
-                        _("&Configure as FTP Source"), source == `ftp)),
-                // radio button label
-                `Left (`RadioButton (`id (`nfs), `opt (`notify),
-                        _("&Configure as NFS Source"), source == `nfs))
+        term buttons =
+            `VBox (
+                    // radio button label
+                    `Left (`RadioButton (`id (`http), `opt (`notify),
+                            _("&Configure a HTTP Source"), source == `http)),
+                    // radio button label
+                    `Left (`RadioButton (`id (`ftp), `opt (`notify),
+                            _("&Configure as FTP Source"), source == `ftp)),
+                    // radio button label
+                    `Left (`RadioButton (`id (`nfs), `opt (`notify),
+                            _("&Configure as NFS Source"), source == `nfs))
 
-              );
+                  );
 
-    /* Instserver configure2 dialog contents */
-    term contents =
-        `Top (
-                `VBox(
-                    `RadioButtonGroup (
-                        `id (`service),
-                        buttons
-                        ),
-                    `VSpacing(1),
-                    c1
-                    )
-             );
+        /* Instserver configure2 dialog contents */
+        term contents =
+            `HVSquash(
+                    `VBox(
+                        `RadioButtonGroup (
+                            `id (`service),
+                            buttons
+                            ),
+                        `VSpacing(1),
+                        c1
+                        )
+                    );
 
-    Wizard::SetContentsButtons(caption, contents, HELPS["server"]:"server",
-	    Label::BackButton(), Label::NextButton());
+        Wizard::SetContentsButtons(caption, contents, HELPS["server"]:"server",
+                Label::BackButton(), Label::NextButton());
 
-    any ret = nil;
-    while(true) {
+        any ret = nil;
+        while(true) {
 
-        source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
-        ret = UI::UserInput();
-        dir = (string)UI::QueryWidget(`id(`dir), `Value);
+            source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
+            ret = UI::UserInput();
+            dir = (string)UI::QueryWidget(`id(`dir), `Value);
 
-	/* abort? */
-	if(ret == `abort || ret == `cancel) {
-	    if(ReallyAbort()) break;
-	    else continue;
-        }
-        else if (ret ==`select_dir)
-        {
-            any new_dir = UI::AskForExistingDirectory( dir, _("Select Directory"));
-            if (new_dir != nil)
-            {
-                UI::ChangeWidget(`id(`dir), `Value, (string) new_dir);
+            /* abort? */
+            if(ret == `abort || ret == `cancel) {
+                if(ReallyAbort()) break;
+                else continue;
             }
-            continue;
-        }
-
-        else if(ret == `back ) {
-            break;
-        }
-        else if(ret == `next ) {
-            boolean r = false;
-            if (dir == "")
+            else if (ret ==`select_dir)
             {
-                Report::Error(_("Directory path for the installation server missing."));
+                any new_dir = UI::AskForExistingDirectory( dir, _("Select Directory"));
+                if (new_dir != nil)
+                {
+                    UI::ChangeWidget(`id(`dir), `Value, (string) new_dir);
+                }
                 continue;
             }
-            Instserver::ServerSettings["service"] = source;
-            Instserver::ServerSettings["directory"] = dir;
-            Instserver::modified = true;
-            ret = source;
-            break;
+
+            else if(ret == `back ) {
+                break;
+            }
+            else if(ret == `next ) {
+                boolean r = false;
+                if (dir == "")
+                {
+                    Report::Error(_("Directory path for the installation server missing."));
+                    continue;
+                }
+                Instserver::ServerSettings["service"] = source;
+                Instserver::ServerSettings["directory"] = dir;
+                Instserver::modified = true;
+                ret = source;
+                break;
+            }
+            else {
+                y2error("unexpected retcode: %1", ret);
+                continue;
+            }
         }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
+
+        return ret;
     }
 
-    return ret;
-}
+    /**
+     * NFS dialog
+     * @return dialog result
+     */
+    any NfsDialog () {
 
-/**
- * NFS dialog
- * @return dialog result
- */
-any NfsDialog () {
+        /* Instserver configure2 dialog caption */
+        string caption = _("Installation Server - NFS");
 
-    /* Instserver configure2 dialog caption */
-    string caption = _("Installation Server - NFS");
+        string nfsoptions = "ro,root_squash,sync";
+        string wildcard = "*";
 
-    string nfsoptions = "ro,root_squash,sync";
-    string wildcard = "*";
-
-    /* Instserver nfs dialog contents */
-    term contents =
-        `Top (
-                `VBox(
+        /* Instserver nfs dialog contents */
+        term contents =
+            `HVSquash( 
+                    `VBox(
                         `Left(`TextEntry(`id(`wildcard), _("&Hosts wildcard"), wildcard)),
                         `Left(`TextEntry(`id(`nfsoptions), _("&Options"), nfsoptions))
-                    )
-             );
+                        )
+                    );
 
 
-    Wizard::SetContentsButtons(caption, contents, HELPS["nfs"]:"nfs",
-	    Label::BackButton(), Label::NextButton());
+        Wizard::SetContentsButtons(caption, contents, HELPS["nfs"]:"nfs",
+                Label::BackButton(), Label::NextButton());
 
-    any ret = nil;
-    while(true) {
+        any ret = nil;
+        while(true) {
 
-        ret = UI::UserInput();
+            ret = UI::UserInput();
 
-	/* abort? */
-	if(ret == `abort || ret == `cancel) {
-	    if(ReallyAbort()) break;
-	    else continue;
-        }
-        else if(ret == `back ) {
-            break;
-        }
-        else if(ret == `next ) {
-            boolean r = false;
-            nfsoptions = (string)UI::QueryWidget(`id(`nfsoptions), `Value);
-            wildcard = (string)UI::QueryWidget(`id(`wildcard), `Value);
-            r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
-            if (!r)
-            {
-                Report::Error(_("Error occured while configuring NFS"));
+            /* abort? */
+            if(ret == `abort || ret == `cancel) {
+                if(ReallyAbort()) break;
+                else continue;
+            }
+            else if(ret == `back ) {
+                break;
+            }
+            else if(ret == `next ) {
+                boolean r = false;
+                nfsoptions = (string)UI::QueryWidget(`id(`nfsoptions), `Value);
+                wildcard = (string)UI::QueryWidget(`id(`wildcard), `Value);
+                r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
+                if (!r)
+                {
+                    Report::Error(_("Error occured while configuring NFS"));
+                    continue;
+                }
+                Instserver::modified = true;
+                break;
+            }
+            else {
+                y2error("unexpected retcode: %1", ret);
                 continue;
             }
-            Instserver::modified = true;
-            break;
         }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
+
+        return ret;
     }
 
-    return ret;
-}
+
+    /**
+     * Ftp dialog
+     * @return dialog result
+     */
+    any FtpDialog () {
+
+        /* Instserver configure2 dialog caption */
+        string caption = _("Installation Server - FTP");
 
 
-/**
- * Ftp dialog
- * @return dialog result
- */
-any FtpDialog () {
-
-    /* Instserver configure2 dialog caption */
-    string caption = _("Installation Server - FTP");
-
-
-    /* Instserver nfs dialog contents */
-    term contents =
-        `Top (
-                `VBox(
-                    `Empty()
-                    )
-             );
+        /* Instserver nfs dialog contents */
+        term contents =
+            `HVSquash(
+                    `VBox(
+                        `Empty()
+                        )
+                    );
 
 
-    Wizard::SetContentsButtons(caption, contents, HELPS["ftp"]:"ftp",
-	    Label::BackButton(), Label::NextButton());
+        Wizard::SetContentsButtons(caption, contents, HELPS["ftp"]:"ftp",
+                Label::BackButton(), Label::NextButton());
 
-    any ret = nil;
-    while(true) {
+        any ret = nil;
+        while(true) {
 
-        ret = UI::UserInput();
+            ret = UI::UserInput();
 
-	/* abort? */
-	if(ret == `abort || ret == `cancel) {
-	    if(ReallyAbort()) break;
-	    else continue;
-        }
-        else if(ret == `back ) {
-            break;
-        }
-        else if(ret == `next ) {
-            boolean r = false;
-            r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , "/srv/ftp" );
-            if (!r)
-            {
-                Report::Error(_("Error occured while configuring FTP"));
+            /* abort? */
+            if(ret == `abort || ret == `cancel) {
+                if(ReallyAbort()) break;
+                else continue;
+            }
+            else if(ret == `back ) {
+                break;
+            }
+            else if(ret == `next ) {
+                boolean r = false;
+                r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , "/srv/ftp" );
+                if (!r)
+                {
+                    Report::Error(_("Error occured while configuring FTP"));
+                    continue;
+                }
+                Instserver::modified = true;
+                break;
+            }
+            else {
+                y2error("unexpected retcode: %1", ret);
                 continue;
             }
-            Instserver::modified = true;
-            break;
         }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
+
+        return ret;
     }
 
-    return ret;
-}
+    /**
+     * Http dialog
+     * @return dialog result
+     */
+    any HttpDialog () {
 
-/**
- * Http dialog
- * @return dialog result
- */
-any HttpDialog () {
+        /* Instserver configure2 dialog caption */
+        string caption = _("Installation Server - HTTP");
 
-    /* Instserver configure2 dialog caption */
-    string caption = _("Installation Server - HTTP");
-
-    string alias = Instserver::ServerSettings["alias"]:"";
-    /* Instserver nfs dialog contents */
-    term contents =
-        `Top (
-                `VBox(
-                    `Left(`TextEntry(`id(`alias), _("Alias for the Installation Server Directory"), alias ))
-                    )
-             );
+        string alias = Instserver::ServerSettings["alias"]:"";
+        /* Instserver nfs dialog contents */
+        term contents =
+            `HVSquash(
+                    `VBox(
+                        `Left(`TextEntry(`id(`alias), _("Alias for the Installation Server Directory"), alias ))
+                        )
+                    );
 
 
-    Wizard::SetContentsButtons(caption, contents, HELPS["http"]:"http",
-	    Label::BackButton(), Label::NextButton());
+        Wizard::SetContentsButtons(caption, contents, HELPS["http"]:"http",
+                Label::BackButton(), Label::NextButton());
 
-    any ret = nil;
-    while(true) {
+        any ret = nil;
+        while(true) {
 
-        ret = UI::UserInput();
+            ret = UI::UserInput();
 
-	/* abort? */
-	if(ret == `abort || ret == `cancel) {
-	    if(ReallyAbort()) break;
-	    else continue;
-        }
-        else if(ret == `back ) {
-            break;
-        }
-        else if(ret == `next ) {
-            alias = (string)UI::QueryWidget(`id(`alias), `Value);
-            if (!Instserver::SetupHTTP(Instserver::ServerSettings["directory"]:"", alias))
-            {
-                Popup::Error(_("Error creating HTTPD configuration"));
+            /* abort? */
+            if(ret == `abort || ret == `cancel) {
+                if(ReallyAbort()) break;
+                else continue;
             }
-            Instserver::modified = true;
-            break;
+            else if(ret == `back ) {
+                break;
+            }
+            else if(ret == `next ) {
+                alias = (string)UI::QueryWidget(`id(`alias), `Value);
+                if (!Instserver::SetupHTTP(Instserver::ServerSettings["directory"]:"", alias))
+                {
+                    Popup::Error(_("Error creating HTTPD configuration"));
+                }
+                Instserver::ServerSettings["alias"] = alias;
+                Instserver::modified = true;
+                break;
+            }
+            else {
+                y2error("unexpected retcode: %1", ret);
+                continue;
+            }
         }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
+
+        return ret;
     }
 
-    return ret;
-}
 
-
-/* EOF */
+    /* EOF */
 }

@@ -1,12 +1,12 @@
 /**
  * File:	modules/Instserver.ycp
- * Package:	Configuration of instserver
- * Summary:	Instserver settings, input and output functions
+ * Package:	Configuration of Installation Server
+ * Summary:	Installation Server settings, input and output functions
  * Authors:	Anas Nashif <nashif@suse.de>
  *
  * $Id$
  *
- * Representation of the configuration of instserver.
+ * Representation of the configuration of Installation Server.
  * Input and output routines.
  */
 
@@ -27,6 +27,8 @@ import "SLP";
 
 include "instserver/routines.ycp";
 
+global boolean test = true;
+
 /* Configuration Map */
 global map Config = $[];
 
@@ -45,11 +47,14 @@ string ConfigFile = Rep + "/instserver.xml";
 global string FirstDialog = "summary";
 
 
+global list<map> products = [];
+
+
 global list Detected = [];
 
 
 
-global boolean standalone = true;
+global boolean standalone = false;
 
 /**
  * Prototypes
@@ -96,6 +101,59 @@ global boolean Modified() {
     return modified;
 }
 
+
+
+/**
+ * Create links
+ *
+ */
+global list createLinks (string dir, string product)
+{
+    string shorttgt = sformat("%1/CD%2",  product, 1 );
+    list cmds = [];
+
+    foreach(string symlink , ["content", "media.1" , "boot"], ``{
+            cmds=add(cmds, sformat("pushd %1 && ln -sf %2/%3 && popd ", dir, shorttgt, symlink));
+            });
+    cmds=add(cmds, sformat("mkdir %1/yast", dir));
+
+    y2debug("cmds: %1", cmds );
+    return cmds;
+}
+
+
+/**
+ * Create yast directory with ordr/instorder files
+ *
+ */
+global boolean createOrderFiles(string dir)
+{
+    if (size(products) > 1 )
+    {
+        SCR::Execute(.target.mkdir, dir + "/yast");
+        // create order
+        list order = filter(map p, products, ``(!p["baseproduct"]:false));
+        order = union(order, filter(map p, products, ``(p["baseproduct"]:false)));
+        y2debug("order: %1", order );
+        list instorder = filter(map p, products, ``(p["baseproduct"]:false));
+        instorder = union(instorder, filter(map p, products, ``(!p["baseproduct"]:false)));
+        y2debug("instorder: %1", instorder );
+        list<string> file = [];
+        foreach (map p, order , ``{
+                string proddir = sformat("/%1/CD1", p["name"]:"" );
+                file = add(file, mergestring([  proddir, proddir ], "\t"));
+                SCR::Write(.target.string, dir + "/yast/order",  mergestring(file, "\n"));
+                });
+        file = [];
+        foreach (map p, instorder , ``{
+                string proddir = sformat("/%1/CD1", p["name"]:"" );
+                file = add(file, mergestring([  proddir, proddir ], "\t"));
+                SCR::Write(.target.string, dir + "/yast/instorder",  mergestring(file, "\n"));
+                });
+    }
+    products = [];
+    return true;
+}
 
 /**
   * Mount directory to avoid symlinks
@@ -228,6 +286,10 @@ will now be installed.");
     string conf = (string)SCR::Read(.target.string, "/etc/httpd/inst_server.conf.in");
     list<string> confline = splitstring(conf, "\n");
 
+    if (findlastof(alias, "/") != size(alias) -1 )
+       alias = alias + "/";
+    if (findfirstof(alias, "/") != 0 )
+       alias = "/" + alias;
     confline = maplist(string line, confline, ``{
             any res = regexpsub(line , "(ALIAS_CONFIGLINE)", sformat("Alias %1 %2/", alias , dir ));
             if (res != nil)
@@ -309,15 +371,17 @@ global boolean WriteSLPReg (map cm) {
     string serv = "";
     if (ServerSettings["service"]:`none == `nfs)
     {
-        serv =  sformat("service:YaST-Source:nfs://$HOSTNAME%1/%2,en,65535", ServerSettings["directory"]:"", cm["name"]:"");
+        serv =  sformat("service:YaST-Source:nfs://$HOSTNAME%1/%2%3,en,65535", ServerSettings["directory"]:"", cm["name"]:"",
+                (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1" );
     }
     else if (ServerSettings["service"]:`none == `ftp)
     {
-        serv =  sformat("service:YaST-Source:ftp://$HOSTNAME/%1,en,65535",  cm["name"]:"");
+        serv =  sformat("service:YaST-Source:ftp://$HOSTNAME/%1%2,en,65535",  cm["name"]:"", (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
     else if (ServerSettings["service"]:`none == `http)
     {
-        serv = sformat("service:YaST-Source:http://$HOSTNAME/%1/%2,en,65535", ServerSettings["alias"]:"", cm["name"]:"");
+        serv = sformat("service:YaST-Source:http://$HOSTNAME/%1/%2%3,en,65535", ServerSettings["alias"]:"", cm["name"]:"",
+                (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
 
     map attr = $[];
@@ -472,7 +536,7 @@ define list PrepareConfigs() ``{
 global boolean Write() {
 
     /* Instserver read dialog caption */
-    string caption = _("Saving instserver Configuration");
+    string caption = _("Saving Installation Server Configuration");
 
     integer steps = 2;
 
@@ -514,7 +578,9 @@ global boolean Write() {
 
     foreach(string cn, map cm, Configs, ``{
             if (cm["slp"]:false)
+            {
                 WriteSLPReg(cm);
+            }
         });
     /* Error message */
     if(false) Report::Error (_("SuSEconfig script failed."));
@@ -532,6 +598,7 @@ global boolean Write() {
 
 global define void UpdateConfig() ``{
     y2debug("current config: %1", Configs );
+
     string name = Config["name"]:"";
     string old_name = Config["old_name"]:"";
     if (haskey(Instserver::Configs, old_name) && old_name != "")
@@ -539,7 +606,8 @@ global define void UpdateConfig() ``{
         Configs = filter(string k, map v, Configs, ``(k!=old_name));
         remove(Config, "old_name");
     }
-    Configs[name] = Config;
+    if (name!="")
+        Configs[name] = Config;
     y2debug("current config: %1", Configs );
     return;
 }

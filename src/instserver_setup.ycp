@@ -1,5 +1,5 @@
 /**
- * File:	clients/instserver.ycp
+ * File:	clients/instserver-setup.ycp
  * Package:	Configuration of instserver
  * Summary:	Main file
  * Authors:	Anas Nashif <nashif@suse.de>
@@ -26,20 +26,21 @@ import "Report";
 import "Summary";
 
 include "instserver/wizards.ycp";
+
 /* is this proposal or not? */
-boolean test = false;
+boolean propose = false;
 list args = WFM::Args();
 if(size(args) > 0) {
-    if(is(WFM::Args(0), path) && WFM::Args(0) == .test) {
+    if(is(WFM::Args(0), path) && WFM::Args(0) == .propose) {
         y2milestone("Using PROPOSE mode");
-        test = true;
+        propose = true;
     }
 }
 
 /* main ui function */
 any ret = nil;
 
-ret = InstserverSequence();
+ret = SetupSequence();
 y2debug("ret=%1", ret);
 
 /* Finish */
