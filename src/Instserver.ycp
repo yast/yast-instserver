@@ -229,7 +229,7 @@ will now be installed.");
     list<string> confline = splitstring(conf, "\n");
 
     confline = maplist(string line, confline, ``{
-            any res = regexpsub(line , "(ALIAS_CONFIGLINE)", sformat("Alias %1 %2", alias , dir ));
+            any res = regexpsub(line , "(ALIAS_CONFIGLINE)", sformat("Alias %1 %2/", alias , dir ));
             if (res != nil)
                 return ((string)res);
             else

@@ -16,6 +16,38 @@ textdomain "installation server";
  */
 map HELPS = $[
 
+    "nfs": _("<p><b><big>NFS Server Configuration</big></b><br>
+</p>") +
+
+    _("<p>To complete this configuration, a new entry in the file
+<em>/etc/exports</em> has to be added and the NFS Server has to be 
+installed and started.
+</p>") +
+
+    _("<p>If you need to restrict access to the exported directories to certain 
+hosts, add a more restrictive wildcard mask. For example, use <em>192.168.1.0/24</em>
+to restrict access to the <em>192.168.1.0</em> subnet.
+</p>") +
+    _("<p>Additionally, set the export options. For more details on the available
+options, see the manual page for <em>exports</em> (man exports(5) )
+</p>") +
+
+    _("<p>The source will be available using the following URL:</p>
+<p><pre>nfs://&lt;Host IP&gt;/&lt;Source Name&gt;</pre>
+</p>"),
+    "http": _("<p><b><big>HTTP Server Configuration</big></b><br>
+</p>") +
+
+    _("<p>To complete this configuration, an HTTP Server has to be 
+installed and started. The Alias will be used to reference the Installation
+Server root directory.</p>
+") +
+
+    _("<p>Select a short and easy to remember Alias. For example, if you select
+<em>SuSE</em> as the alias, the sources will be available as shown below:</p>") +
+
+    _("<p><pre>http://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</pre>
+</p>"),
 
     "initial": _("<p><b><big>Creating a new Configuration</big></b><br>
 </p>") +
