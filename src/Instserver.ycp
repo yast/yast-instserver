@@ -23,6 +23,7 @@ import "Popup";
 import "Require";
 import "Call";
 import "Service";
+import "SLP";
 
 include "instserver/routines.ycp";
 
@@ -218,27 +219,27 @@ Leave NFS exports unmodified?");
 
 global boolean WriteSLPReg (map cm) {
 
-    list<string> slp = [];
+    string serv = "";
     if (ServerSettings["service"]:`none == `nfs)
     {
-        slp=add(slp, sformat("service:YaST-Source:nfs://$HOSTNAME%1/%2,en,65535", ServerSettings["directory"]:"", cm["name"]:""));
+        serv =  sformat("service:YaST-Source:nfs://$HOSTNAME%1/%2,en,65535", ServerSettings["directory"]:"", cm["name"]:"");
     }
     else if (ServerSettings["service"]:`none == `ftp)
     {
-        slp=add(slp, sformat("service:YaST-Source:ftp://$HOSTNAME/%1,en,65535",  cm["name"]:""));
+        serv =  sformat("service:YaST-Source:ftp://$HOSTNAME/%1,en,65535",  cm["name"]:"");
     }
     else if (ServerSettings["service"]:`none == `http)
     {
-        slp=add(slp, sformat("service:YaST-Source:http://$HOSTNAME/%1/%2,en,65535", ServerSettings["alias"]:"", cm["name"]:""));
+        serv = sformat("service:YaST-Source:http://$HOSTNAME/%1/%2,en,65535", ServerSettings["alias"]:"", cm["name"]:"");
     }
 
+    map attr = $[];
     foreach(string a, ["LABEL", "VERSION", "VENDOR", "DEFAULTBASE", "BASEPRODUCT", "BASEVERSION"], ``{
-        slp=add(slp, sformat("%1=%2", tolower(a), cm[a]:"" ));
+        attr[tolower(a)] =  cm[a]:"";
         });
 
-    string all = mergestring(slp, "\n");
-    SCR::Execute(.target.bash,  sformat("touch /etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" ));
-    boolean ret =(boolean) SCR::Write(.target.string,    sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" ), all);
+    string regfile =  sformat("YaST-%1.reg",  cm["name"]:"" );
+    boolean ret = SLP::RegFile(serv, attr, regfile );
     return ret;
 }
 

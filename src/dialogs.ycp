@@ -65,9 +65,16 @@ any CopyCDs( string dir) {
             }
 
             // cant mount /dev/cdrom popup
-            if (!Popup::ContinueCancel( msg ))
+            symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
+            if (pop == `retry)
             {
                 return `abort;
+            }
+            else if (pop == `no)
+            {
+                y2debug("skipping media");
+                current_cd = current_cd + 1;
+                continue;
             }
         }
 
@@ -80,9 +87,15 @@ any CopyCDs( string dir) {
         if (size(media) == 0 )
         {
             SCR::Execute (.target.umount, Installation::sourcedir);
-            if (!Popup::ContinueCancel( msg ))
+            symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
+            if (pop == `retry)
             {
                 return `abort;
+            }
+            else if (pop == `no)
+            {
+                y2debug("skipping media");
+                current_cd = current_cd + 1;
             }
             continue;
         }
@@ -90,17 +103,26 @@ any CopyCDs( string dir) {
         {
             if (media[2]:"" != "")
             {
-               total_cds = tointeger(media[2]:"-1");
+                total_cds = tointeger(media[2]:"-1");
             }
-           content = ReadContentFile(cdpath + "/content");
-           if (content["PRODUCT"]:"dummy" != base && content["VERSION"]:"dummy" != basever  && !standalone)
-           {
-               SCR::Execute (.target.umount, Installation::sourcedir);
-               if (!Popup::ContinueCancel( msg ))
-               {
-                   return `abort;
-               }
-               continue;
+            content = ReadContentFile(cdpath + "/content");
+            if (content["PRODUCT"]:"dummy" != base && content["VERSION"]:"dummy" != basever  && !standalone)
+            {
+                SCR::Execute (.target.umount, Installation::sourcedir);
+                symbol pop =  Popup::AnyQuestion3(_("Change Media"), msg, Label::ContinueButton(), _("Ski&p"), Label::CancelButton(), `focus_yes );
+                if (pop == `retry)
+                {
+                    return `abort;
+                }
+                else if (pop == `no)
+                {
+                    y2debug("skipping media");
+                    if (total_cds == current_cd )
+                        break;
+                    else
+                        current_cd = current_cd + 1;
+                }
+                continue;
            }
         }
 
