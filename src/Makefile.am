@@ -7,8 +7,7 @@ yncludedir = @yncludedir@/instserver
 YCPCFLAGS = -I ./include
 
 client_DATA =			\
-	instserver.ycp		\
-	instserver_setup.ycp
+	instserver.ycp		
 
 ynclude_DATA =			\
 	helps.ycp		\

@@ -72,8 +72,38 @@ any SummaryDialog() {
     string configured = summary[0]:"";
 
     /* Frame label */
-    term contents = Wizard_hw::DetectedContent(_("Sources to Configure"),
-	    unconfigured, false, configured);
+    term contents =  `HBox(
+	`HSpacing(1.5),
+	`VBox(
+	    `VSpacing(0.4),
+	    `Frame(_("Sources to Configure"), `HBox(
+		`HSpacing(0.5),
+		`VBox(
+		    `SelectionBox(`id(`detected_selbox), `opt(`notify),
+			_("A&vailable are:"), unconfigured),
+		    `HBox(
+			`HSpacing(0.5),
+			`HStretch(),
+			`PushButton(`id(`configure_button), `opt (`key_F3),
+                            _("&Configure..."))
+                        )
+		),
+		`HSpacing(0.5)
+	    )),
+	    `VSpacing(0.3),
+	    `RichText(`id(`configured_richtext), configured),
+	    `Right(
+                `HBox(
+                    `PushButton(`id(`settings_button),
+                        _("Settin&gs")),
+                    `PushButton(`id(`edit_button), `opt (`key_F4),
+                        _("C&hange..."))
+                    )
+                ),
+	    `VSpacing(0.4)
+	),
+	`HSpacing(1.5)
+            );
 
     Wizard::SetContentsButtons(caption, contents, HELPS["summary"]:"",
 	    Label::BackButton(), Label::FinishButton());
@@ -88,6 +118,10 @@ any SummaryDialog() {
 	    if(ReallyAbort()) break;
 	    else continue;
 	}
+        else if(ret == `settings_button) {
+            ret = `settings;
+            break;
+        }
         /* overview dialog */
         else if(ret == `edit_button) {
             ret = `overview;
@@ -169,6 +203,7 @@ any OverviewDialog() {
         else if(ret == `delete_button) {
             y2debug("Deleting: %1", current);
             Instserver::Configs = filter(string k, map<string, any> v, Instserver::Configs, ``(k!=current));
+	    Instserver::to_delete = add(Instserver::to_delete, current);
             overview = Instserver::Overview();
             UI::ChangeWidget(`id(`table), `Items, overview);
             if (size(overview) == 0 )
