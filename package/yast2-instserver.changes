@@ -1,4 +1,55 @@
 -------------------------------------------------------------------
+Wed May 26 05:48:53 CEST 2004 - nashif@suse.de
+
+- Added documentation about network installation
+
+-------------------------------------------------------------------
+Tue May 25 04:22:33 CEST 2004 - nashif@suse.de
+
+- Fixed label and requested CD for Service Packs and  addon products
+  (#40816 )
+
+-------------------------------------------------------------------
+Thu May 20 05:48:58 CEST 2004 - nashif@suse.de
+
+- instorder file has only one column according to the specification 
+
+-------------------------------------------------------------------
+Mon May 17 04:19:38 CEST 2004 - nashif@suse.de
+
+- Add +FollowSymLinks to apache configuration
+
+-------------------------------------------------------------------
+Mon May 17 03:57:35 CEST 2004 - nashif@suse.de
+
+- Use product name from media file (#40656)
+- Allow dot in source name (#40657)
+
+-------------------------------------------------------------------
+Thu May 13 15:20:46 CEST 2004 - nashif@suse.de
+
+- Fixed dialog loop when checking for directory permissions (#40260)
+
+-------------------------------------------------------------------
+Mon May 10 17:39:47 CEST 2004 - nashif@suse.de
+
+- Ask for the right Product CD if product is based on something
+  else.
+- check if slp server is running and start it if not. (#40260)
+- check if directory to contain sources is writable (#40260)
+
+-------------------------------------------------------------------
+Mon May 10 17:39:10 CEST 2004 - nashif@suse.de
+
+- Do not allow special charachters in source name (#40260)
+
+-------------------------------------------------------------------
+Fri Apr 30 06:49:14 CEST 2004 - nashif@suse.de
+
+- dont announce empty attributes (#39669)
+- content file of base product changed (#39276)
+
+-------------------------------------------------------------------
 Fri Apr 16 20:15:30 CEST 2004 - nashif@suse.de
 
 - Create multiple sources using CORE/SLES installation media

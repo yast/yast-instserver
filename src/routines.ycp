@@ -13,11 +13,11 @@ textdomain "instserver";
 
 
 
-list ReadMediaFile(string media) {
+list<string> ReadMediaFile(string media) {
     if (SCR::Read(.target.size, media) != -1 )
     {
         string media_contents = (string)SCR::Read(.target.string, media);
-        list m = splitstring(media_contents, "\n");
+        list<string> m = splitstring(media_contents, "\n");
         return m;
     } else {
         return [];
