@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Sun Feb 29 04:08:30 CET 2004 - nashif@suse.de
+
+- Support for SLES8/ SLES8 products
+- Support for adding from ISO images
+- HTTP/NFS/FTP support
+
+-------------------------------------------------------------------
 Tue Feb 10 23:59:54 2004 - nashif@suse.de
 
 - initial version
