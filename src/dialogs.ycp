@@ -407,7 +407,7 @@
                     symbol ret = `none;
                     if (SCR::Read(.target.size, target + "/content") != -1 )
                     {
-                        Popup::Message(_("Contents already exist in this directory, not copying CDs."));
+                        Popup::Message(_("Contents already exist in this directory. Not copying CDs."));
                         ret = `next;
                     }
                     else
@@ -470,7 +470,7 @@
     any ServerDialog () {
 
         /* Instserver configure2 dialog caption */
-        string caption = _("Initial Setup - Servers");
+        string caption = _("Initial Setup -- Servers");
 
         string dir = Instserver::ServerSettings["directory"]:"";
         boolean dry = Instserver::ServerSettings["dry"]:false;
@@ -482,7 +482,7 @@
                         `Left(`CheckBox(`id(`dry), _("Do not configure the net&work service."))),
                         `VSquash(
                             `HBox(
-                                `TextEntry(`id(`dir), _("Di&rectory to contain sources:"), dir),
+                                `TextEntry(`id(`dir), _("Di&rectory to Contain Sources:"), dir),
                                 `VBox(
                                     `VSpacing(),
                                     `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
@@ -496,7 +496,7 @@
             `VBox (
                     // radio button label
                     `Left (`RadioButton (`id (`http), `opt (`notify),
-                            _("&Configure a HTTP Source"), source == `http)),
+                            _("&Configure an HTTP Source"), source == `http)),
                     // radio button label
                     `Left (`RadioButton (`id (`ftp), `opt (`notify),
                             _("&Configure as FTP Source"), source == `ftp)),
@@ -618,7 +618,7 @@
                     r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
                     if (!r)
                     {
-                        Popup::Error(_("Error occured while configuring NFS"));
+                        Popup::Error(_("Error occurred while configuring NFS."));
                         continue;
                     }
                 }
@@ -682,7 +682,7 @@
                     r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , ftproot );
                     if (!r)
                     {
-                        Popup::Error(_("Error occured while configuring FTP"));
+                        Popup::Error(_("Error occurred while configuring FTP."));
                         continue;
                     }
                 }

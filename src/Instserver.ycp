@@ -458,7 +458,7 @@ global boolean Read() {
     // We do not set help text here, because it was set outside
     Progress::New( caption, " ", steps, [
 	    /* Progress stage 1/2 */
-	    _("Read Configuration File"),
+	    _("Read configuration file"),
 	    /* Progress stage 2/2 */
 	    _("Look for new source media"),
 	], [
