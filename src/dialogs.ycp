@@ -621,11 +621,7 @@
                         || size (dir) > 127
                         )
                 {
-                    string errmsg = dgettext("autoinst", "Invalid file name.
-Names can only contain letters, numbers, and underscore,
-must begin with letter, and must be
-127 characters long or less.
-");
+                    string errmsg = _("Invalid file name.");
                     Popup::Error(errmsg);
                     continue;
                 }
