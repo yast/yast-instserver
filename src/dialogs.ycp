@@ -101,6 +101,7 @@
             list medianames = [];
             boolean failed = false;
             boolean cds_copied = false;
+            boolean medianames_set = false;
 
             string media_id = "";
 
@@ -146,6 +147,10 @@
                         prompt_for_cd = prompt_totalcds + current_cd;
                     }
 
+
+
+		    // FIXME: Ugly code repetition
+
 		    if (!iso)
                     {
                         if (size(medianames) == 0)
@@ -162,12 +167,19 @@
                             {
                                 y2milestone("all media names available");
                                 m = medianames[prompt_for_cd - 1]:"";
+				if (m == "" || m == nil) {
+                                	prompt_string =
+                                    substring(regexpsub(medianames[0]:"",
+                                                "(.*)D.", "\\1D%1"), 7,
+                                            size(medianames[0]:""));
+                               	 	m = sformat(prompt_string, prompt_for_cd);
+				}
                             }
                             else
                             {
                                 prompt_string =
                                     substring(regexpsub(medianames[0]:"",
-                                                "(.*)CD.", "\\1CD%1"), 7,
+                                                "(.*)D.", "\\1D%1"), 7,
                                             size(medianames[0]:""));
                                 m = sformat(prompt_string, prompt_for_cd);
                             }
@@ -190,12 +202,19 @@
                             {
                                 y2milestone("all media names available");
                                 m = medianames[prompt_for_cd - 1]:"";
+				if (m == "" || m == nil) {
+                                	prompt_string =
+                                    substring(regexpsub(medianames[0]:"",
+                                                "(.*)D.", "\\1D%1"), 7,
+                                            size(medianames[0]:""));
+                               	 	m = sformat(prompt_string, prompt_for_cd);
+				}
                             }
                             else
                             {
                                 prompt_string =
                                     regexpsub(medianames[0]:"",
-                                                "(.*)CD.", "\\1CD%1");
+                                                "(.*)D.", "\\1D%1");
                                 y2debug("prompt string: %1)", prompt_string);
                                 m = sformat(prompt_string, prompt_for_cd);
                             }
@@ -263,11 +282,11 @@
 		    SCR::Execute (.target.umount, Installation::sourcedir);
 		    continue;
 		}
-		else
+		else 
 		{
 		    content = ReadContentFile(cdpath + "/content");
                     y2debug("Content file: %1", content);
-		    if (media[2]:"" != "" && media[2]:"" != "doublesided")
+		    if (media[2]:"" != "" && media[2]:"" != "doublesided" && current_cd == 1)
 		    {
 			total_cds = tointeger(media[2]:"-1");
                         media_id = media[1]:"";
@@ -289,26 +308,32 @@
                         }
 		    }
 
+		    if (current_cd == 1 ) {
                     foreach(string m, media, ``{
                             if (m == "doublesided")
                             doublesided = true;
 
                             if (substring(m, 0, 5 ) == "MEDIA" )
                             {
-                            if (doublesided)
-                                medianame = regexpsub(m, "(.*)SIDE A(.*)", "\\1SIDE %1\\2");
-                            else
-                                medianame = regexpsub(m, "(.*)CD.", "\\1CD%1");
+                            	if (doublesided)
+                                	medianame = regexpsub(m, "(.*)SIDE A(.*)", "\\1SIDE %1\\2");
+                            	else
+                                	medianame = regexpsub(m, "(.*)CD.", "\\1CD%1");
 
-                            medianames=add(medianames, substring(m,7,
-                                    size(m)));
+			   	if (!medianames_set) {
+                            		medianames=add(medianames, substring(m,7, size(m)));
+				}
                             }
                             });
+		   if (size(medianames)>0)
+		   	medianames_set = true;
+		   }
                     y2milestone("medianames: %1", medianames);
 		}
 
 
 		string distprod = content["LABEL"]:"";
+		y2debug("distprod: %1", distprod );
                 string flags = content["FLAGS"]:"";
                 list<string> flaglist = splitstring(flags, " ");
 
@@ -324,6 +349,7 @@
 
                 
 		list<string> l = splitstring(distprod, " ");
+		y2debug("distprod splitted: %1", l );
 		distprod = mergestring(l, "-");
 		string tgt = sformat("%1/%2/CD%3", dir, distprod, current_cd );
 		y2debug("tgt: %1", tgt );
