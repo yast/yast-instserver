@@ -8,7 +8,6 @@ YCPCFLAGS = -I ./include
 
 client_DATA =			\
 	instserver.ycp		\
-	instserver_auto.ycp	\
 	instserver_setup.ycp
 
 ynclude_DATA =			\
