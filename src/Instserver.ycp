@@ -44,6 +44,7 @@ global string Rep = "/var/lib/YaST2/instserver";
 /* config file */
 string ConfigFile = Rep + "/instserver.xml";
 
+
 global string FirstDialog = "summary";
 
 
@@ -66,15 +67,9 @@ global boolean Modified();
  */
 global boolean modified = false;
 
-/**
- */
-global boolean proposal_valid = false;
 
-/**
- * Write only, used during autoinstallation.
- * Don't run services and SuSEconfig, it's all done at one place.
- */
-global boolean write_only = false;
+
+global list<string> to_delete = [];
 
 /**
  * Abort function
@@ -107,14 +102,18 @@ global boolean Modified() {
  * Create links
  *
  */
-global list<string> createLinks (string dir, string product)
+global list<string> createLinks (string dir, string product, list<string> files)
 {
     string shorttgt = sformat("%1/CD%2",  product, 1 );
     list<string> cmds = [];
 
-    foreach(string symlink , ["content", "media.1" , "boot"], ``{
-            cmds=add(cmds, sformat("pushd %1 && ln -sf %2/%3 && popd ", dir, shorttgt, symlink));
-            });
+    foreach(string symlink , files, ``{
+	string f = sformat("%1/%2/%3", dir, shorttgt, symlink );
+
+	cmds=add(cmds, sformat("( test -f %1 || test -d %2) &&  pushd %3 && ln -sf %4/%5 && popd ",
+			       f,f,dir, shorttgt, symlink));
+
+    });
     cmds=add(cmds, sformat("mkdir %1/yast", dir));
 
     y2debug("cmds: %1", cmds );
@@ -124,20 +123,52 @@ global list<string> createLinks (string dir, string product)
 
 /**
  * Create yast directory with ordr/instorder files
- *
+ * @param string directory
+ * @return booelan 
  */
 global boolean createOrderFiles(string dir)
 {
-    if (size(products) > 1 )
+    string order_path = sformat("%1/yast/order", dir );
+    string instorder_path = sformat("%1/yast/instorder", dir );
+
+    if (SCR::Read(.target.size, order_path) > 0 &&
+	SCR::Read(.target.size, instorder_path) > 0 &&
+	size(products) == 1 )
+    {
+	y2debug("order files exist");
+	string ofile = (string)SCR::Read(.target.string, order_path );
+	list<string> oentries = splitstring(ofile, "\n");
+	string iofile = (string)SCR::Read(.target.string, instorder_path );
+	list<string> ioentries = splitstring(iofile, "\n");
+	string proddir = sformat("/%1/CD1", products[0, "name"]:"" );
+	if (issubstring(tolower(products[0, "name"]:""), "service-pack" ))
+	{
+	    oentries = add( oentries, mergestring([  proddir, proddir ], "\t"));
+	    ioentries = (list<string>) union(  (list<string>)[ mergestring([  proddir, proddir ], "\t") ], ioentries);
+	}
+	else
+	{
+	    oentries = add( oentries, mergestring([  proddir, proddir ], "\t"));
+	    ioentries = add( ioentries, mergestring([  proddir, proddir ], "\t"));
+	}
+	SCR::Write(.target.string, dir + "/yast/order",  mergestring(oentries, "\n"));
+	SCR::Write(.target.string, dir + "/yast/instorder",  mergestring(ioentries, "\n"));
+	    
+    }    
+    else if (size(products) > 1 )
     {
         SCR::Execute(.target.mkdir, dir + "/yast");
         // create order
-        list<map> order = filter(map p, products, ``(!p["baseproduct"]:false));
+        list<map> order = filter(map p, products, ``(!p["baseproduct"]:false));	
         order = (list<map>)union(order, filter(map p, products, ``(p["baseproduct"]:false)));
+	
         y2debug("order: %1", order );
+	
         list<map> instorder = filter(map p, products, ``(p["baseproduct"]:false));
         instorder = (list<map>)union(instorder, filter(map p, products, ``(!p["baseproduct"]:false)));
+	
         y2debug("instorder: %1", instorder );
+	
         list<string> file = [];
         foreach (map p, order , ``{
                 string proddir = sformat("/%1/CD1", p["name"]:"" );
@@ -155,13 +186,15 @@ global boolean createOrderFiles(string dir)
     return true;
 }
 
+
 /**
   * Mount directory to avoid symlinks
   * @param string directory to bind
   * @param string bind to
   * @return boolean
   */
-boolean MountBind( string dir, string ftproot) {
+boolean MountBind( string dir, string ftproot)
+{
     y2debug("Calling MountBind with: %1 %2", dir, ftproot );
     list<map> fstab = (list<map>)SCR::Read(.etc.fstab);
     y2debug("fstab: %1", fstab );
@@ -213,8 +246,8 @@ any ReadServiceSettings(string module_auto) {
  */
 global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 
-    string help = _("The FTP Installation Server requires an FTP server package. The vsftpd package
-will now be installed.");
+    string help = _("The FTP Installation Server requires an FTP server package. 
+The vsftpd package will now be installed.");
     if ( !Require::AreAllPackagesInstalled( [ "xinetd", "vsftpd" ] ) ) {
         y2debug("some packages are not installed");
     }
@@ -381,21 +414,27 @@ Leave NFS exports unmodified?");
 }
 
 
+/**
+ * Write SLP configuration
+ */
 global boolean WriteSLPReg (map cm) {
 
     string serv = "";
     if (ServerSettings["service"]:`none == `nfs)
     {
-        serv =  sformat("service:install.suse:nfs://$HOSTNAME%1/%2%3,en,65535", ServerSettings["directory"]:"", cm["name"]:"",
+        serv =  sformat("service:install.suse:nfs://$HOSTNAME%1/%2%3,en,65535",
+                ServerSettings["directory"]:"", cm["name"]:"",
                 (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1" );
     }
     else if (ServerSettings["service"]:`none == `ftp)
     {
-        serv =  sformat("service:install.suse:ftp://$HOSTNAME/%1%2,en,65535",  cm["name"]:"", (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
+        serv =  sformat("service:install.suse:ftp://$HOSTNAME/%1%2,en,65535",
+                cm["name"]:"", (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
     else if (ServerSettings["service"]:`none == `http)
     {
-        serv = sformat("service:install.suse:http://$HOSTNAME/%1/%2%3,en,65535", ServerSettings["alias"]:"", cm["name"]:"",
+        serv = sformat("service:install.suse:http://$HOSTNAME/%1/%2%3,en,65535",
+                ServerSettings["alias"]:"", cm["name"]:"",
                 (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
 
@@ -404,8 +443,14 @@ global boolean WriteSLPReg (map cm) {
         attr[tolower(a)] =  cm[a]:"";
         });
 
+    attr["description"] = cm["LABEL"]:"" + " " +
+        cm["DEFAULTBASE"]:"";
+    attr["machine"] = (cm["DEFAULTBASE"]:"" == "i386") ?  "i586,i686" :
+        cm["DEFAULTBASE"]:"";
+
     string regfile =  sformat("YaST-%1.reg",  cm["name"]:"" );
     boolean ret = SLP::RegFile(serv, attr, regfile );
+    
     return ret;
 }
 
@@ -414,7 +459,8 @@ global boolean WriteSLPReg (map cm) {
 global list<string> DetectMedia() {
     if (ServerSettings["directory"]:"" != "")
     {
-        string f = sformat("find %1 -maxdepth 2 -name %2 | grep -v yast", ServerSettings["directory"]:"", "content");
+        string f = sformat("find %1 -maxdepth 2 -name %2 | grep -v yast",
+                ServerSettings["directory"]:"", "content");
         map ret = (map)SCR::Execute (.target.bash_output, f);
         list<string> found = splitstring(ret["stdout"]:"", "\n");
         found = filter(string s, found, ``(s!=""));
@@ -591,16 +637,32 @@ global boolean Write() {
     if(Abort()) return false;
     Progress::NextStage ();
 
+    boolean slpreload = false;
     foreach(string cn, map cm, Configs, ``{
             if (cm["slp"]:false)
             {
                 WriteSLPReg(cm);
-            }
+		slpreload = true;
+            } else {		
+		string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
+		if (SCR::Read(.target.size, regfile) > 0 ) 
+		    SCR::Execute(.target.remove, regfile);
+		    
+	    }
         });
-    /* Error message */
-    if(false) Report::Error (_("SuSEconfig script failed."));
-    sleep(sl);
 
+    foreach(string c, to_delete, ``{
+	string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  c );
+	if (SCR::Read(.target.size, regfile) > 0 )
+	{
+	    slpreload = true;
+	    SCR::Execute(.target.remove, regfile);
+	}
+    });
+    
+    if (slpreload)
+	Service::Reload("slpd");
+    
     if(Abort()) return false;
     /* Progress finished */
     Progress::NextStage();
@@ -622,7 +684,9 @@ global define void UpdateConfig() ``{
         remove(Config, "old_name");
     }
     if (name!="")
+    {
         Configs[name] = Config;
+    }
     y2debug("current config: %1", Configs );
     return;
 }

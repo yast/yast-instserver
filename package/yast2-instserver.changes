@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Apr 16 20:15:30 CEST 2004 - nashif@suse.de
+
+- Create multiple sources using CORE/SLES installation media
+- Reload SLP daemon when needed only
+- Support additional product media
+
+-------------------------------------------------------------------
 Fri Apr  2 17:35:00 CEST 2004 - nashif@suse.de
 
 - License changed to GPL

@@ -25,12 +25,12 @@ include "instserver/dialogs.ycp";
 any AddSequence() {
 
     map aliases = $[
-	"config1"	: ``(Configure1Dialog())
+	"sourceconfig"	: ``(SourceConfigDialog())
     ];
 
     map sequence = $[
-	"ws_start" : "config1",
-	"config1" : $[
+	"ws_start" : "sourceconfig",
+	"sourceconfig" : $[
 	    `abort	: `abort,
 	    `next	: `next
 	]
@@ -38,9 +38,6 @@ any AddSequence() {
 
     return Sequencer::Run(aliases, sequence);
 }
-
-
-
 
 /**
  * Server Sequence
@@ -81,6 +78,47 @@ any ServerSequence() {
     return Sequencer::Run(aliases, sequence);
 }
 
+/**
+ * Whole configuration of instserver but without reading and writing.
+ * For use with autoinstallation.
+ * @return sequence result
+ */
+any SetupSequence() {
+
+
+    map aliases = $[
+	"read"	: [ ``( ReadDialog() ), true ],
+	"main"	:   ``( ServerSequence() ),
+	"write"	        : ``(WriteDialog())
+    ];
+
+    map sequence = $[
+	"ws_start" : "read",
+	"read" : $[
+	    `abort	: `abort,
+	    `next	: "main"
+	],
+	"main" : $[
+	    `abort	: `abort,
+	    `next	: "write"
+	],
+	"write" : $[
+	    `abort	: `abort,
+	    `next	: `next
+	]
+    ];
+
+    //Wizard::CreateDialog();
+    //Wizard::SetDesktopIcon("instserver");
+    
+    any ret = Sequencer::Run(aliases, sequence);
+
+    //UI::CloseDialog();
+    return ret;
+}
+
+
+
 
 
 
@@ -97,7 +135,8 @@ any MainSequence() {
 	"configure"	: [ ``( AddSequence() ), true ],
 	"add"		: [ ``( AddSequence() ), true ],
 	"edit"		: [ ``( AddSequence() ), true ],
-	"server"	: [ ``( ServerSequence() ) , true ]
+	"server"	: [ ``( ServerSequence() ) , true ],
+	"settings"	: [ ``( SetupSequence() ) , true ]
     ];
 
     string start = Instserver::FirstDialog;
@@ -113,6 +152,7 @@ any MainSequence() {
 	    `overview	: "overview",
 	    `configure	: "configure",
 	    `other	: "configure",
+	    `settings	: "settings",
 	],
 	"overview" : $[
 	    `abort	: `abort,
@@ -123,6 +163,10 @@ any MainSequence() {
 	"configure" : $[
 	    `abort	: `abort,
 	    `next	: "summary",
+	],
+	"settings" : $[
+	    `abort	: `abort,
+	    `next	: "overview",
 	],
 	"add" : $[
 	    `abort	: `abort,
@@ -169,51 +213,13 @@ any InstserverSequence() {
 
     Wizard::CreateDialog();
     Wizard::SetDesktopIcon("instserver");
-    
+
     any ret = Sequencer::Run(aliases, sequence);
 
     UI::CloseDialog();
     return ret;
 }
 
-/**
- * Whole configuration of instserver but without reading and writing.
- * For use with autoinstallation.
- * @return sequence result
- */
-any SetupSequence() {
-
-
-    map aliases = $[
-	"read"	: [ ``( ReadDialog() ), true ],
-	"main"	:   ``( ServerSequence() ),
-	"write"	        : ``(WriteDialog())
-    ];
-
-    map sequence = $[
-	"ws_start" : "read",
-	"read" : $[
-	    `abort	: `abort,
-	    `next	: "main"
-	],
-	"main" : $[
-	    `abort	: `abort,
-	    `next	: "write"
-	],
-	"write" : $[
-	    `abort	: `abort,
-	    `next	: `next
-	]
-    ];
-
-    Wizard::CreateDialog();
-    Wizard::SetDesktopIcon("instserver");
-    
-    any ret = Sequencer::Run(aliases, sequence);
-
-    UI::CloseDialog();
-    return ret;
-}
 
 /* EOF */
 }
