@@ -632,7 +632,7 @@
                     y2debug("executing: %1", mkdircmd );
                     if (SCR::Execute(.target.bash, mkdircmd) != 0 )
                     {
-                        Popup::Error(sformat(_("Error while creating 'source' directoy.
+                        Popup::Error(sformat(_("Error while creating 'source' directory.
 Verify that the directory 
  %1 
 is writable and try again."), Instserver::ServerSettings["directory"]:""));
