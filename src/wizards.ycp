@@ -110,7 +110,7 @@ any SetupSequence() {
 
     //Wizard::CreateDialog();
     //Wizard::SetDesktopIcon("instserver");
-    
+
     any ret = Sequencer::Run(aliases, sequence);
 
     //UI::CloseDialog();
@@ -142,10 +142,6 @@ any MainSequence() {
     string start = Instserver::FirstDialog;
     map sequence = $[
 	"ws_start" : start,
-	"server" : $[
-	    `abort	: `abort,
-	    `next	: "summary",
-	],
 	"summary" : $[
 	    `abort	: `abort,
 	    `next	: `next,
@@ -166,7 +162,7 @@ any MainSequence() {
 	],
 	"settings" : $[
 	    `abort	: `abort,
-	    `next	: "overview",
+	    `next	: "summary",
 	],
 	"add" : $[
 	    `abort	: `abort,

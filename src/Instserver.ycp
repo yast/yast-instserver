@@ -544,7 +544,7 @@ global boolean Read() {
     y2milestone("Configs: %1", Configs);
 
     if (c["servers"]:$[] == $[])
-        FirstDialog = "server";
+        FirstDialog = "settings";
 
     ServerSettings = c["servers"]:$[];
 
