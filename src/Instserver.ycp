@@ -20,6 +20,9 @@ import "Report";
 import "Summary";
 import "XML";
 import "Popup";
+import "Require";
+import "Call";
+import "Service";
 
 include "instserver/routines.ycp";
 
@@ -90,6 +93,72 @@ global boolean Modified() {
 
 
 
+
+boolean MountBind( string dir, string ftproot) {
+    list fstab = (list)SCR::Read(.etc.fstab);
+    list existing = filter(map f, fstab, ``(f["spec"]:"" == dir));
+    if (size(existing)> 0 )
+    {
+        return false;
+    }
+    else
+    {
+        SCR::Execute(.target.mkdir, ftproot);
+        SCR::Execute(.target.mount, [ dir, ftproot], "--bind" );
+        map bindfs = $[];
+        bindfs = $["file":ftproot, "spec":dir, "freq":1,
+        "mntops":"bind", "passno":1, "vfstype":"auto"];
+        fstab=add(fstab, bindfs);
+        SCR::Write(.etc.fstab, fstab);
+    }
+    return true;
+}
+
+boolean ConfigureService(string module_auto, map resource) {
+    boolean ret = false;
+    ret = (boolean)Call::Function(module_auto, ["Import", resource   ]);
+    ret = (boolean)Call::Function(module_auto, ["Write",  resource  ]);
+    return ret;
+}
+
+global boolean SetupFTP(string dir, string ftproot) {
+
+    string help = _("The FTP Installation Server requires an FTP server. The vsftpd package
+will now be installed.");
+    if ( !Require::AreAllPackagesInstalled( [ "xinetd", "vsftpd" ] ) ) {
+        y2debug("some packages are not installed");
+    }
+
+    if ( !Require::RequireAndConflict( [ "xinetd", "vsftpd" ], [], help ) ) {
+        y2error("Error while installing packages");
+        return false;
+    }
+    if (!issubstring(dir, ftproot))
+    {
+        y2debug("binding dir");
+        MountBind(dir, ftproot);
+    }
+
+    y2debug("configuring services");
+    map inetdconf =
+        $["last_created":0,
+    "netd_conf":[
+        $["protocol":"tcp", "script":"vsftpd", "server":"/usr/sbin/vsftpd", "service":"ftp"]
+        ],
+    "netd_service":`xinetd,
+    "netd_status":0];
+
+    ConfigureService("inetd_auto", inetdconf);
+    Service::Enable("xinetd");
+    if (Service::Status("xinetd") == 0 )
+        Service::Reload("xinetd");
+    else
+        Service::Start("xinetd");
+    return true;
+}
+
+
+
 /**
  * Setup NFS Server
  * @param string directory
@@ -129,6 +198,11 @@ global boolean SetupNFS(string dir, string options) {
     NfsServer::write_only = true;
     ret = NfsServer::Write();
     Progress::on();
+    Service::Enable("nfsserver");
+    if (Service::Status("nfsserver") == 0 )
+        Service::Reload("nfsserver");
+    else
+        Service::Start("nfsserver");
     return ret;
 }
 
@@ -140,6 +214,15 @@ global boolean WriteSLPReg (map cm) {
     {
         slp=add(slp, sformat("service:YaST-Source:nfs://$HOSTNAME%1/%2,en,65535", ServerSettings["directory"]:"", cm["name"]:""));
     }
+    else if (ServerSettings["service"]:`none == `ftp)
+    {
+        slp=add(slp, sformat("service:YaST-Source:ftp://$HOSTNAME/%1,en,65535",  cm["name"]:""));
+    }
+    else if (ServerSettings["service"]:`none == `http)
+    {
+        slp=add(slp, sformat("service:YaST-Source:http://$HOSTNAME/%1/%2,en,65535", ServerSettings["alias"]:"", cm["name"]:""));
+    }
+
     foreach(string a, ["LABEL", "VERSION", "VENDOR", "DEFAULTBASE", "BASEPRODUCT", "BASEVERSION"], ``{
         slp=add(slp, sformat("%1=%2", tolower(a), cm[a]:"" ));
         });

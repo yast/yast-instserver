@@ -361,7 +361,13 @@ any ServerDialog () {
     any ret = nil;
     while(true) {
 
-	ret = UI::UserInput();
+        ret = UI::UserInput();
+        source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
+        if (source == `ftp && dir == "")
+        {
+            UI::ChangeWidget(`id(`dir), `Value, "/srv/ftp");
+        }
+        dir = (string)UI::QueryWidget(`id(`dir), `Value);
 
 	/* abort? */
 	if(ret == `abort || ret == `cancel) {
@@ -369,15 +375,24 @@ any ServerDialog () {
 	    else continue;
 	}
         else if(ret == `next || ret == `back) {
-            dir = (string)UI::QueryWidget(`id(`dir), `Value);
-            source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
-            boolean ret = false;
+            boolean r = false;
             if (source == `nfs)
             {
-                ret = Instserver::SetupNFS(dir , "" );
-                if (!ret)
+                r = Instserver::SetupNFS(dir , "" );
+                if (!r)
                 {
                     Report::Error(_("Error occured while configuring NFS"));
+                    continue;
+                }
+                Instserver::ServerSettings["service"] = source;
+                Instserver::ServerSettings["directory"] = dir;
+            }
+            else if (source == `ftp )
+            {
+                r = Instserver::SetupFTP(dir , "/srv/ftp" );
+                if (!r)
+                {
+                    Report::Error(_("Error occured while configuring FTP"));
                     continue;
                 }
                 Instserver::ServerSettings["service"] = source;

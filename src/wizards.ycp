@@ -25,20 +25,15 @@ include "instserver/dialogs.ycp";
 any AddSequence() {
 
     map aliases = $[
-	"config1"	: ``(Configure1Dialog()),
-	"config2"	: ``(Configure2Dialog()),
+	"config1"	: ``(Configure1Dialog())
     ];
 
     map sequence = $[
 	"ws_start" : "config1",
 	"config1" : $[
 	    `abort	: `abort,
-	    `next	: "config2"
-	],
-	"config2" : $[
-	    `abort	: `abort,
 	    `next	: `next
-	],
+	]
     ];
 
     return Sequencer::Run(aliases, sequence);
