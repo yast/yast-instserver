@@ -20,7 +20,7 @@ Summary:	Configuration of instserver
 @CLEAN@
 
 %post
-%{fillup_and_insserv -i apache-inst_server}
+%{fillup_only -i apache-inst_server}
 
 %files
 %defattr(-,root,root)
@@ -36,4 +36,5 @@ Summary:	Configuration of instserver
 /etc/httpd/inst_server.conf
 /etc/httpd/inst_server.conf.in
 /var/adm/fillup-templates/sysconfig.apache-inst_server
-
+@scrconfdir@/*.scr
+@agentdir@/ag_*
