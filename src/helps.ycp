@@ -23,8 +23,8 @@ map HELPS = $[
     _("<p>Select one of the server options and specify where all the sources
 should be hosted on the local system.
 </p>") +
-    _("<p>If you have one the services already running and wish to do the
-server configuration manually, make sure to check the option not to configure 
+    _("<p>If you have one of the services already running and want to do the
+server configuration manually, select not to configure 
 the services.
 </p>
 "),
@@ -59,8 +59,8 @@ installed and started.</p>
 ") +
 
     _("<p>If the installation server directory chosen is outside
-the FTP server hierarchy, a mount entry will be added to <em>/etc/fstab</em>,
-which will make the Installation Server directory available under the
+the FTP server hierarchy, a mount entry is added to <em>/etc/fstab</em>,
+which makes the Installation Server directory available under the
 FTP server (using the <em>--bind</em> option of <em>mount</em>).
 </p>
 ") +

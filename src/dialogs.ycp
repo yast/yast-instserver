@@ -719,14 +719,14 @@ Not copying CDs."));
         term c1 =
             `HBox(
 		  `VBox(
-                        `Left(`CheckBox(`id(`dry), `opt(`notify), _("Do not configure any net&work services."))),
+                        `Left(`CheckBox(`id(`dry), `opt(`notify), _("Do Not Configure Any Net&work Services"))),
                         `VSquash(
 				 `HBox(
-				       `TextEntry(`id(`dir), _("Di&rectory to contain sources:"), dir),
+				       `TextEntry(`id(`dir), _("Di&rectory to Contain Sources:"), dir),
 				       `VBox(
 					     `VSpacing(),
 					     `Bottom(`PushButton(`id(`select_dir),
-								 _("Select &directory")))
+								 _("Select &Directory")))
 					     )
 				       )
 				 )
