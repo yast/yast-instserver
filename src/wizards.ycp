@@ -61,7 +61,7 @@ any ServerSequence() {
 	    `abort	: `abort,
 	    `nfs	: "nfs",
 	    `http	: "http",
-	    `ftp	: `next,
+	    `ftp	: "ftp",
 	    `next	: `next
 	],
 	"ftp" : $[

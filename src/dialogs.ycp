@@ -473,6 +473,7 @@
         string caption = _("Initial Setup - Servers");
 
         string dir = Instserver::ServerSettings["directory"]:"";
+        boolean dry = Instserver::ServerSettings["dry"]:false;
         symbol source = Instserver::ServerSettings["service"]:`http;
 
         term c1 =
@@ -527,6 +528,7 @@
             source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
             ret = UI::UserInput();
             dir = (string)UI::QueryWidget(`id(`dir), `Value);
+            dry = (boolean)UI::QueryWidget(`id(`dry), `Value);
 
             /* abort? */
             if(ret == `abort || ret == `cancel) {
@@ -554,6 +556,7 @@
                     continue;
                 }
                 Instserver::ServerSettings["service"] = source;
+                Instserver::ServerSettings["dry"] = dry;
                 Instserver::ServerSettings["directory"] = dir;
                 Instserver::modified = true;
                 ret = source;
@@ -610,11 +613,14 @@
                 boolean r = false;
                 nfsoptions = (string)UI::QueryWidget(`id(`nfsoptions), `Value);
                 wildcard = (string)UI::QueryWidget(`id(`wildcard), `Value);
-                r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
-                if (!r)
+                if (!Instserver::ServerSettings["dry"]:false)
                 {
-                    Popup::Error(_("Error occured while configuring NFS"));
-                    continue;
+                    r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
+                    if (!r)
+                    {
+                        Popup::Error(_("Error occured while configuring NFS"));
+                        continue;
+                    }
                 }
                 Instserver::modified = true;
                 break;
@@ -638,12 +644,14 @@
         /* Instserver configure2 dialog caption */
         string caption = _("Installation Server - FTP");
 
-
+        string ftproot = Instserver::ServerSettings["ftproot"]:"/srv/ftp";
+        string ftpalias = Instserver::ServerSettings["ftpalias"]:"";
         /* Instserver nfs dialog contents */
         term contents =
             `HVSquash(
                     `VBox(
-                        `Empty()
+                        `Left(`TextEntry(`id(`ftproot), _("FTP server root Directory:"), ftproot )),
+                        `Left(`TextEntry(`id(`ftpalias), _("Directory Alias:"), ftpalias ))
                         )
                     );
 
@@ -656,6 +664,7 @@
 
             ret = UI::UserInput();
 
+            ftproot = (string)UI::QueryWidget(`id(`ftproot), `Value);
             /* abort? */
             if(ret == `abort || ret == `cancel) {
                 if(ReallyAbort()) break;
@@ -666,11 +675,16 @@
             }
             else if(ret == `next ) {
                 boolean r = false;
-                r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , "/srv/ftp" );
-                if (!r)
+                Instserver::ServerSettings["ftproot"] = ftproot;
+                Instserver::ServerSettings["ftpalias"] = ftpalias;
+                if (!Instserver::ServerSettings["dry"]:false)
                 {
-                    Popup::Error(_("Error occured while configuring FTP"));
-                    continue;
+                    r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , ftproot  , ftpalias);
+                    if (!r)
+                    {
+                        Popup::Error(_("Error occured while configuring FTP"));
+                        continue;
+                    }
                 }
                 Instserver::modified = true;
                 break;
@@ -721,11 +735,14 @@
             }
             else if(ret == `next ) {
                 alias = (string)UI::QueryWidget(`id(`alias), `Value);
-                if (!Instserver::SetupHTTP(Instserver::ServerSettings["directory"]:"", alias))
-                {
-                    Popup::Error(_("Error creating HTTPD configuration"));
-                }
                 Instserver::ServerSettings["alias"] = alias;
+                if (!Instserver::ServerSettings["dry"]:false)
+                {
+                    if (!Instserver::SetupHTTP(Instserver::ServerSettings["directory"]:"", alias))
+                    {
+                        Popup::Error(_("Error creating HTTPD configuration"));
+                    }
+                }
                 Instserver::modified = true;
                 break;
             }
