@@ -30,10 +30,10 @@ include "instserver/routines.ycp";
 global boolean test = true;
 
 /* Configuration Map */
-global map Config = $[];
+global map<string, any> Config = $[];
 
 /* All Configurations */
-global map Configs = $[];
+global map<string, map<string, any> > Configs = $[];
 
 /* Server Configuration */
 global map ServerSettings = $[];
@@ -50,7 +50,7 @@ global string FirstDialog = "summary";
 global list<map> products = [];
 
 
-global list Detected = [];
+global list<string> Detected = [];
 
 
 
@@ -107,10 +107,10 @@ global boolean Modified() {
  * Create links
  *
  */
-global list createLinks (string dir, string product)
+global list<string> createLinks (string dir, string product)
 {
     string shorttgt = sformat("%1/CD%2",  product, 1 );
-    list cmds = [];
+    list<string> cmds = [];
 
     foreach(string symlink , ["content", "media.1" , "boot"], ``{
             cmds=add(cmds, sformat("pushd %1 && ln -sf %2/%3 && popd ", dir, shorttgt, symlink));
@@ -132,11 +132,11 @@ global boolean createOrderFiles(string dir)
     {
         SCR::Execute(.target.mkdir, dir + "/yast");
         // create order
-        list order = filter(map p, products, ``(!p["baseproduct"]:false));
-        order = union(order, filter(map p, products, ``(p["baseproduct"]:false)));
+        list<map> order = filter(map p, products, ``(!p["baseproduct"]:false));
+        order = (list<map>)union(order, filter(map p, products, ``(p["baseproduct"]:false)));
         y2debug("order: %1", order );
-        list instorder = filter(map p, products, ``(p["baseproduct"]:false));
-        instorder = union(instorder, filter(map p, products, ``(!p["baseproduct"]:false)));
+        list<map> instorder = filter(map p, products, ``(p["baseproduct"]:false));
+        instorder = (list<map>)union(instorder, filter(map p, products, ``(!p["baseproduct"]:false)));
         y2debug("instorder: %1", instorder );
         list<string> file = [];
         foreach (map p, order , ``{
@@ -163,9 +163,9 @@ global boolean createOrderFiles(string dir)
   */
 boolean MountBind( string dir, string ftproot) {
     y2debug("Calling MountBind with: %1 %2", dir, ftproot );
-    list fstab = (list)SCR::Read(.etc.fstab);
+    list<map> fstab = (list<map>)SCR::Read(.etc.fstab);
     y2debug("fstab: %1", fstab );
-    list existing = filter(map f, fstab, ``(f["spec"]:"" == deletechars(dir, " ")));
+    list<map> existing = filter(map f, fstab, ``(f["spec"]:"" == deletechars(dir, " ")));
     y2debug("existing: %1", existing );
     if (size(existing)> 0 )
     {
@@ -393,7 +393,7 @@ global boolean WriteSLPReg (map cm) {
                 (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
 
-    map attr = $[];
+    map<string, string> attr = $[];
     foreach(string a, ["LABEL", "VERSION", "VENDOR", "DEFAULTBASE", "BASEPRODUCT", "BASEVERSION"], ``{
         attr[tolower(a)] =  cm[a]:"";
         });
@@ -405,12 +405,12 @@ global boolean WriteSLPReg (map cm) {
 
 
 
-global list DetectMedia() {
+global list<string> DetectMedia() {
     if (ServerSettings["directory"]:"" != "")
     {
         string f = sformat("find %1 -maxdepth 2 -name %2 | grep -v yast", ServerSettings["directory"]:"", "content");
         map ret = (map)SCR::Execute (.target.bash_output, f);
-        list found = splitstring(ret["stdout"]:"", "\n");
+        list<string> found = splitstring(ret["stdout"]:"", "\n");
         found = filter(string s, found, ``(s!=""));
         found = filter(string file, found, ``{
                 string d = dirname(file);
@@ -426,8 +426,8 @@ global list DetectMedia() {
     }
 }
 
-global define map FindAvailable() ``{
-    map Available = $[];
+global define map<string, map> FindAvailable() ``{
+    map<string, map> Available = $[];
     foreach(string c, Detected, ``{
             map ret = ReadContentFile(c);
             string d = dirname(c);
@@ -482,10 +482,10 @@ global boolean Read() {
     {
         c = XML::XMLToYCPFile(ConfigFile);
     }
-    list all = c["configurations"]:[];
+    list<map<string, any > > all = c["configurations"]:[];
     ServerSettings = c["servers"]:$[];
 
-    Configs = listmap (map i, all, ``{
+    Configs = listmap (map<string, any> i, all, ``{
             string name = i["name"]:"";
             return($[name: i]);
             });
@@ -612,7 +612,7 @@ global define void UpdateConfig() ``{
     string old_name = Config["old_name"]:"";
     if (haskey(Instserver::Configs, old_name) && old_name != "")
     {
-        Configs = filter(string k, map v, Configs, ``(k!=old_name));
+        Configs = filter(string k, map<string, any> v, Configs, ``(k!=old_name));
         remove(Config, "old_name");
     }
     if (name!="")
@@ -671,7 +671,7 @@ global map Export () {
 global list Summary() {
     /* Configuration summary text for autoyast */
     string sum = "";
-    map Available = filter( string d, map avail, FindAvailable(), ``(!haskey(Configs, basename(d))));
+    map<string, map> Available = filter( string d, map avail, FindAvailable(), ``(!haskey(Configs, basename(d))));
     list unconf = maplist(string d, map avail, Available, ``{
             string dir = basename(d);
             return(`item(`id(dir), avail["LABEL"]:"" + "(" + avail["DEFAULTBASE"]:"" + ")" )) ;
