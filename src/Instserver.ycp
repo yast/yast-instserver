@@ -24,8 +24,13 @@ import "Package";
 import "Call";
 import "Service";
 import "SLP";
+import "IP";
 
 include "instserver/routines.ycp";
+
+
+// Is this a service pack?
+global boolean is_service_pack = false;
 
 global boolean test = false;
 
@@ -100,7 +105,6 @@ global boolean Modified() {
 
 /**
  * Create links
- *
  */
 global list<string> createLinks (string dir, string product, list<string> files)
 {
@@ -146,9 +150,9 @@ global boolean createOrderFiles(string dir)
         ioentries=filter(string l, ioentries, ``(l!=""));
 
 	string proddir = sformat("/%1/CD1", products[0, "name"]:"" );
-	if (issubstring(tolower(products[0, "name"]:""), "service-pack" ))
+	if (issubstring(tolower(products[0, "name"]:""), "service-pack" ) || is_service_pack)
 	{
-	    oentries = add( oentries, mergestring([  proddir, proddir ], "\t"));
+	    oentries = prepend( oentries, mergestring([  proddir, proddir ], "\t"));
 	    ioentries = (list<string>) union(  (list<string>)[  proddir ], ioentries);
 	}
 	else
@@ -263,8 +267,12 @@ any ReadServiceSettings(string module_auto) {
  */
 global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 
-    if ( !Package::InstallAll( [ "xinetd", "vsftpd" ]) ) {
-        Report::Error(_("Error while installing packages"));
+    if ( !Package::InstalledAll( [ "xinetd", "vsftpd", "openslp-server" ] ) ) {
+        y2debug("some packages are not installed");
+    }
+
+    if ( !Package::InstallAll( [ "xinetd", "vsftpd" , "openslp-server"])) {
+        y2error("Error while installing packages");
         return false;
     }
     string a = "";
@@ -327,9 +335,15 @@ define void RunSuseConfigApache( boolean enable ) ``{
  */
 global boolean SetupHTTP(string dir, string alias) {
 
-    if ( !Package::InstallAll( [ "apache2"  ]) ) {
-        Report::Error("Error while installing packages");
-        return false;
+    string help = _("The HTTP installation server requires an HTTP server package. The apache2 package
+will now be installed.");
+    if ( !Package::InstalledAny( [ "apache2" , "openslp-server" ] ) ) {
+        y2debug("some packages are not installed");
+
+        if ( !Package::InstallAll( [ "apache2" , "apache2-prefork", "openslp-server" ] ) ) {
+            y2error("Error while installing packages");
+            return false;
+        } 
     }
 
     if ((integer)SCR::Read(.target.size, "/etc/apache2/conf.d/inst_server.conf.in") > 0 )
@@ -418,27 +432,43 @@ Leave NFS exports unmodified?");
     return true;
 }
 
+/*
+ * Return the IP address of the local machine	
+ * @return string IP Address
+ */
+global string GetIPAddr()
+{
+    list<map> ifconfig =(list<map>)SCR::Read(.run.ifconfig);
+    ifconfig = filter(map iface, ifconfig, ``( iface["name"]:"" == "eth0"));
+    integer ip = ifconfig[0,"value", "inet", "addr"]:0;
+
+    return (IP::ToString(ip));
+}
 
 /**
  * Write SLP configuration
  */
-global boolean WriteSLPReg (map cm) {
+global boolean WriteSLPReg (map<string,any> cm) {
 
+    string ip = GetIPAddr();
     string serv = "";
+    string regfile =  sformat("YaST-%1.reg",  cm["name"]:"" );
     if (ServerSettings["service"]:`none == `nfs)
     {
-        serv =  sformat("service:install.suse:nfs://$HOSTNAME%1/%2%3,en,65535",
+        serv =  sformat("service:install.suse:nfs://%1/%2/%3%4,en,65535",
+                ip,
                 ServerSettings["directory"]:"", cm["name"]:"",
                 (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1" );
     }
     else if (ServerSettings["service"]:`none == `ftp)
     {
-        serv =  sformat("service:install.suse:ftp://$HOSTNAME/%1%2,en,65535",
+        serv =  sformat("service:install.suse:ftp://%1/%2%3,en,65535", ip,
                 cm["name"]:"", (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
     else if (ServerSettings["service"]:`none == `http)
     {
-        serv = sformat("service:install.suse:http://$HOSTNAME/%1/%2%3,en,65535",
+        serv = sformat("service:install.suse:http://%1/%2/%3%4,en,65535",
+                ip,
                 ServerSettings["alias"]:"", cm["name"]:"",
                 (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
     }
@@ -451,12 +481,36 @@ global boolean WriteSLPReg (map cm) {
         }
         });
 
-    attr["description"] = cm["LABEL"]:"" + " " +
-        cm["DEFAULTBASE"]:"";
-    attr["machine"] = (cm["DEFAULTBASE"]:"" == "i386") ?  "i586,i686" :
-        cm["DEFAULTBASE"]:"";
+    // Check if the description is already used
 
-    string regfile =  sformat("YaST-%1.reg",  cm["name"]:"" );
+    string descr = sformat("%1 ++%2++", cm["LABEL"]:"" , cm["DISTPRODUCT"]:"" );
+
+    string cmd = sformat("grep description  /etc/slp.reg.d/YaST-*.reg | grep -c \"%1\"", descr );
+    map bashret = (map)SCR::Execute(.target.bash_output, cmd);
+    y2debug("description bashret: %1", bashret);
+    if (bashret["exit"]:-1 == 0)
+    {
+        attr["description"] = sformat("%1  #%2", descr,
+                substring(bashret["stdout"]:"", 0 , 1 ) );
+    }
+    else
+    {
+        attr["description"] = sformat("%1", descr );
+    }
+    string machine = "";
+    list<string> machines = [];
+    foreach(string k, any v, cm, ``{
+            if (issubstring(k, "ARCH"))
+            {
+                machines = (list<string>)union (machines, splitstring((string)v, " ") );
+            }
+            });
+    machines = filter(string m , machines, ``(m!="" && m!="noarch"));
+    machines = toset(machines);
+    y2debug("machines: %1", machines);
+    attr["machine"] = mergestring(machines, ",");
+    y2debug("machine: %1", machine);
+
     boolean ret = SLP::RegFile(serv, attr, regfile );
 
     return ret;
@@ -646,32 +700,42 @@ global boolean Write() {
     Progress::NextStage ();
 
     boolean slpreload = false;
+    // Remove all SLP files
+    /*
     foreach(string cn, map cm, Configs, ``{
+            string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
+            if (SCR::Read(.target.size, regfile) > 0 )
+            {
+                SCR::Execute(.target.remove, regfile);
+            }
+         });
+         */
+    // Create all SLP files
+    foreach(string c, to_delete, ``{
+       string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  c );
+       if (SCR::Read(.target.size, regfile) > 0 )
+       {
+           slpreload = true;
+           SCR::Execute(.target.remove, regfile);
+       }
+    });
+
+    foreach(string cn, map<string, any> cm, Configs, ``{
             if (cm["slp"]:false)
             {
-                WriteSLPReg(cm);
-		slpreload = true;
-            } else {
-		string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
-		if (SCR::Read(.target.size, regfile) > 0 )
-		    SCR::Execute(.target.remove, regfile);
-
-	    }
+                string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
+                if (SCR::Read(.target.size, regfile) < 1 )
+                {
+                    WriteSLPReg(cm);
+		    slpreload = true;
+                }
+            }
         });
-
-    foreach(string c, to_delete, ``{
-	string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  c );
-	if (SCR::Read(.target.size, regfile) > 0 )
-	{
-	    slpreload = true;
-	    SCR::Execute(.target.remove, regfile);
-	}
-    });
 
     if (slpreload)
     {
         if (Service::Status("slpd") == 0 )
-	    Service::Reload("slpd");
+	    Service::Restart("slpd");
         else
 	    Service::Start("slpd");
     }

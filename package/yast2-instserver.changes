@@ -1,4 +1,54 @@
 -------------------------------------------------------------------
+Mon Nov 15 04:36:34 CET 2004 - nashif@suse.de
+
+- Fixed sformat syntax
+
+-------------------------------------------------------------------
+Fri Nov  5 06:25:02 CET 2004 - nashif@suse.de
+
+- #47946: YaST2 install server module requests "NUX Exnterprise.."
+- #47936: YaST installation server module asks for SLES9-SP1 CD4
+
+-------------------------------------------------------------------
+Tue Nov  2 08:27:16 CET 2004 - nashif@suse.de
+
+- #47701: announcing instserver dir via slp does not work
+- #47564: yast2-installserver fails to configure httpd
+- #47599: YaST "Installation Server" does not accept SP1 CD2 iso
+
+-------------------------------------------------------------------
+Sat Oct  9 04:36:45 CEST 2004 - nashif@suse.de
+
+- #47047: Service pack not copied correctly because of special 
+  format(hardlinks).
+- Use flag SP to identify Service pack CD
+
+-------------------------------------------------------------------
+Tue Aug 10 14:35:03 CEST 2004 - nashif@suse.de
+
+- Disable test mode
+
+-------------------------------------------------------------------
+Tue Aug 10 06:31:53 CEST 2004 - nashif@suse.de
+
+- If required packages cant be installed, return to setup screen.
+  (#43628)
+
+-------------------------------------------------------------------
+Mon Aug  9 19:19:02 CEST 2004 - nashif@suse.de
+
+- SLP not functional after adding sles9 and sles9 eval (#43466):
+  Now we use the product ID to distinguish between sources with
+  same Label.
+  Also detect if same product ID is already available and add a
+  counter to description attribute to make it unique
+
+-------------------------------------------------------------------
+Wed Jul  7 16:14:57 CEST 2004 - nashif@suse.de
+
+- Install Server setup doesn't work for SuSE Linux 9.1 (#42536)
+
+-------------------------------------------------------------------
 Wed May 26 05:48:53 CEST 2004 - nashif@suse.de
 
 - Added documentation about network installation
