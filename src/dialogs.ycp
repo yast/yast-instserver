@@ -19,7 +19,6 @@
 
     include "instserver/helps.ycp";
     include "instserver/routines.ycp";
-    include "instserver/complex.ycp";
 
 
 
@@ -78,6 +77,7 @@
 
 	    // free mount point
 	    SCR::Execute (.target.umount, Installation::sourcedir);
+
 
 	    string default_device = "/dev/cdrom";
 	    string mount_options = "";
@@ -288,6 +288,7 @@
 			    continue;
                         }
 		    }
+
                     foreach(string m, media, ``{
                             if (m == "doublesided")
                             doublesided = true;
@@ -445,7 +446,7 @@
 		    cmds = add(cmds, sformat("cp -pR %1/media.%2 %3", cdpath,
 					     current_cd, tgt) );
 		    cmds = add(cmds, sformat("cp  %1/content %2", cdpath,
-					      tgt));
+					     tgt));
 		}
 		else
 		{
@@ -620,7 +621,7 @@
                         || size (dir) > 127
                         )
                 {
-                    string errmsg = _("Invalid file name.
+                    string errmsg = dgettext("autoinst", "Invalid file name.
 Names can only contain letters, numbers, and underscore,
 must begin with letter, and must be
 127 characters long or less.
@@ -635,9 +636,9 @@ must begin with letter, and must be
                     y2debug("executing: %1", mkdircmd );
                     if (SCR::Execute(.target.bash, mkdircmd) != 0 )
                     {
-                        Popup::Error(sformat(_("Error while creating 'source' directory.
+                        Popup::Error(sformat(_("Error while creating 'source' directoy.
 Verify that the directory 
- %1
+ %1 
 is writable and try again."), Instserver::ServerSettings["directory"]:""));
                         continue;
                     }
