@@ -180,18 +180,34 @@ any InstserverSequence() {
  * For use with autoinstallation.
  * @return sequence result
  */
-any InstserverAutoSequence() {
+any SetupSequence() {
 
-    /* Initialization dialog caption */
-    string caption = _("Instserver Configuration");
-    /* Initialization dialog contents */
-    term contents = `Label(_("Initializing..."));
+
+    map aliases = $[
+	"read"	: [ ``( ReadDialog() ), true ],
+	"main"	:   ``( ServerSequence() ),
+	"write"	        : ``(WriteDialog())
+    ];
+
+    map sequence = $[
+	"ws_start" : "read",
+	"read" : $[
+	    `abort	: `abort,
+	    `next	: "main"
+	],
+	"main" : $[
+	    `abort	: `abort,
+	    `next	: "write"
+	],
+	"write" : $[
+	    `abort	: `abort,
+	    `next	: `next
+	]
+    ];
 
     Wizard::CreateDialog();
-    Wizard::SetContentsButtons(caption, contents, "",
-	    Label::BackButton(), Label::NextButton());
 
-    any ret = MainSequence();
+    any ret = Sequencer::Run(aliases, sequence);
 
     UI::CloseDialog();
     return ret;

@@ -104,6 +104,8 @@ any SummaryDialog() {
             }
             Instserver::Config = $[];
             Instserver::Config["directory"] = (selected!=nil) ? (string)selected : "";
+            if (selected!=nil && selected != "")
+                Instserver::Config["detected"] = true;
             break;
         }
         else if(ret == `next) {

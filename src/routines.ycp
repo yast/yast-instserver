@@ -1,0 +1,53 @@
+/**
+ * File:	include/instserver/complex.ycp
+ * Package:	Configuration of instserver
+ * Summary:	Dialogs definitions
+ * Authors:	Anas Nashif <nashif@suse.de>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "instserver";
+
+
+
+list ReadMediaFile(string media) {
+    if (SCR::Read(.target.size, media) != -1 )
+    {
+        string media_contents = (string)SCR::Read(.target.string, media);
+        list m = splitstring(media_contents, "\n");
+        return m;
+    } else {
+        return [];
+    }
+}
+
+map ReadContentFile(string content) {
+
+    map contentmap = (map)SCR::Read(.content_file, content);
+    return contentmap;
+}
+
+string basename (string file)
+{
+    list pathComponents = splitstring(file, "/");
+    string ret = pathComponents[size(pathComponents) -1 ]: "";
+    return ( ret );
+}
+
+/**
+ * Get directory name
+ * @param string path
+ * @return  string dirname
+ */
+string dirname (string file)
+{
+    list pathComponents = splitstring(file, "/");
+    string last = pathComponents[size(pathComponents) -1]:"";
+    string ret = substring(file, 0 , size(file) - size(last) -1 );
+    return (ret);
+}
+/* EOF */
+}
