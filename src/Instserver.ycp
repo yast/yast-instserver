@@ -18,6 +18,30 @@ textdomain "instserver";
 import "Progress";
 import "Report";
 import "Summary";
+import "XML";
+import "Popup";
+
+include "instserver/routines.ycp";
+
+/* Configuration Map */
+global map Config = $[];
+
+/* All Configurations */
+global map Configs = $[];
+
+/* Server Configuration */
+global map ServerSettings = $[];
+
+/* Configuration Repository */
+global string Rep = "/var/lib/YaST2/instserver";
+
+/* config file */
+string ConfigFile = Rep + "/instserver.xml";
+
+global string FirstDialog = "summary";
+
+
+global map Available = $[];
 
 /**
  * Prototypes
@@ -43,7 +67,7 @@ global boolean write_only = false;
  * Abort function
  * return boolean return true if abort
  */
-global boolean() AbortFunction = Modified;
+global boolean AbortFunction = Modified();
 
 /**
  * Abort function
@@ -51,7 +75,7 @@ global boolean() AbortFunction = Modified;
  */
 global define boolean Abort() ``{
     if(AbortFunction != nil)
-	return eval(AbortFunction) == true;
+	return (boolean)eval(AbortFunction);
     return false;
 }
 
@@ -64,20 +88,76 @@ global boolean Modified() {
     return modified;
 }
 
-// Settings: Define all variables needed for configuration of instserver
-// TODO FIXME: Define all the variables necessary to hold
-// TODO FIXME: the configuration here (with the appropriate
-// TODO FIXME: description)
-// TODO FIXME: For example:
-//   /**
-//    * List of the configured cards.
-//    */
-//   list cards = [];
-//
-//   /**
-//    * Some additional parameter needed for the configuration.
-//    */
-//   boolean additional_parameter = true;
+
+
+/**
+ * Setup NFS Server
+ * @param string directory
+ * @param string options
+ * @return boolean
+ */
+global boolean SetupNFS(string dir, string options) {
+
+    import "NfsServer";
+    boolean ret = false;
+    NfsServer::Read();
+    list<map> oldexp = NfsServer::exports;
+
+    list oldexists = filter(map e, oldexp, ``(e["mountpoint"]:"" == dir) );
+    if (size(oldexists) > 0 ) {
+        boolean yesno = Popup::YesNo("Directory is already exported via NFS, continue anyway?");
+        if (!yesno)
+            return false;
+    }
+    list<map> exports = oldexp;
+    map nfs = $[];
+    nfs["start_nfsserver"] = true;
+    list allowed = [];
+    if (size(options) == 0 ) {
+        // FIXME: Calculate mask and allow clients in the same network.
+        options = "*(ro,root_squash,sync)";
+    }
+    allowed=add(allowed, options);
+    map ex = $[];
+    ex["allowed"] = allowed;
+    ex["mountpoint"] = dir;
+    exports=add(exports, ex);
+    nfs["nfs_exports"] = exports;
+
+    NfsServer::Import(nfs);
+    Progress::off();
+    NfsServer::write_only = true;
+    ret = NfsServer::Write();
+    Progress::on();
+    return ret;
+}
+
+
+
+
+
+global list DetectMedia() {
+    if (ServerSettings["directory"]:"" != "")
+    {
+        string f = sformat("find %1 -name %2 | grep -v yast", ServerSettings["directory"]:"", "content");
+        map ret = (map)SCR::Execute (.target.bash_output, f);
+        list found = splitstring(ret["stdout"]:"", "\n");
+        found = filter(string s, found, ``(s!=""));
+        found = filter(string file, found, ``{
+                string d = dirname(file);
+                string media = sformat("%1/media.1/media", d);
+                return (SCR::Read(.target.size, media)!= -1 );
+                });
+        y2debug("media: %1", found);
+        return found;
+    }
+    else
+    {
+        return ([]);
+    }
+}
+
+
 
 /**
  * Read all instserver settings
@@ -86,30 +166,24 @@ global boolean Modified() {
 global boolean Read() {
 
     /* Instserver read dialog caption */
-    string caption = _("Initializing instserver Configuration");
+    string caption = _("Initializing Configuration");
 
-    // TODO FIXME Set the right number of stages
     integer steps = 4;
 
-    integer sl = 500;
+    integer sl = 1;
     sleep(sl);
 
-    // TODO FIXME Names of real stages
     // We do not set help text here, because it was set outside
     Progress::New( caption, " ", steps, [
-	    /* Progress stage 1/3 */
-	    _("Read the database"),
-	    /* Progress stage 2/3 */
-	    _("Read the previous settings"),
-	    /* Progress stage 3/3 */
-	    _("Detect the devices")
+	    /* Progress stage 1/2 */
+	    _("Read Configuration File"),
+	    /* Progress stage 2/2 */
+	    _("Look for new source media"),
 	], [
-	    /* Progress step 1/3 */
-	    _("Reading the database..."),
-	    /* Progress step 2/3 */
-	    _("Reading the previous settings..."),
-	    /* Progress step 3/3 */
-	    _("Detecting the devices..."),
+	    /* Progress step 1/2 */
+	    _("Reading configuration file..."),
+	    /* Progress step 2/2 */
+	    _("Looking for new source media..."),
 	    /* Progress finished */
 	    _("Finished")
 	],
@@ -119,30 +193,51 @@ global boolean Read() {
     // read database
     if(Abort()) return false;
     Progress::NextStage();
+    map c = $[];
+
+
+    if (SCR::Read(.target.size, ConfigFile) != -1 )
+    {
+        c = XML::XMLToYCPFile(ConfigFile);
+    }
+    list all = c["configurations"]:[];
+    ServerSettings = c["servers"]:$[];
+
+    Configs = listmap (map i, all, ``{
+            string name = i["name"]:"";
+            return($[name: i]);
+            });
+    y2milestone("Configs: %1", Configs);
+
+    if (c["servers"]:$[] == $[])
+        FirstDialog = "server";
+
+    ServerSettings = c["servers"]:$[];
+
     /* Error message */
     if(false) Report::Error(_("Cannot read the database1."));
     sleep(sl);
 
-    // read another database
-    if(Abort()) return false;
-    Progress::NextStep();
-    /* Error message */
-    if(false) Report::Error(_("Cannot read the database2."));
-    sleep(sl);
 
     // read current settings
     if(Abort()) return false;
     Progress::NextStage();
+
+
+    list media = DetectMedia();
+    foreach(string c, media, ``{
+            map ret = ReadContentFile(c);
+            if (ret != $[])
+            {
+            string d = dirname(c);
+            Available[d]= ret;
+            }
+            });
+
     /* Error message */
     if(false) Report::Error(_("Cannot read current settings."));
     sleep(sl);
 
-    // detect devices
-    if(Abort()) return false;
-    Progress::NextStage();
-    /* Error message */
-    if(false) Report::Warning(_("Cannot detect devices."));
-    sleep(sl);
 
     if(Abort()) return false;
     /* Progress finished */
@@ -154,6 +249,21 @@ global boolean Read() {
     return true;
 }
 
+
+
+/**
+ * Prepare map for writing  into XML
+ * @return lists of configurations
+ */
+define list PrepareConfigs() ``{
+
+    list c = maplist(string k, map v, Configs, ``{
+        return(v);
+    });
+    return (c);
+}
+
+
 /**
  * Write all instserver settings
  * @return true on success
@@ -163,13 +273,11 @@ global boolean Write() {
     /* Instserver read dialog caption */
     string caption = _("Saving instserver Configuration");
 
-    // TODO FIXME And set the right number of stages
     integer steps = 2;
 
-    integer sl = 500;
+    integer sl = 1;
     sleep(sl);
 
-    // TODO FIXME Names of real stages
     // We do not set help text here, because it was set outside
     Progress::New(caption, " ", steps, [
 	    /* Progress stage 1/2 */
@@ -190,6 +298,11 @@ global boolean Write() {
     // write settings
     if(Abort()) return false;
     Progress::NextStage();
+
+    list c = PrepareConfigs();
+    map xml = $["configurations": c , "servers": ServerSettings ];
+    boolean ret = XML::YCPToXMLFile(`instserver, xml, ConfigFile);
+
     /* Error message */
     if(false) Report::Error (_("Cannot write settings."));
     sleep(sl);
@@ -210,6 +323,28 @@ global boolean Write() {
     return true;
 }
 
+
+
+/**
+ * Create XML Configuration
+ * @return void
+ */
+global define void configSetup()
+    ``{
+    map doc = $[];
+    doc["listEntries"] =
+        $[
+        ];
+    doc["cdataSections"] = [];
+    doc["rootElement"] = "instserver";
+    doc["systemID"] = "/usr/share/YaST2/dtd/instserver.dtd";
+    doc["nameSpace"] = "http://www.suse.com/1.0/yast2ns";
+    doc["typeNamespace"] = "http://www.suse.com/1.0/configns";
+    XML::xmlCreateDoc(`instserver, doc);
+    return;
+}
+
+
 /**
  * Get all instserver settings from the first parameter
  * (For use by autoinstallation.)
@@ -217,7 +352,6 @@ global boolean Write() {
  * @return boolean True on success
  */
 global boolean Import (map settings) {
-    // TODO FIXME: your code here (fill the above mentioned variables)...
     return true;
 }
 
@@ -227,18 +361,22 @@ global boolean Import (map settings) {
  * @return map Dumped settings (later acceptable by Import ())
  */
 global map Export () {
-    // TODO FIXME: your code here (return the above mentioned variables)...
     return $[];
 }
+
 
 /**
  * Create a textual summary and a list of unconfigured cards
  * @return summary of the current configuration
  */
 global list Summary() {
-    // TODO FIXME: your code here...
     /* Configuration summary text for autoyast */
-    return [ _("Configuration summary ..."), [] ];
+    string sum = "";
+    list unconf = maplist(string d, map avail, Available, ``{
+            return(`item(`id(d), avail["LABEL"]:"" + "(" + avail["DEFAULTBASE"]:"" + ")" )) ;
+            });
+
+    return [ _("Configuration summary ..."), unconf ];
 }
 
 /**
@@ -246,20 +384,17 @@ global list Summary() {
  * @return table items
  */
 global list Overview() {
-    // TODO FIXME: your code here...
     return [];
 }
 
+
 /**
- * Return packages needed to be installed and removed during
- * Autoinstallation to insure module has all needed software
- * installed.
- * @return map with 2 lists.
+ * Constructor
  */
-global map AutoPackages() {
-    // TODO FIXME: your code here...
-    return $[ "install":[], "remove":[] ];
+global define void Instserver() ``{
+    configSetup();
 }
+
 
 /* EOF */
 }

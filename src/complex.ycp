@@ -52,6 +52,16 @@ symbol ReadDialog() {
  */
 symbol WriteDialog() {
     Wizard::RestoreHelp(HELPS["write"]:"");
+    string name = Instserver::Config["name"]:"";
+    string old_name = Instserver::Config["old_name"]:"";
+    if (haskey(Instserver::Configs, old_name) && old_name != "")
+    {
+
+        Instserver::Configs = filter(string k, map v, Instserver::Configs, ``(k!=old_name));
+        remove(Instserver::Config, "old_name");
+    }
+    Instserver::Configs[name] = Instserver::Config;
+
     // Instserver::AbortFunction = PollAbort;
     boolean ret = Instserver::Write();
     return ret ? `next : `abort;
@@ -64,15 +74,14 @@ symbol WriteDialog() {
 any SummaryDialog() {
 
     /* Instserver summary dialog caption */
-    string caption = _("Instserver Configuration");
+    string caption = _("Source Configuration");
 
-    /* FIXME */
     list summary = Instserver::Summary();
     list unconfigured = summary[1]:[];
     string configured = summary[0]:"";
 
     /* Frame label */
-    term contents = Wizard_hw::DetectedContent(_("Instserver to Configure"),
+    term contents = Wizard_hw::DetectedContent(_("Sources to Configure"),
 	    unconfigured, false, configured);
 
     Wizard::SetContentsButtons(caption, contents, HELPS["summary"]:"",
@@ -117,6 +126,7 @@ any SummaryDialog() {
     return ret;
 }
 
+
 /**
  * Overview dialog
  * @return dialog result
@@ -124,14 +134,13 @@ any SummaryDialog() {
 any OverviewDialog() {
 
     /* Instserver overview dialog caption */
-    string caption = _("Instserver Overview");
+    string caption = _("Installation Server");
 
     list overview = Instserver::Overview();
 
-    /* FIXME table header */
     term contents = Wizard_hw::ConfiguredContent(
 	/* Table header */
-	`header(_("Number"), _("Instserver")),
+	`header(_("Product"), _("Locations")),
 	overview, nil, nil, nil, nil );
 
     contents = Wizard_hw::SpacingAround(contents, 1.5, 1.5, 1.0, 1.0);

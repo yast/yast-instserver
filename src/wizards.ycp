@@ -12,6 +12,7 @@
 textdomain "instserver";
 
 import "Sequencer";
+import "Instserver";
 import "Wizard";
 
 include "instserver/complex.ycp";
@@ -23,13 +24,11 @@ include "instserver/dialogs.ycp";
  */
 any AddSequence() {
 
-    /* FIXME: adapt to your needs */
     map aliases = $[
 	"config1"	: ``(Configure1Dialog()),
 	"config2"	: ``(Configure2Dialog()),
     ];
 
-    /* FIXME: adapt to your needs */
     map sequence = $[
 	"ws_start" : "config1",
 	"config1" : $[
@@ -39,7 +38,7 @@ any AddSequence() {
 	"config2" : $[
 	    `abort	: `abort,
 	    `next	: `next
-	]
+	],
     ];
 
     return Sequencer::Run(aliases, sequence);
@@ -51,18 +50,22 @@ any AddSequence() {
  */
 any MainSequence() {
 
-    /* FIXME: adapt to your needs */
     map aliases = $[
 	"summary"	:   ``( SummaryDialog() ),
 	"overview"	:   ``( OverviewDialog() ),
 	"configure"	: [ ``( AddSequence() ), true ],
 	"add"		: [ ``( AddSequence() ), true ],
-	"edit"		: [ ``( AddSequence() ), true ]
+	"edit"		: [ ``( AddSequence() ), true ],
+	"server"	:   ``( ServerDialog() )
     ];
 
-    /* FIXME: adapt to your needs */
+    string start = Instserver::FirstDialog;
     map sequence = $[
-	"ws_start" : "summary",
+	"ws_start" : start,
+	"server" : $[
+	    `abort	: `abort,
+	    `next	: "summary",
+	],
 	"summary" : $[
 	    `abort	: `abort,
 	    `next	: `next,
@@ -104,7 +107,7 @@ any InstserverSequence() {
     map aliases = $[
 	"read"	: [ ``( ReadDialog() ), true ],
 	"main"	:   ``( MainSequence() ),
-	"write"	: [ ``( WriteDialog() ), true ]
+	"write"	        : ``(WriteDialog())
     ];
 
     map sequence = $[
