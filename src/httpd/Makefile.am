@@ -1,11 +1,4 @@
-apacheconfdir = /etc/httpd
-apacheconf_DATA = inst_server.conf \
-		  inst_server.conf.in
+apacheconfdir = /etc/apache2/conf.d
+apacheconf_DATA = inst_server.conf.in
 
-apachemodulesdir = /etc/httpd/modules
-apachemodules_DATA = inst_server
-
-sysconfigdir = /var/adm/fillup-templates
-sysconfig_DATA = sysconfig.apache-inst_server
-
-EXTRA_DIST = $(apacheconf_DATA) $(apachemodules_DATA) $(sysconfig_DATA)
+EXTRA_DIST = $(apacheconf_DATA) 

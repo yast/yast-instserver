@@ -1,7 +1,13 @@
-# httpd configuration for YOU server included by httpd.conf
+# httpd configuration for Installation Server included by httpd.conf
+<IfDefine inst_server>
+    @ALIAS_CONFIGLINE@
+    <Directory @SERVERDIR@>
 
-<IfModule mod_alias.c>
+        Options +Indexes
+        IndexOptions +NameWidth=*
 
-  ALIAS_CONFIGLINE
+        Order allow,deny
+        Allow from all
 
-</IfModule>
+    </Directory>
+</IfDefine>

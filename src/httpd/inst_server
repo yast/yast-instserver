@@ -1,3 +1,0 @@
-Variable:INSTALLATION_SERVER
-Text:Installation-Server
-Include:/etc/httpd/inst_server.conf
