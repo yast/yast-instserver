@@ -14,10 +14,9 @@ X-SuSE-YaST-RootOnly=true
 X-SuSE-YaST-AutoInst=
 X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
-X-SuSE-YaST-AutoInstResource= instserver
 
 Icon=instserver
 Exec=/sbin/yast2 instserver 
 
-Name=Instserver
-GenericName=Configure instserver
+Name=Installation Server
+GenericName=Configure and Manage Installation Servers
