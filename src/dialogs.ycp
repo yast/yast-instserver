@@ -188,7 +188,7 @@
             y2debug("tgt: %1", tgt );
             y2debug("shorttgt: %1", shorttgt );
 
-            list cmds = [];
+            list<string> cmds = [];
 
             // Copy stuff here.
             // Now, we check if this product on the CD is based on some other product. If
@@ -440,7 +440,7 @@
 
                         y2milestone("content: %1", content);
                         Instserver::Config["name"] = dir;
-                        Instserver::Config = (map)union(Instserver::Config, content);
+                        Instserver::Config = (map<string, any>)union(Instserver::Config, content);
                         Instserver::Config["directory"] = dir;
                         Instserver::Config["slp"] = slp;
                         Instserver::Config["dir-type"] = stype;
