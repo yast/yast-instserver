@@ -19,9 +19,6 @@ Summary:	Configuration of instserver
 
 @CLEAN@
 
-%post
-%{fillup_only -i apache-inst_server}
-
 %files
 %defattr(-,root,root)
 %dir @yncludedir@/instserver

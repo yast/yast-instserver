@@ -262,13 +262,11 @@ will now be installed.");
  * @return void
  */
 define void RunSuseConfigApache( string state ) ``{
-    SCR::Write( .sysconfig.apache.INSTALLATION_SERVER, state );
-    if( !SCR::Write( .sysconfig.apache, nil ) ) {
-        Popup::Error( _("Unable to write /etc/sysconfig/apache") );
+    string flags = (string) SCR::Read( .sysconfig.apache2.APACHE_SERVER_FLAGS );
+    SCR::Write( .sysconfig.apache2.APACHE_SERVER_FLAGS, flags + " inst_server" );
+    if( !SCR::Write( .sysconfig.apache2, nil ) ) {
+        Popup::Error( _("Unable to write /etc/sysconfig/apache2") );
         return;
-    }
-    if( SCR::Execute( .target.bash, "/sbin/SuSEconfig --module apache" ) != 0 ) {
-        Popup::Error( _("'SuSEconfig --module apache' failed.") );
     }
 }
 
@@ -281,13 +279,13 @@ define void RunSuseConfigApache( string state ) ``{
  */
 global boolean SetupHTTP(string dir, string alias) {
 
-    string help = _("The HTTP Installation Server requires an HTTP server package. The apache package
+    string help = _("The HTTP Installation Server requires an HTTP server package. The apache2 package
 will now be installed.");
-    if ( !Require::AreAllPackagesInstalled( [ "apache" ] ) ) {
+    if ( !Require::AreAllPackagesInstalled( [ "apache2" ] ) ) {
         y2debug("some packages are not installed");
     }
 
-    if ( !Require::RequireAndConflict( [ "apache"  ], [], help ) ) {
+    if ( !Require::RequireAndConflict( [ "apache2"  ], [], help ) ) {
         y2error("Error while installing packages");
         return false;
     }
@@ -310,17 +308,17 @@ will now be installed.");
     y2debug("conf: %1", confline);
 
     conf = mergestring(confline, "\n");
-    if (!SCR::Write(.target.string, "/etc/httpd/inst_server.conf", conf ))
+    if (!SCR::Write(.target.string, "/etc/apache2/inst_server.conf", conf ))
     {
-        y2error("Error writing apache config file");
+        y2error("Error writing apache2 config file");
     }
     RunSuseConfigApache("yes");
 
-    Service::Enable("apache");
-    if (Service::Status("apache") == 0 )
-        Service::Reload("apache");
+    Service::Enable("apache2");
+    if (Service::Status("apache2") == 0 )
+        Service::Reload("apache2");
     else
-        Service::Start("apache");
+        Service::Start("apache2");
     return true;
 }
 
