@@ -39,6 +39,52 @@ any AddSequence() {
     return Sequencer::Run(aliases, sequence);
 }
 
+
+
+
+/**
+ * Server Sequence
+ * @return sequence result
+ */
+any ServerSequence() {
+
+    map aliases = $[
+	"main"	: ``(ServerDialog()),
+	"nfs"	: ``(NfsDialog()),
+	"http"	: ``(HttpDialog()),
+	"ftp"	: ``(FtpDialog()),
+    ];
+
+    map sequence = $[
+	"ws_start" : "main",
+	"main" : $[
+	    `abort	: `abort,
+	    `nfs	: "nfs",
+	    `http	: "http",
+	    `ftp	: `next,
+	    `next	: `next
+	],
+	"ftp" : $[
+	    `abort	: `abort,
+	    `next	: `next
+	],
+	"http" : $[
+	    `abort	: `abort,
+	    `next	: `next
+	],
+	"nfs" : $[
+	    `abort	: `abort,
+	    `next	: `next
+	]
+    ];
+
+    return Sequencer::Run(aliases, sequence);
+}
+
+
+
+
+
 /**
  * Main workflow of the instserver configuration
  * @return sequence result
@@ -51,7 +97,7 @@ any MainSequence() {
 	"configure"	: [ ``( AddSequence() ), true ],
 	"add"		: [ ``( AddSequence() ), true ],
 	"edit"		: [ ``( AddSequence() ), true ],
-	"server"	:   ``( ServerDialog() )
+	"server"	: [ ``( ServerSequence() ) , true ]
     ];
 
     string start = Instserver::FirstDialog;

@@ -19,6 +19,9 @@ Summary:	Configuration of instserver
 
 @CLEAN@
 
+%post
+%{fillup_and_insserv -i apache-inst_server}
+
 %files
 %defattr(-,root,root)
 %dir @yncludedir@/instserver
@@ -29,3 +32,8 @@ Summary:	Configuration of instserver
 @desktopdir@/instserver.desktop
 %doc @docdir@
 /var/lib/YaST2/instserver
+/etc/httpd/modules/inst_server
+/etc/httpd/inst_server.conf
+/etc/httpd/inst_server.conf.in
+/var/adm/fillup-templates/sysconfig.apache-inst_server
+

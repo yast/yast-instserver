@@ -1,5 +1,6 @@
 apacheconfdir = /etc/httpd
-apacheconf_DATA = inst_server.conf
+apacheconf_DATA = inst_server.conf \
+		  inst_server.conf.in
 
 apachemodulesdir = /etc/httpd/modules
 apachemodules_DATA = inst_server

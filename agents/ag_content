@@ -30,7 +30,7 @@ sub Read ()
     my $fh;
     if (defined($content_file)) {
         $fh = IO::File->new("< $content_file")
-            or die "Couldn't open $content_file for reading: $!\n";
+            or return %content;
 
         while(<$fh>)
         {
