@@ -27,7 +27,7 @@ import "SLP";
 
 include "instserver/routines.ycp";
 
-global boolean test = true;
+global boolean test = false;
 
 /* Configuration Map */
 global map<string, any> Config = $[];
