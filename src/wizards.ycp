@@ -168,7 +168,8 @@ any InstserverSequence() {
     ];
 
     Wizard::CreateDialog();
-
+    Wizard::SetDesktopIcon("instserver");
+    
     any ret = Sequencer::Run(aliases, sequence);
 
     UI::CloseDialog();
@@ -206,7 +207,8 @@ any SetupSequence() {
     ];
 
     Wizard::CreateDialog();
-
+    Wizard::SetDesktopIcon("instserver");
+    
     any ret = Sequencer::Run(aliases, sequence);
 
     UI::CloseDialog();
