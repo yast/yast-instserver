@@ -555,10 +555,10 @@
 				     ),
 			    `VSpacing(1),
 			    `Left(
-				  `CheckBox(`id(`prompt), _("&Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
+				  `CheckBox(`id(`prompt), _("&Prompt for Additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
 				  ),
 			    `Left(
-				  `CheckBox(`id(`slp), _("A&nnounce as Installation Service with SLP"), slp )
+				  `CheckBox(`id(`slp), _("A&nnounce as Installation Server with SLP"), slp )
 				  )
                             )
 		      );
