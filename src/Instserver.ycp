@@ -338,7 +338,7 @@ global boolean SetupHTTP(string dir, string alias) {
 
     string help = _("The HTTP installation server requires an HTTP server package. The apache2 package
 will now be installed.");
-     if ( !Package::InstalledAny( [ "apache2" , "openslp-server" ] ) ) {
+     if ( !Package::InstalledAll( [ "apache2" , "openslp-server" ] ) ) {
         y2debug("some packages are not installed");
 
          if ( !Package::InstallAll( [ "apache2" , "apache2-prefork", "openslp-server" ] ) ) {
