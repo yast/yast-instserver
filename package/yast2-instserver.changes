@@ -1,9 +1,4 @@
 -------------------------------------------------------------------
-Mon Nov 15 04:36:34 CET 2004 - nashif@suse.de
-
-- Fixed sformat syntax
-
--------------------------------------------------------------------
 Fri Nov  5 06:25:02 CET 2004 - nashif@suse.de
 
 - #47946: YaST2 install server module requests "NUX Exnterprise.."
