@@ -66,6 +66,10 @@ any SummaryDialog() {
 
     /* Instserver summary dialog caption */
     string caption = _("Source Configuration");
+    if (Instserver::FirstDialog == "settings")
+    {
+        Instserver::Detected = Instserver::DetectMedia();
+    }
 
     list summary = Instserver::Summary();
     list unconfigured = summary[1]:[];
@@ -176,9 +180,14 @@ any OverviewDialog() {
     Wizard::SetContentsButtons(caption, contents, HELPS["overview"]:"",
 	    Label::BackButton(), Label::FinishButton());
 
+    if (size(overview) == 0 )
+    {
+        UI::ChangeWidget(`id(`edit_button), `Enabled, false);
+        UI::ChangeWidget(`id(`delete_button), `Enabled, false);
+    }
+
     any ret = nil;
     while(true) {
-
 	ret = UI::UserInput();
 
         string current = (string) UI::QueryWidget(`id(`table), `CurrentItem );

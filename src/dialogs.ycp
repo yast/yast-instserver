@@ -611,7 +611,7 @@ Not copying CDs."));
                 Instserver::ServerSettings["directory"] = dir;
                 Instserver::modified = true;
                 if (dry)
-                    ret = `back;
+                    ret = `next;
                 else
                     ret = source;
                 break;
