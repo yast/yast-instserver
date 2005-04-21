@@ -15,7 +15,7 @@ X-SuSE-YaST-AutoInst=
 X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
 
-Icon=instserver
+Icon=yast-instserver
 Exec=/sbin/yast2 instserver 
 
 Name=Installation Server
