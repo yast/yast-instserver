@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue May 17 11:02:53 CEST 2005 - lslezak@suse.cz
+
+- fixed FTP source configuration (#82861)
+- 2.12.0
+
+-------------------------------------------------------------------
 Wed Feb  9 19:07:09 CET 2005 - nashif@suse.de
 
 - Save configuration data into /etc/YaST2/instserver

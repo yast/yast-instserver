@@ -276,11 +276,11 @@ will now be installed.
         y2error("Error while installing packages");
         return false;
     }
-    string a = "";
-    if (!issubstring(dir, a))
+    if (!issubstring(dir, ftproot))
     {
         if (ftpalias != "")
         {
+	    string a = "";
             a = ftproot + "/" + ftpalias;
             SCR::Execute(.target.bash,"mkdir -p " + a);
         }
