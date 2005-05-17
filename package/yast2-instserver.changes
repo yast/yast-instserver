@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue May 17 16:20:33 CEST 2005 - lslezak@suse.cz
+
+- another fix for FTP configuration (#82861)
+- 2.12.1
+
+-------------------------------------------------------------------
 Tue May 17 11:02:53 CEST 2005 - lslezak@suse.cz
 
 - fixed FTP source configuration (#82861)

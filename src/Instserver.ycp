@@ -283,6 +283,7 @@ will now be installed.
 	    string a = "";
             a = ftproot + "/" + ftpalias;
             SCR::Execute(.target.bash,"mkdir -p " + a);
+	    ftproot = a;
         }
         y2debug("binding dir");
         MountBind(dir, ftproot);
@@ -355,8 +356,8 @@ will now be installed.");
         if (findfirstof(alias, "/") != 0 )
             alias = "/" + alias;
         confline = maplist(string line, confline, ``{
-                any res = regexpsub(line , "(.*)@ALIAS@(.*)", sformat("\\1%1\\2", alias ));
-                res = regexpsub((res!=nil) ?(string)res:line , "(.*)@SERVERDIR@(.*)", sformat("\\1%1\\2", dir ));
+                any res = regexpsub(line , "(.*)@ALIAS@(.*)", sformat("\\1%1/\\2", alias ));
+                res = regexpsub((res!=nil) ?(string)res:line , "(.*)@SERVERDIR@(.*)", sformat("\\1%1/\\2", dir ));
                 if (res != nil)
                 return ((string)res);
                 else
