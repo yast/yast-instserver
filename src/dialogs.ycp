@@ -916,6 +916,8 @@ Not copying CDs."));
             ret = UI::UserInput();
 
             ftproot = (string)UI::QueryWidget(`id(`ftproot), `Value);
+	    ftpalias = (string)UI::QueryWidget(`id(`ftpalias), `Value);
+
             /* abort? */
             if(ret == `abort || ret == `cancel) {
                 if(ReallyAbort()) break;
