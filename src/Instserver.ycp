@@ -452,6 +452,8 @@ global string GetIPAddr()
  */
 global boolean WriteSLPReg (map<string,any> cm) {
 
+    y2debug("WriteSLPReg(%1)", cm);
+
     string ip = GetIPAddr();
     string serv = "";
     string regfile =  sformat("YaST-%1.reg",  cm["name"]:"" );
@@ -484,10 +486,26 @@ global boolean WriteSLPReg (map<string,any> cm) {
         });
 
     // Check if the description is already used
+    // don't check file which will be rewritten
+    string checkfiles = "/etc/slp.reg.d/YaST-*.reg";
+    string targetfile = "/etc/slp.reg.d/" + regfile;
+
+    if (SCR::Read(.target.size, targetfile) >= 0)
+    {
+	// don't check the overwritten config file
+	// get names of all config files except the rewritten one
+	map lsout = (map)SCR::Execute(.target.bash_output, "/bin/ls /etc/slp.reg.d/* | grep -v /etc/slp.reg.d/YaST-sles9.reg");
+	if (lsout["exit"]:-1 == 0)
+	{
+	    // merge the output into single line
+	    checkfiles = mergestring(splitstring(lsout["stdout"]:"", "\n"), " ");
+	    y2debug("files to check: %1", checkfiles);
+	}
+    }
 
     string descr = sformat("%1 ++%2++", cm["LABEL"]:"" , cm["DISTPRODUCT"]:"" );
 
-    string cmd = sformat("grep description  /etc/slp.reg.d/YaST-*.reg | grep -c \"%1\"", descr );
+    string cmd = sformat("grep description  %1 | grep -c \"%2\"", checkfiles, descr);
     map bashret = (map)SCR::Execute(.target.bash_output, cmd);
     y2debug("description bashret: %1", bashret);
     if (bashret["exit"]:-1 == 0)
@@ -512,6 +530,8 @@ global boolean WriteSLPReg (map<string,any> cm) {
     y2debug("machines: %1", machines);
     attr["machine"] = mergestring(machines, ",");
     y2debug("machine: %1", machine);
+
+    y2milestone("registering SLP service: serv: %1, attr: %2, regfile: %3", serv, attr, regfile);
 
     boolean ret = SLP::RegFile(serv, attr, regfile );
 
@@ -660,6 +680,8 @@ define list PrepareConfigs() ``{
  */
 global boolean Write() {
 
+    y2debug("Instserver::Write() called");
+
     /* Instserver read dialog caption */
     string caption = _("Saving Installation Server Configuration");
 
@@ -712,8 +734,20 @@ global boolean Write() {
             }
          });
          */
+
+    list<string> regs_delete = to_delete;
+
+    // add disabled SLP sources
+    foreach(string confname, map<string, any> conf, Instserver::Configs, {
+	    if (conf["slp"]:true == false)
+	    {
+		regs_delete = add(regs_delete, conf["name"]:"");
+	    }
+	}
+    );
+
     // Create all SLP files
-    foreach(string c, to_delete, ``{
+    foreach(string c, regs_delete, ``{
        string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  c );
        if (SCR::Read(.target.size, regfile) > 0 )
        {
@@ -726,7 +760,7 @@ global boolean Write() {
             if (cm["slp"]:false)
             {
                 string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
-                if (SCR::Read(.target.size, regfile) < 1 )
+//                if (SCR::Read(.target.size, regfile) < 0 )
                 {
                     WriteSLPReg(cm);
 		    slpreload = true;
@@ -734,7 +768,7 @@ global boolean Write() {
             }
         });
 
-
+    // slp service reload is required - the configuration has been changed
     if (slpreload)
     {
         if (Service::Status("slpd") == 0 )

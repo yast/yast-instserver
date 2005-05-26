@@ -736,13 +736,13 @@ Not copying CDs."));
         term buttons =
             `VBox (
 		   // radio button label
-		   `Left (`RadioButton (`id (`http), `opt (`notify),
+		   `Left (`RadioButton (`id (`http),
 					_("&Configure as HTTP Source"), source == `http)),
 		   // radio button label
-		   `Left (`RadioButton (`id (`ftp), `opt (`notify),
+		   `Left (`RadioButton (`id (`ftp),
 					_("&Configure as FTP Source"), source == `ftp)),
 		   // radio button label
-		   `Left (`RadioButton (`id (`nfs), `opt (`notify),
+		   `Left (`RadioButton (`id (`nfs),
 					_("&Configure as NFS Source"), source == `nfs))
 
 		   );
@@ -773,8 +773,10 @@ Not copying CDs."));
             } else {
                 UI::ChangeWidget(`id(`service), `Enabled, true);
             }
-            source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
+
             ret = UI::UserInput();
+
+            source = (symbol)UI::QueryWidget(`id(`service), `CurrentButton);
             dir = (string)UI::QueryWidget(`id(`dir), `Value);
 
             /* abort? */
@@ -814,7 +816,7 @@ Not copying CDs."));
                 break;
             }
             else {
-                y2error("unexpected retcode: %1", ret);
+		y2error("unexpected retcode: %1", ret);
                 continue;
             }
         }
