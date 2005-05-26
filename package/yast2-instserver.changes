@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu May 26 13:49:16 CEST 2005 - lslezak@suse.cz
+
+- update SLP registration file when export type (FTP,NFS...)
+  is changed, remove it when SLP is disabled (#83909)
+- 2.12.2
+
+-------------------------------------------------------------------
 Tue May 17 16:20:33 CEST 2005 - lslezak@suse.cz
 
 - another fix for FTP configuration (#82861)
