@@ -48,7 +48,7 @@ options, see the manual page for <em>exports</em> (man exports(5))
 ") +
 
     _("<p>The source will be available at the following URL:
-<pre>nfs://Host_IP/Source_Name</pre></p>"),
+<tt>nfs://Host_IP/Source_Name</tt></p>"),
     "ftp": _("<p><b><big>FTP Server Configuration</big></b><br>
 </p>") +
 
@@ -67,7 +67,7 @@ FTP server (using the <em>--bind</em> option of <em>mount</em>).
 </p>
 ") +
 
-    _("<p><pre>ftp://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</pre>
+    _("<p><tt>ftp://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</tt>
 </p>"),
     "http": _("<p><b><big>HTTP Server Configuration</big></b><br>
 </p>") +
@@ -81,7 +81,7 @@ server root directory.</p>
 <em>SuSE</em> as the alias, the sources will be available as shown below:</p>
 ") +
 
-    _("<p><pre>http://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</pre>
+    _("<p><tt>http://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</tt>
 </p>"),
 
     "initial": _("<p><b><big>Creating a New Configuration</big></b><br>
