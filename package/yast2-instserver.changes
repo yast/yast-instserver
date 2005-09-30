@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Sep 30 14:27:14 CEST 2005 - lslezak@suse.cz
+
+- use WizardHW for the overview dialog, code cleanup
+- MountBind() fixed
+- 2.13.0
+
+-------------------------------------------------------------------
 Thu Aug 11 10:17:53 CEST 2005 - visnov@suse.cz
 
 - mark up help examples according to the style guide 

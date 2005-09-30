@@ -815,7 +815,7 @@ Not copying CDs."));
                     ret = source;
                 break;
             }
-            else {
+            else if (ret != `dry) {
 		y2error("unexpected retcode: %1", ret);
                 continue;
             }
