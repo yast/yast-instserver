@@ -130,39 +130,26 @@ any SetupSequence() {
 any MainSequence() {
 
     map aliases = $[
-	"summary"	:   ``( SummaryDialog() ),
 	"overview"	:   ``( OverviewDialog() ),
-	"configure"	: [ ``( AddSequence() ), true ],
 	"add"		: [ ``( AddSequence() ), true ],
 	"edit"		: [ ``( AddSequence() ), true ],
 	"server"	: [ ``( ServerSequence() ) , true ],
-	"settings"	: [ ``( SetupSequence() ) , true ]
     ];
 
     string start = Instserver::FirstDialog;
+
     map sequence = $[
-	"ws_start" : start,
-	"summary" : $[
-	    `abort	: `abort,
-	    `next	: `next,
-	    `overview	: "overview",
-	    `configure	: "configure",
-	    `other	: "configure",
-	    `settings	: "settings",
-	],
+	"ws_start" : "overview",
 	"overview" : $[
 	    `abort	: `abort,
 	    `next	: `next,
 	    `add	: "add",
 	    `edit	: "edit",
+	    `config	: "server"
 	],
-	"configure" : $[
+	"server" : $[
 	    `abort	: `abort,
-	    `next	: "summary",
-	],
-	"settings" : $[
-	    `abort	: `abort,
-	    `next	: "summary",
+	    `next	: "overview"
 	],
 	"add" : $[
 	    `abort	: `abort,

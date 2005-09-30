@@ -14,10 +14,13 @@ textdomain "instserver";
 import "Label";
 import "Popup";
 import "Wizard";
-import "Wizard_hw";
+import "WizardHW";
 import "Instserver";
 
 include "instserver/helps.ycp";
+
+// selected installation source
+string selected_source = "";
 
 /**
  * Return a modification status
@@ -58,106 +61,45 @@ symbol WriteDialog() {
     return ret ? `next : `abort;
 }
 
-/**
- * Summary dialog
- * @return dialog result
- */
-any SummaryDialog() {
 
-    /* Instserver summary dialog caption */
-    string caption = _("Source Configuration");
-    if (Instserver::FirstDialog == "settings")
+define list<map<string,any> > createOverviewTable() {
+
+    map<string, map<string, any> > conf  = Instserver::Configs;
+
+    y2milestone("Current configuration: conf: %1", conf);
+
+    list<map<string,any> > ret = [];
+
+    if (conf != nil && size(conf) > 0)
     {
-        Instserver::Detected = Instserver::DetectMedia();
-    }
+	foreach(string name, map cfg, conf, {
+		list<string> descr = [];
 
-    list summary = Instserver::Summary();
-    list unconfigured = summary[1]:[];
-    string configured = summary[0]:"";
+		if (haskey(cfg, "LABEL") && cfg["LABEL"]:"" != nil)
+		{
+		    // source overview - %1 is product name (e.g. "SUSE LINUX Version 10.0")
+		    descr = add(descr, sformat(_("Label: %1"), cfg["LABEL"]:""));
+		}
 
-    /* Frame label */
-    term contents =  `HBox(
-	`HSpacing(1.5),
-	`VBox(
-	    `VSpacing(0.4),
-	    `Frame(_("Sources to Configure"), `HBox(
-		`HSpacing(0.5),
-		`VBox(
-		    `SelectionBox(`id(`detected_selbox), `opt(`notify),
-			_("A&vailable are:"), unconfigured),
-		    `HBox(
-			`HSpacing(0.5),
-			`HStretch(),
-			`PushButton(`id(`configure_button), `opt (`key_F3),
-                            _("&Configure..."))
-                        )
-		),
-		`HSpacing(0.5)
-	    )),
-	    `VSpacing(0.3),
-	    `RichText(`id(`configured_richtext), configured),
-	    `Right(
-                `HBox(
-                    `PushButton(`id(`settings_button),
-                        _("Settin&gs")),
-                    `PushButton(`id(`edit_button), `opt (`key_F4),
-                        _("C&hange..."))
-                    )
-                ),
-	    `VSpacing(0.4)
-	),
-	`HSpacing(1.5)
-            );
+		if (haskey(cfg, "slp") && cfg["slp"]:false != nil)
+		{
+		    // yes/no string displayed in the overview
+		    descr = add(descr, sformat(_("Announce using SLP: %1"), (cfg["slp"]:false) ? _("Yes") : _("No")));
+		}
 
-    Wizard::SetContentsButtons(caption, contents, HELPS["summary"]:"",
-	    Label::BackButton(), Label::FinishButton());
+		map<string,any> r = $[
+		    "id" : name,
+		    "table_descr" : [ name, cfg["PRODUCT"]:"" + " " + cfg["VERSION"]:"" ],
+		    "rich_descr" : WizardHW::CreateRichTextDescription(name, descr)
+		];
 
-    any ret = nil;
-    while(true) {
-
-	ret = UI::UserInput();
-
-	/* abort? */
-	if(ret == `abort || ret == `cancel || ret == `back) {
-	    if(ReallyAbort()) break;
-	    else continue;
-	}
-        else if(ret == `settings_button) {
-            ret = `settings;
-            break;
-        }
-        /* overview dialog */
-        else if(ret == `edit_button) {
-            ret = `overview;
-            break;
-        }
-        /* configure the selected device */
-        else if(ret == `configure_button) {
-            any selected = UI::QueryWidget(`id(`detected_selbox), `CurrentItem);
-            if(selected == `other) {
-                ret = `other;
-            }
-            else {
-                ret = `configure;
-            }
-            Instserver::Config = $[];
-            Instserver::Config["directory"] = (selected!=nil) ? (string)selected : "";
-            if (selected!=nil && selected != "")
-                Instserver::Config["detected"] = true;
-            break;
-        }
-        else if(ret == `next) {
-            break;
-        }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
+		ret = add(ret, r);
+	    }
+	);
     }
 
     return ret;
 }
-
 
 /**
  * Overview dialog
@@ -167,62 +109,75 @@ any OverviewDialog() {
 
     /* Instserver overview dialog caption */
     string caption = _("Installation Server");
+    list<list> extra_buttons = [
+	// menu item
+	[`config, _("&Server configuration...")],
+    ];
+    list<map<string,any> > items = createOverviewTable();
 
-    list overview = Instserver::Overview();
+    WizardHW::CreateHWDialog(caption,
+	HELPS["overview"]:"",
+	// table header
+	[ _("Configuration"), _("Product") ],
+	extra_buttons
+    );
 
-    term contents = Wizard_hw::ConfiguredContent(
-	/* Table header */
-	`header(_("Configuration"), _("Product")),
-	overview, nil, nil, nil, nil );
+    WizardHW::SetContents(items);
 
-    contents = Wizard_hw::SpacingAround(contents, 1.5, 1.5, 1.0, 1.0);
+    Wizard::SetNextButton(`next, Label::FinishButton());
 
-    Wizard::SetContentsButtons(caption, contents, HELPS["overview"]:"",
-	    Label::BackButton(), Label::FinishButton());
-
-    if (size(overview) == 0 )
-    {
-        UI::ChangeWidget(`id(`edit_button), `Enabled, false);
-        UI::ChangeWidget(`id(`delete_button), `Enabled, false);
-    }
 
     any ret = nil;
     while(true) {
-	ret = UI::UserInput();
 
-        string current = (string) UI::QueryWidget(`id(`table), `CurrentItem );
+	// initilize selected selected source
+	if (selected_source == "")
+	{
+	    selected_source = WizardHW::SelectedItem();
+	}
+
+	// set previously selected source
+	WizardHW::SetSelectedItem(selected_source);
+
+
+	map<string,any> ev = WizardHW::WaitForEvent();
+	y2milestone("WaitForEvent: %1", ev);
+
+	ret = (symbol)ev["event","ID"]:nil;
+        string current = ev["selected"]:"";
+	selected_source = WizardHW::SelectedItem();
+
 	/* abort? */
 	if(ret == `abort || ret == `cancel) {
 	    if(ReallyAbort()) break;
 	    else continue;
 	}
         /* add */
-        else if(ret == `add_button) {
+        else if(ret == `add) {
             Instserver::Config = $[];
-            ret = `add;
             break;
         }
         /* edit */
-        else if(ret == `edit_button) {
+        else if(ret == `edit) {
             Instserver::Config = Instserver::Configs[current]:$[];
-            ret = `edit;
             break;
         }
         /* delete */
-        else if(ret == `delete_button) {
-            y2debug("Deleting: %1", current);
+        else if(ret == `delete) {
+            y2milestone("Deleting: %1", current);
             Instserver::Configs = filter(string k, map<string, any> v, Instserver::Configs, ``(k!=current));
 	    Instserver::to_delete = add(Instserver::to_delete, current);
-            overview = Instserver::Overview();
-            UI::ChangeWidget(`id(`table), `Items, overview);
-            if (size(overview) == 0 )
-            {
-                UI::ChangeWidget(`id(`edit_button), `Enabled, false);
-                UI::ChangeWidget(`id(`delete_button), `Enabled, false);
-            }
+
+	    // refresh content of the table
+	    items = createOverviewTable();
+	    WizardHW::SetContents(items);
+
+	    // the selected source has just been removed
+	    selected_source = "";
+
             continue;
         }
-        else if(ret == `next || ret == `back) {
+        else if(ret == `next || ret == `back || ret == `config) {
             break;
         }
         else {
