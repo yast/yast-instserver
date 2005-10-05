@@ -322,7 +322,6 @@
                 }
 
 
-                
 		list<string> l = splitstring(distprod, " ");
 		distprod = mergestring(l, "-");
 		string tgt = sformat("%1/%2/CD%3", dir, distprod, current_cd );
@@ -367,7 +366,7 @@
 
 		    // its not standalone
 		    standalone = false;
-                    
+
 		    // and its not a base product
 		    baseproduct = false;
 
@@ -521,19 +520,16 @@
 	}
 
 
-
     /**
      * Source configuration dialog
      * @return dialog result
      */
-    any SourceConfigDialog () {
+    any MediaDialog () {
 
         /* Instserver configuration dialog caption */
         string caption = _("Source Configuration");
 
-        string dir = Instserver::Config["directory"]:"";
         string isodir = Instserver::ServerSettings["iso-dir"]:"";
-        boolean slp = Instserver::Config["slp"]:false;
         boolean promptmore = false;
         boolean iso = false;
 
@@ -541,8 +537,6 @@
         term contents =
             `HVSquash(
 		      `VBox(
-			    `Left(`TextEntry(`id(`dir), _("Source &Name:"), dir)),
-			    `VSpacing(1),
 			    `Left(`CheckBox(`id(`iso), `opt(`notify),  _("Use &ISO Images Instead of CDs"), iso )),
 			    `VSquash(
 				     `HBox(
@@ -556,50 +550,35 @@
 			    `VSpacing(1),
 			    `Left(
 				  `CheckBox(`id(`prompt), _("&Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
-				  ),
-			    `Left(
-				  `CheckBox(`id(`slp), _("A&nnounce as Installation Service with SLP"), slp )
 				  )
-                            )
-		      );
+		      )
+	    );
 
 	Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"initial",
 				   Label::BackButton(), Label::NextButton());
 
+	UI::ChangeWidget(`id(`isodir), `Enabled, iso);
+	UI::ChangeWidget(`id(`select_dir), `Enabled, iso);
+
 	any ret = nil;
 	while(true) {
-
-	    boolean iso =  (boolean)UI::QueryWidget(`id(`iso) , `Value);
-
-	    if (iso)
-	    {
-		UI::ChangeWidget(`id(`isodir), `Enabled, true);
-		UI::ChangeWidget(`id(`select_dir), `Enabled, true);
-	    }
-	    else
-	    {
-		UI::ChangeWidget(`id(`isodir), `Enabled, false);
-		UI::ChangeWidget(`id(`select_dir), `Enabled, false);
-	    }
-	    dir = (string)UI::QueryWidget(`id(`dir), `Value);
-
-	    string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
-	    if (SCR::Read(.target.size, target + "/content") == -1 )
-	    {
-		UI::ChangeWidget(`id(`prompt), `Enabled, false);
-	    }
-
 	    ret = UI::UserInput();
 
 	    /* abort? */
-	    if(ret == `abort || ret == `cancel) {
-		if(ReallyAbort()) break;
+	    if (ret == `abort || ret == `cancel) {
+		if (ReallyAbort()) break;
 		else continue;
 	    }
 	    else if(ret == `back ) {
 		break;
 	    }
-	    else if (ret ==`select_dir)
+	    else if (ret == `iso)
+	    {
+		iso = (boolean)UI::QueryWidget(`id(`iso) , `Value);
+		UI::ChangeWidget(`id(`isodir), `Enabled, iso);
+		UI::ChangeWidget(`id(`select_dir), `Enabled, iso);
+	    }
+	    else if (ret == `select_dir)
 	    {
 		any new_dir = UI::AskForExistingDirectory( isodir, _("Select Directory"));
 		if (new_dir != nil)
@@ -608,43 +587,21 @@
 		}
 		continue;
 	    }
-	    else if(ret == `next )
+	    else if (ret == `next)
 	    {
-		dir = (string)UI::QueryWidget(`id(`dir), `Value);
-		if (dir=="")
+		boolean iso = (boolean)UI::QueryWidget(`id(`iso) , `Value);
+		string dir = Instserver::Config["directory"]:"";
+		string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
+
+		if (dir == "")
 		{
 		    Popup::Error(_("Installation server name missing."));
 		    continue;
 		}
-                else if (dir != filterchars (dir,
-                                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.")
-                        || size (dir) > 127
-                        )
-                {
-                    string errmsg = _("Invalid file name.");
-                    Popup::Error(errmsg);
-                    continue;
-                }
-                else {
-                    target = Instserver::ServerSettings["directory"]:"" + "/" +
-                        dir;
-                    string mkdircmd = "mkdir -p " + target;
-                    y2debug("executing: %1", mkdircmd );
-                    if (SCR::Execute(.target.bash, mkdircmd) != 0 )
-                    {
-                        Popup::Error(sformat(_("Error while creating 'source' directory.
-Verify that the directory 
- %1 
-is writable and try again."), Instserver::ServerSettings["directory"]:""));
-                        continue;
-                    }
 
-                }
 		Instserver::ServerSettings["iso-dir"] = (string)UI::QueryWidget(`id(`isodir), `Value);
-		slp  = (boolean)UI::QueryWidget(`id(`slp), `Value);
 		promptmore = (boolean)UI::QueryWidget(`id(`prompt) , `Value);
 
-		target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
 		symbol ret = `none;
 		if (SCR::Read(.target.size, target + "/content") != -1 )
 		{
@@ -665,24 +622,21 @@ Not copying CDs."));
 		if (ret == `next)
 		{
 		    map content = $[];
-		    string contentpath = "";
+		    string contentpath = sformat("%1/content", target);
 
-		    contentpath = sformat("%1/content", target);
 		    Instserver::createOrderFiles(target);
 
 		    if (SCR::Read(.target.size, contentpath) > 0 )
 		    {
-			content = (map)SCR::Read(.content_file, contentpath );
+			content = (map)SCR::Read(.content_file, contentpath);
 		    }
 		    else
 		    {
 			y2error("cant read content file, something nasty happened: %1", contentpath);
 		    }
+
 		    y2debug("content: %1", content);
-		    Instserver::Config["name"] = dir;
 		    Instserver::Config = (map<string, any>)union(Instserver::Config, content);
-		    Instserver::Config["directory"] = dir;
-		    Instserver::Config["slp"] = slp;
 		}
 		else
 		{
@@ -691,6 +645,119 @@ Not copying CDs."));
 
 		Instserver::UpdateConfig();
 		Instserver::modified = true;
+		break;
+	    }
+	    else {
+		y2error("unexpected retcode: %1", ret);
+		continue;
+	    }
+	}
+
+	return ret;
+    }
+
+    /**
+     * Source configuration dialog
+     * @return dialog result
+     */
+    any SourceConfigDialog () {
+
+        /* Instserver configuration dialog caption */
+        string caption = _("Source Configuration");
+
+        string dir = Instserver::Config["directory"]:"";
+        boolean slp = Instserver::Config["slp"]:false;
+
+        /* Instserver configure1 dialog contents */
+        term contents =
+            `HVSquash(
+		      `VBox(
+			    `Left(`TextEntry(`id(`dir), _("Source &Name:"), dir)),
+			    `VSpacing(1),
+			    `Left(
+				  `CheckBox(`id(`slp), _("A&nnounce as Installation Service with SLP"), slp )
+				  )
+                            )
+		      );
+
+	Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"initial",
+				   Label::BackButton(), Label::NextButton());
+
+	map current = Instserver::Config;
+
+	any ret = nil;
+	while(true) {
+
+	    ret = UI::UserInput();
+	    dir = (string)UI::QueryWidget(`id(`dir), `Value);
+            string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
+
+	    /* abort? */
+	    if (ret == `abort || ret == `cancel) {
+		if (ReallyAbort()) break;
+		else continue;
+	    }
+	    else if (ret == `back ) {
+		break;
+	    }
+	    else if (ret == `next )
+	    {
+		if (dir == "")
+		{
+		    Popup::Error(_("Installation server name missing."));
+		    continue;
+		}
+                else if (dir != filterchars (dir,
+                                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.")
+                        || size (dir) > 127
+                        )
+                {
+                    string errmsg = _("Invalid source name.");
+                    Popup::Error(errmsg);
+                    continue;
+                }
+                else if (dir != Instserver::Config["name"]:"" && haskey(Instserver::Configs, dir)){
+		    // an error message - entered source name already exists
+		    Popup::Error(sformat(_("Source '%1' already exists,\nenter another name."), dir));
+		    continue;
+		}
+		// create directory only for a new source
+		else if (Instserver::Config == $[]) {
+                    string mkdircmd = "mkdir -p " + target;
+
+                    y2debug("executing: %1", mkdircmd );
+                    if (SCR::Execute(.target.bash, mkdircmd) != 0 )
+                    {
+                        Popup::Error(sformat(_("Error while creating 'source' directory.
+Verify that the directory 
+ %1 
+is writable and try again."), Instserver::ServerSettings["directory"]:""));
+                        continue;
+                    }
+                }
+
+		if (dir != Instserver::Config["name"]:"" && Instserver::Config["name"]:"" != "")
+		{
+		    // mark the directory content for moving at write
+		    Instserver::renamed = add(Instserver::renamed, Instserver::Config["name"]:"", dir);
+
+		    // remove the old configuration in Instserver::UpdateConfig()
+		    Instserver::Config["old_name"] = Instserver::Config["name"]:"";
+		}
+
+		slp  = (boolean)UI::QueryWidget(`id(`slp), `Value);
+
+		Instserver::Config["name"] = dir;
+		Instserver::Config["directory"] = dir;
+		Instserver::Config["slp"] = slp;
+
+		if (current != $[])
+		{
+		    // update modified source now, the workflow has in this case only one step
+		    Instserver::UpdateConfig();
+		    Instserver::modified = true;
+		}
+
 		break;
 	    }
 	    else {

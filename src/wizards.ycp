@@ -25,6 +25,29 @@ include "instserver/dialogs.ycp";
 any AddSequence() {
 
     map aliases = $[
+	"sourceconfig"	: ``(SourceConfigDialog()),
+	"mediaconfig"	: ``(MediaDialog())
+    ];
+
+    map sequence = $[
+	"ws_start" : "sourceconfig",
+	"sourceconfig" : $[
+	    `abort	: `abort,
+	    `next	: "mediaconfig"
+	],
+	"mediaconfig" : $[
+	    `abort	: `abort,
+	    `next	: `next
+	]
+    ];
+
+    return Sequencer::Run(aliases, sequence);
+}
+
+
+any EditSequence() {
+
+    map aliases = $[
 	"sourceconfig"	: ``(SourceConfigDialog())
     ];
 
@@ -132,7 +155,7 @@ any MainSequence() {
     map aliases = $[
 	"overview"	:   ``( OverviewDialog() ),
 	"add"		: [ ``( AddSequence() ), true ],
-	"edit"		: [ ``( AddSequence() ), true ],
+	"edit"		: [ ``( EditSequence() ), true ],
 	"server"	: [ ``( ServerSequence() ) , true ],
     ];
 

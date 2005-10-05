@@ -60,6 +60,10 @@ global list<string> Detected = [];
 
 global boolean standalone = false;
 
+// renamed sources: $["old" : "new"]
+global map<string, string> renamed = $[];
+
+
 /**
  * Prototypes
  */
@@ -753,7 +757,7 @@ global boolean Write() {
 	}
     );
 
-    // Create all SLP files
+    // Remove the SLP files and directories
     foreach(string c, regs_delete, ``{
        string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  c );
        if (SCR::Read(.target.size, regfile) > 0 )
@@ -761,19 +765,39 @@ global boolean Write() {
            slpreload = true;
            SCR::Execute(.target.remove, regfile);
        }
+
+       string dir = Instserver::ServerSettings["directory"]:"" + "/" + c;
+       y2milestone("removing directory: %1", dir);
+
+       string rm = "rm -rf " + dir;
+       SCR::Execute(.target.bash, rm);
     });
 
+    // Write all SLP files
     foreach(string cn, map<string, any> cm, Configs, ``{
             if (cm["slp"]:false)
             {
                 string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
-//                if (SCR::Read(.target.size, regfile) < 0 )
                 {
                     WriteSLPReg(cm);
 		    slpreload = true;
                 }
             }
         });
+
+    // move content of the renamed sources
+    foreach(string orig, string new, renamed, {
+	    string cmd = sformat("mv %1/%2 %1/%3", Instserver::ServerSettings["directory"]:"", orig, new);
+	    y2milestone("moving directory: %1", cmd);
+
+	    if (SCR::Execute(.target.bash, cmd) != 0 )
+	    {
+		Popup::Error(_("Error while moving installation source content."));
+		continue;
+	    }
+	}
+    );
+
 
     // slp service reload is required - the configuration has been changed
     if (slpreload)
@@ -784,7 +808,7 @@ global boolean Write() {
 	    Service::Start("slpd");
     }
 
-    if(Abort()) return false;
+    if (Abort()) return false;
     /* Progress finished */
     Progress::NextStage();
     sleep(sl);
@@ -799,15 +823,20 @@ global define void UpdateConfig() ``{
 
     string name = Config["name"]:"";
     string old_name = Config["old_name"]:"";
+
+    // remove the old config
     if (haskey(Instserver::Configs, old_name) && old_name != "")
     {
         Configs = filter(string k, map<string, any> v, Configs, ``(k!=old_name));
         remove(Config, "old_name");
     }
-    if (name!="")
+
+    if (name != "")
     {
+	// update the config
         Configs[name] = Config;
     }
+
     y2debug("current config: %1", Configs );
     return;
 }
