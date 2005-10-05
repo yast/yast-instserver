@@ -171,6 +171,7 @@ any OverviewDialog() {
 	    // refresh content of the table
 	    items = createOverviewTable();
 	    WizardHW::SetContents(items);
+	    WizardHW::SetSelectedItem("");
 
 	    // the selected source has just been removed
 	    selected_source = "";
