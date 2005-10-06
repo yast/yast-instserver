@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Oct  5 13:58:33 CEST 2005 - lslezak@suse.cz
+
+- CD drive is configurable (instead of hardcoded /dev/cdrom)
+- split the configuration dialog, the workflow adapted
+- also edit/delete files in the repository
+- 2.13.1
+
+-------------------------------------------------------------------
 Fri Sep 30 14:27:14 CEST 2005 - lslezak@suse.cz
 
 - use WizardHW for the overview dialog, code cleanup
