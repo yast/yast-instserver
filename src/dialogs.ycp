@@ -72,14 +72,14 @@
      * @param boolean prompt for additional CDs.
      * @return any
      */
-    any CopyCDs( string dir, symbol stype, boolean iso, boolean promptmore)
+    any CopyCDs( string dir, symbol stype, boolean iso, boolean promptmore, string cddrive)
 	{
 
 	    // free mount point
 	    SCR::Execute (.target.umount, Installation::sourcedir);
 
 
-	    string default_device = "/dev/cdrom";
+	    string default_device = cddrive;
 	    string mount_options = "";
 	    any result = nil;
 
@@ -519,6 +519,26 @@
 	    return `next;
 	}
 
+    define list<term> CDdevices() {
+	list<map> cds = (list<map>)SCR::Read(.probe.cdrom);
+	list<term> ret = [];
+
+	if (cds != nil)
+	{
+	    foreach(map cd, cds, {
+		    string dev = cd["dev_name"]:"";
+		    string model = cd["model"]:"";
+
+		    if (dev != nil && dev != "" && model != nil)
+		    {
+			ret = add(ret, `item(`id(dev), model + sformat(" (%1)", dev)));
+		    }
+		}
+	    );
+	}
+
+	return ret;
+    }
 
     /**
      * Source configuration dialog
@@ -531,23 +551,36 @@
 
         string isodir = Instserver::ServerSettings["iso-dir"]:"";
         boolean promptmore = false;
-        boolean iso = false;
+	list<term> cddevs = CDdevices();
+        boolean iso = (size(cddevs) == 0);
 
         /* Instserver configure1 dialog contents */
         term contents =
             `HVSquash(
 		      `VBox(
-			    `Left(`CheckBox(`id(`iso), `opt(`notify),  _("Use &ISO Images Instead of CDs"), iso )),
+			    `RadioButtonGroup(`id(`rbg),
+				`VBox(
+				    `Left(`RadioButton(`id(`disk), `opt(`notify),  _("Read &CD/DVD Medium"), iso == false )),
+				     `HBox(
+					    `HSpacing(3),
+					    `ComboBox(`id(`drive), _("Data &source"), cddevs),
+					    `HStretch()
+				     ),
+				    `VSpacing(1),
+				    `Left(`RadioButton(`id(`iso), `opt(`notify),  _("Use &ISO Images"), iso == true))
+				)
+			    ),
 			    `VSquash(
 				     `HBox(
-					   `TextEntry(`id(`isodir),  _("Di&rectory with CD Images:"), isodir),
-					   `VBox(
+					    `HSpacing(3),
+					    `TextEntry(`id(`isodir),  _("Di&rectory with CD Images:"), isodir),
+					    `VBox(
 						 `VSpacing(),
 						 `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
 						 )
 					   )
 				     ),
-			    `VSpacing(1),
+			    `VSpacing(2),
 			    `Left(
 				  `CheckBox(`id(`prompt), _("&Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
 				  )
@@ -559,6 +592,13 @@
 
 	UI::ChangeWidget(`id(`isodir), `Enabled, iso);
 	UI::ChangeWidget(`id(`select_dir), `Enabled, iso);
+
+	// disable CD widgets when there is no drive detected
+	if (size(cddevs) == 0)
+	{
+	    UI::ChangeWidget(`id(`disk), `Enabled, false);
+	    UI::ChangeWidget(`id(`drive), `Enabled, false);
+	}
 
 	any ret = nil;
 	while(true) {
@@ -572,11 +612,12 @@
 	    else if(ret == `back ) {
 		break;
 	    }
-	    else if (ret == `iso)
+	    else if (ret == `disk || ret == `iso)
 	    {
 		iso = (boolean)UI::QueryWidget(`id(`iso) , `Value);
 		UI::ChangeWidget(`id(`isodir), `Enabled, iso);
 		UI::ChangeWidget(`id(`select_dir), `Enabled, iso);
+		UI::ChangeWidget(`id(`drive), `Enabled, !iso);
 	    }
 	    else if (ret == `select_dir)
 	    {
@@ -589,7 +630,7 @@
 	    }
 	    else if (ret == `next)
 	    {
-		boolean iso = (boolean)UI::QueryWidget(`id(`iso) , `Value);
+		boolean iso = (boolean)UI::QueryWidget(`id(`iso), `Value);
 		string dir = Instserver::Config["directory"]:"";
 		string target = Instserver::ServerSettings["directory"]:"" + "/" + dir;
 
@@ -602,7 +643,9 @@
 		Instserver::ServerSettings["iso-dir"] = (string)UI::QueryWidget(`id(`isodir), `Value);
 		promptmore = (boolean)UI::QueryWidget(`id(`prompt) , `Value);
 
+		string selecteddrive = (string)UI::QueryWidget(`id(`drive), `Value);
 		symbol ret = `none;
+
 		if (SCR::Read(.target.size, target + "/content") != -1 )
 		{
 		    Popup::Message(_("Contents already exist in this directory.
@@ -611,12 +654,12 @@ Not copying CDs."));
 		}
 		else
 		{
-		    ret = (symbol)CopyCDs(target, `onedir , iso, false);
+		    ret = (symbol)CopyCDs(target, `onedir, iso, false, selecteddrive);
 		}
 
 		if (promptmore)
 		{
-		    ret = (symbol)CopyCDs(target, `onedir , iso, true);
+		    ret = (symbol)CopyCDs(target, `onedir, iso, true, selecteddrive);
 		}
 
 		if (ret == `next)
