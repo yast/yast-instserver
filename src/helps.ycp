@@ -67,7 +67,7 @@ FTP server (using the <em>--bind</em> option of <em>mount</em>).
 </p>
 ") +
 
-    _("<p><tt>ftp://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</tt>
+    _("<p><tt>ftp://&lt;Host IP&gt;/&lt;Source Name&gt;</tt>
 </p>"),
     "http": _("<p><b><big>HTTP Server Configuration</big></b><br>
 </p>") +
@@ -102,6 +102,23 @@ additional add-on CDs,</p>
     _("<p>SLP (Service Location Protocol) makes finding an installation server easier. 
 If checked, the installation server will be announced on the network using SLP.</p>
 "),
+
+    "initial2": _("<p><b><big>Creating a New Configuration</big></b><br>
+</p>
+") +
+
+_("<p>Select a srource drive from the list, insert the first medium and press
+<b>Next</b> to copy the content into the local repository.</p>") +
+
+    _("<p>You can let YaST prompt you for additional CDs if those should be copied 
+after the main CDs have been copied, for example, Service Pack CDs or any 
+additional add-on CDs,</p>
+") +
+
+    _("<p><b><big>ISO Images</big></b></p>") +
+
+    _("<p>ISO images can be used instead of CD/DVD media. Press <b>Next</b> and
+then select ISO image file of the first medium in the popup dialog.</p>"),
 
 
     /* Read dialog help 1/2 */

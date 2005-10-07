@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Oct  7 13:38:50 CEST 2005 - lslezak@suse.cz
+
+- updated the help texts
+- 2.13.2
+
+-------------------------------------------------------------------
 Wed Oct  5 13:58:33 CEST 2005 - lslezak@suse.cz
 
 - CD drive is configurable (instead of hardcoded /dev/cdrom)

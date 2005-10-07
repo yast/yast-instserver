@@ -587,7 +587,7 @@
 		      )
 	    );
 
-	Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"initial",
+	Wizard::SetContentsButtons(caption, contents, HELPS["initial2"]:"",
 				   Label::BackButton(), Label::NextButton());
 
 	UI::ChangeWidget(`id(`isodir), `Enabled, iso);
@@ -723,7 +723,7 @@ Not copying CDs."));
                             )
 		      );
 
-	Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"initial",
+	Wizard::SetContentsButtons(caption, contents, HELPS["initial"]:"",
 				   Label::BackButton(), Label::NextButton());
 
 	map current = Instserver::Config;
