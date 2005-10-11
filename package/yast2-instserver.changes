@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct 11 11:05:33 CEST 2005 - lslezak@suse.cz
+
+- don't reset xinetd configuration when FTP service is
+  set up (#121885)
+- 2.13.3
+
+-------------------------------------------------------------------
 Fri Oct  7 13:38:50 CEST 2005 - lslezak@suse.cz
 
 - updated the help texts
