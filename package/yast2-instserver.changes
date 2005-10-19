@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Oct 19 10:05:27 CEST 2005 - lslezak@suse.cz
+
+- remove partialy configured source if configuration is aborted
+- use a new popup for copying additional media instead of
+  the checkbox
+- fixed help texts
+- 2.13.4
+
+-------------------------------------------------------------------
 Tue Oct 11 11:05:33 CEST 2005 - lslezak@suse.cz
 
 - don't reset xinetd configuration when FTP service is

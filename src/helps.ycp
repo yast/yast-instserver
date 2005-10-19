@@ -1,5 +1,5 @@
 /**
- * File:	include/installation server/helps.ycp
+ * File:	include/instserver/helps.ycp
  * Package:	Configuration of installation server
  * Summary:	Help texts of all the dialogs
  * Authors:	Anas Nashif <nashif@suse.de>
@@ -56,9 +56,9 @@ options, see the manual page for <em>exports</em> (man exports(5))
 installed and started.</p>
 ") +
 
-    _("<p>If the installation server directory chosen is outside
+    _("<p>If the installation source directory chosen is outside
 the FTP server hierarchy, a mount entry is added to <em>/etc/fstab</em>,
-which makes the Installation Server directory available under the
+which makes the Installation Source directory available under the
 FTP server (using the <em>--bind</em> option of <em>mount</em>).
 </p>
 ") +
@@ -78,47 +78,40 @@ server root directory.</p>
 ") +
 
     _("<p>Select a short and easy to remember alias. For example, if you select
-<em>SuSE</em> as the alias, the sources will be available as shown below:</p>
+<em>SUSE</em> as the alias, the sources will be available as shown below:</p>
 ") +
 
-    _("<p><tt>http://&lt;Host IP&gt;/SuSE/&lt;Source Name&gt;</tt>
+    _("<p><tt>http://&lt;Host IP&gt;/SUSE/&lt;Source Name&gt;</tt>
 </p>"),
 
-    "initial": _("<p><b><big>Creating a New Configuration</big></b><br>
+    "initial": _("<p><b><big>Configuration of the Installation Source</big></b><br>
 </p>
 ") +
-    _("<p>To create a new installation server using the configured
-protocol (NFS, FTP, or HTTP), select a name for the installation server (or source). 
-This name will be used to create a directory under which all product CDs are copied
-and managed.</p> 
-") +
-    _("<p>You can let YaST prompt you for additional CDs if those should be copied 
-after the main CDs have been copied, for example, Service Pack CDs or any 
-additional add-on CDs,</p>
-") +
+
+    _("<p>The source name is used to create a directory under which all product
+CDs are copied and managed. The installation source is accessed using the
+configured protocol (NFS, FTP, or HTTP)</p> ") +
 
     _("<p><b><big>SLP Support</big></b></p>") +
 
     _("<p>SLP (Service Location Protocol) makes finding an installation server easier. 
-If checked, the installation server will be announced on the network using SLP.</p>
+If checked, the installation source will be announced on the network using SLP.</p>
 "),
 
-    "initial2": _("<p><b><big>Creating a New Configuration</big></b><br>
+    "initial2": _("<p><b><big>Configuration of the Installation Source</big></b><br>
 </p>
 ") +
 
-_("<p>Select a srource drive from the list, insert the first medium and press
+_("<p>Select a source drive from the list, insert the first medium of a base product and press
 <b>Next</b> to copy the content into the local repository.</p>") +
 
-    _("<p>You can let YaST prompt you for additional CDs if those should be copied 
-after the main CDs have been copied, for example, Service Pack CDs or any 
-additional add-on CDs,</p>
-") +
+    _("<p>When the base media are copied to the local repository you can add additional
+CDs to the installation source (for example, Service Pack CDs or any add-on CDs).</p>") +
 
     _("<p><b><big>ISO Images</big></b></p>") +
 
-    _("<p>ISO images can be used instead of CD/DVD media. Press <b>Next</b> and
-then select ISO image file of the first medium in the popup dialog.</p>"),
+    _("<p>ISO images can be used instead of CD/DVD media. If you press <b>Next</b> you can
+select ISO image files from the popup dialog.</p>"),
 
 
     /* Read dialog help 1/2 */
@@ -144,12 +137,12 @@ An additional dialog informs whether it is safe to do so.
 "),
 
     /* Summary dialog help 1/3 */
-    "summary" : _("<p><b><big>Installation Server Configuration</big></b><br>
+    "summary" : _("<p><b><big>Installation Source Configuration</big></b><br>
 Configure the installation server here.<br></p>
 ") +
 
     /* Summary dialog help 2/3 */
-    _("<p><b><big>Adding an Installation Server:</big></b><br>
+    _("<p><b><big>Adding an Installation Source:</big></b><br>
 YaST searches for unconfigured directories inside 
 the source repository and makes them available for configuration.
 Choose a source from the list of found sources. 
@@ -163,18 +156,18 @@ the configuration opens.</p>
 "),
 
     /* Ovreview dialog help 1/3 */
-    "overview" : _("<p><b><big>Installation Server Configuration Overview</big></b><br>
-Obtain an overview of installed installation servers. Additionally
+    "overview" : _("<p><b><big>Installation Sources Overview</big></b><br>
+Obtain an overview of configured installation sources. Additionally
 edit their configuration.<br></p>
 ") +
 
     /* Ovreview dialog help 2/3 */
-_("<p><b><big>Adding an Installation Server:</big></b><br>
-Press <b>Add</b> to configure an installation server.</p>") +
+_("<p><b><big>Adding an Installation Source:</big></b><br>
+Press <b>Add</b> to configure an installation source.</p>") +
 
     /* Ovreview dialog help 3/3 */
 _("<p><b><big>Editing or Deleting:</big></b><br>
-Choose an installation server to change or remove.
+Choose an installation source to change or remove.
 Then press <b>Edit</b> or <b>Delete</b> as desired.</p>
 "),
 
