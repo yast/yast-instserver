@@ -356,7 +356,8 @@
 			}
                         else
                         {
-                            y2error("No match for base product");
+			    // add-on medium (e.g. service pack) doesn't match configured source
+                            Report::LongError(sformat(_("The medium requires product '%1'.\nThe configured installation source provides product '%2'.\n\nSelect the right add-on product."), content["BASEPRODUCT"]:"", basecontent["BASEPRODUCT"]:""));
                             media_id = "";
                             continue;
                         }
@@ -460,6 +461,7 @@
 		    if (promptmore)
 		    {
 			files = ["driverupdate", "linux"];
+			// TODO replace boot link by a directory, set root and rescue links #95413
 		    }
 		    else
 		    {
@@ -550,7 +552,6 @@
         string caption = _("Source Configuration");
 
         string isodir = Instserver::ServerSettings["iso-dir"]:"";
-        boolean promptmore = false;
 	list<term> cddevs = CDdevices();
         boolean iso = (size(cddevs) == 0);
 
@@ -579,11 +580,7 @@
 						 `Bottom(`PushButton(`id(`select_dir), _("Select &Directory")))
 						 )
 					   )
-				     ),
-			    `VSpacing(2),
-			    `Left(
-				  `CheckBox(`id(`prompt), _("&Prompt for additional CDs (Service Packs, Additional Package CDs, etc.)"), promptmore )
-				  )
+				     )
 		      )
 	    );
 
@@ -641,7 +638,6 @@
 		}
 
 		Instserver::ServerSettings["iso-dir"] = (string)UI::QueryWidget(`id(`isodir), `Value);
-		promptmore = (boolean)UI::QueryWidget(`id(`prompt) , `Value);
 
 		string selecteddrive = (string)UI::QueryWidget(`id(`drive), `Value);
 		symbol ret = `none;
@@ -657,7 +653,8 @@ Not copying CDs."));
 		    ret = (symbol)CopyCDs(target, `onedir, iso, false, selecteddrive);
 		}
 
-		if (promptmore)
+		// for translators: popup question (prefer more shorter lines than few long lines)
+		while (Popup::YesNo(_("Add an additional product (Service Pack, Additional\nPackage CD, etc.) to the source?")) == true)
 		{
 		    ret = (symbol)CopyCDs(target, `onedir, iso, true, selecteddrive);
 		}
@@ -683,6 +680,15 @@ Not copying CDs."));
 		}
 		else
 		{
+		    // copying has been aborted, remove the source
+		    string cmd = "/bin/rm -rf " + target;
+		    y2milestone("Removing directory %1", target);
+
+                    if (SCR::Execute(.target.bash, cmd) != 0 )
+                    {
+			y2error("Cannot remove directory %1", target);
+		    }
+
 		    Instserver::Config = $[];
 		}
 
