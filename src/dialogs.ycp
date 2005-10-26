@@ -348,8 +348,17 @@
 		    if (promptmore || Instserver::is_service_pack)
 		    {
 			basecontent = ReadContentFile(dir + "/content");
-			if (tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
-			    && content["BASEVERSION"]:"" == basecontent["BASEVERSION"]:"" )
+			y2milestone("content: %1", content);
+			y2milestone("basecontent: %1", basecontent);
+
+			if ((tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
+			    && content["BASEVERSION"]:"" == basecontent["BASEVERSION"]:"")
+			    // or it's a service pack for maintained product (e.g. NLD)
+			    // compare BASEPRODUCT and PRODUCT in that case
+			    || (!haskey(basecontent, "BASEPRODUCT") && !haskey(basecontent, "BASEVERSION") &&
+			        tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["PRODUCT"]:"")
+			        && content["BASEVERSION"]:"" == basecontent["VERSION"]:"" )
+			)
 			{
 			    // Same base product => OK
 			    y2milestone("matching base product");
@@ -386,7 +395,7 @@
 
 		    if ( current_cd == 1 )
 		    {
-			map proddata = $["standalone": false, "baseproduct": false , "name": distprod ];
+			map proddata = $["standalone": false, "baseproduct": false , "name": distprod , "SP": Instserver::is_service_pack ];
 			Instserver::products = add(Instserver::products, proddata );
 		    }
 
@@ -400,7 +409,7 @@
 		{
 		    if ( current_cd == 1 )
 		    {
-			map proddata = $["standalone": true, "baseproduct": true , "name": distprod ];
+			map proddata = $["standalone": true, "baseproduct": true , "name": distprod, "SP": Instserver::is_service_pack ];
 			Instserver::products = add(Instserver::products, proddata );
 		    }
 		    standalone = true;
@@ -413,7 +422,7 @@
 		{
 		    if ( current_cd == 1 )
 		    {
-			map proddata = $["standalone": true, "baseproduct": true , "name": distprod ];
+			map proddata = $["standalone": true, "baseproduct": true , "name": distprod, "SP": Instserver::is_service_pack ];
 			Instserver::products = add(Instserver::products, proddata );
 		    }
 		    standalone = true;
@@ -653,10 +662,13 @@ Not copying CDs."));
 		    ret = (symbol)CopyCDs(target, `onedir, iso, false, selecteddrive);
 		}
 
-		// for translators: popup question (prefer more shorter lines than few long lines)
-		while (Popup::YesNo(_("Add an additional product (Service Pack, Additional\nPackage CD, etc.) to the source?")) == true)
+		if (ret == `next)
 		{
-		    ret = (symbol)CopyCDs(target, `onedir, iso, true, selecteddrive);
+		    // for translators: popup question (prefer more shorter lines than few long lines)
+		    while (Popup::YesNo(_("Add an additional product (Service Pack, Additional\nPackage CD, etc.) to the source?")) == true)
+		    {
+			CopyCDs(target, `onedir, iso, true, selecteddrive);
+		    }
 		}
 
 		if (ret == `next)
