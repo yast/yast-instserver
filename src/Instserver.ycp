@@ -141,7 +141,7 @@ global boolean createOrderFiles(string dir)
 	SCR::Read(.target.size, instorder_path) > 0 &&
 	size(products) == 1 )
     {
-	y2debug("order files exist");
+	y2milestone("order files exist");
 	string ofile = (string)SCR::Read(.target.string, order_path );
 	list<string> oentries = splitstring(ofile, "\n");
 	string iofile = (string)SCR::Read(.target.string, instorder_path );
@@ -173,11 +173,12 @@ global boolean createOrderFiles(string dir)
     else if (size(products) > 1 )
     {
         SCR::Execute(.target.mkdir, dir + "/yast");
-        // create order
+	y2milestone("products: %1", products);
+        // create order: Service Packs, products which require any other product, other products
         list<map> order = filter(map p, products, ``(!p["baseproduct"]:false));
         order = (list<map>)union(order, filter(map p, products, ``(p["baseproduct"]:false)));
 
-        y2debug("order: %1", order );
+        y2milestone("order: %1", order );
 
         list<map> instorder = filter(map p, products, ``(p["baseproduct"]:false));
         instorder = (list<map>)union(instorder, filter(map p, products, ``(!p["baseproduct"]:false)));
@@ -188,18 +189,24 @@ global boolean createOrderFiles(string dir)
         if (size(ul) == 0) {
             instorder = order;
         }
-        y2debug("instorder: %1", instorder );
+        y2milestone("instorder: %1", instorder );
 
         list<string> file = [];
         foreach (map p, order , ``{
-                string proddir = sformat("/%1/CD1", p["name"]:"" );
+		// workaround for NLD9 - if the subdir doesn't exists use root
+		string proddir = (SCR::Read(.target.size, dir + "/" + p["name"]:"") < 0) ?
+		    "/" : sformat("/%1/CD1", p["name"]:"" );
+
                 file = add(file, mergestring([  proddir, proddir ], "\t"));
                 });
         file = add(file , "");
         SCR::Write(.target.string, dir + "/yast/order",  mergestring(file, "\n"));
         file = [];
         foreach (map p, instorder , ``{
-                string proddir = sformat("/%1/CD1", p["name"]:"" );
+		// workaround for NLD9 - if the subdir doesn't exists use root
+		string proddir = (SCR::Read(.target.size, dir + "/" + p["name"]:"") < 0) ?
+		    "/" : sformat("/%1/CD1", p["name"]:"" );
+
                 file = add(file, proddir);
                 });
         file = add(file , "");
@@ -777,18 +784,17 @@ global boolean Write() {
     Progress::NextStage ();
 
     boolean slpreload = false;
-    // Remove all SLP files
-    /*
-    foreach(string cn, map cm, Configs, ``{
-            string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  cm["name"]:"" );
-            if (SCR::Read(.target.size, regfile) > 0 )
-            {
-                SCR::Execute(.target.remove, regfile);
-            }
-         });
-         */
 
     list<string> regs_delete = to_delete;
+
+    // remove the deleted sources
+    foreach(string c, regs_delete, ``{
+       string dir = Instserver::ServerSettings["directory"]:"" + "/" + c;
+       y2milestone("removing directory: %1", dir);
+
+       string rm = "rm -rf " + dir;
+       SCR::Execute(.target.bash, rm);
+    });
 
     // add disabled SLP sources
     foreach(string confname, map<string, any> conf, Instserver::Configs, {
@@ -799,7 +805,7 @@ global boolean Write() {
 	}
     );
 
-    // Remove the SLP files and directories
+    // Remove the SLP files of removed or SLP disabled sources
     foreach(string c, regs_delete, ``{
        string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  c );
        if (SCR::Read(.target.size, regfile) > 0 )
@@ -807,12 +813,6 @@ global boolean Write() {
            slpreload = true;
            SCR::Execute(.target.remove, regfile);
        }
-
-       string dir = Instserver::ServerSettings["directory"]:"" + "/" + c;
-       y2milestone("removing directory: %1", dir);
-
-       string rm = "rm -rf " + dir;
-       SCR::Execute(.target.bash, rm);
     });
 
     // Write all SLP files
