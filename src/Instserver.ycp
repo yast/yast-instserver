@@ -134,50 +134,15 @@ global list<string> createLinks (string dir, string product, list<string> files)
  */
 global boolean createOrderFiles(string dir)
 {
-    string order_path = sformat("%1/yast/order", dir );
-    string instorder_path = sformat("%1/yast/instorder", dir );
-
-    if (SCR::Read(.target.size, order_path) > 0 &&
-	SCR::Read(.target.size, instorder_path) > 0 &&
-	size(products) == 1 )
-    {
-	y2milestone("order files exist");
-	string ofile = (string)SCR::Read(.target.string, order_path );
-	list<string> oentries = splitstring(ofile, "\n");
-	string iofile = (string)SCR::Read(.target.string, instorder_path );
-	list<string> ioentries = splitstring(iofile, "\n");
-
-        // clean empty lines
-        oentries=filter(string l, oentries, ``(l!=""));
-        ioentries=filter(string l, ioentries, ``(l!=""));
-
-	string proddir = sformat("/%1/CD1", products[0, "name"]:"" );
-	if (issubstring(tolower(products[0, "name"]:""), "service-pack" ) || is_service_pack)
-	{
-	    oentries = prepend( oentries, mergestring([  proddir, proddir ], "\t"));
-	    ioentries = (list<string>) union(  (list<string>)[  proddir ], ioentries);
-	}
-	else
-	{
-	    oentries = add( oentries, mergestring([  proddir, proddir ], "\t"));
-            // FIX: instorder only needs first column of the order file in the right
-            // order
-	    ioentries = add( ioentries, proddir);
-	}
-        ioentries = add( ioentries, "");
-        oentries = add( oentries, "");
-
-	SCR::Write(.target.string, dir + "/yast/order",  mergestring(oentries, "\n"));
-	SCR::Write(.target.string, dir + "/yast/instorder",  mergestring(ioentries, "\n"));
-    }
-    else if (size(products) > 1 )
+    if (size(products) > 1 )
     {
         SCR::Execute(.target.mkdir, dir + "/yast");
+
 	y2milestone("products: %1", products);
         // create order: Service Packs, products which require any other product, other products
-        list<map> order = filter(map p, products, ``(!p["baseproduct"]:false));
-        order = (list<map>)union(order, filter(map p, products, ``(p["baseproduct"]:false)));
-
+        list<map> order = filter(map p, products, ``(p["SP"]:false));
+        order = (list<map>)union(order, filter(map p, products, ``(!p["baseproduct"]:false && !p["SP"]:false)));
+        order = (list<map>)union(order, filter(map p, products, ``(p["baseproduct"]:false && !p["SP"]:false)));
         y2milestone("order: %1", order );
 
         list<map> instorder = filter(map p, products, ``(p["baseproduct"]:false));
@@ -213,6 +178,7 @@ global boolean createOrderFiles(string dir)
         SCR::Write(.target.string, dir + "/yast/instorder",  mergestring(file, "\n"));
     }
     products = [];
+
     return true;
 }
 
