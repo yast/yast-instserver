@@ -340,37 +340,57 @@
 		// This product is based on some other product
 		if ( tolower(content["BASEPRODUCT"]:"") != "" && content["BASEVERSION"]:"" != "")
 		{
-                    // first sles cd goes in here.
-                    // Also any non base products, i.e. SDK and SP
-		    map basecontent = $[];
+		    y2debug("products: %1", Instserver::products);
 
-                    // Read content file if source already exists.
-		    if (promptmore || Instserver::is_service_pack)
-		    {
-			basecontent = ReadContentFile(dir + "/content");
-			y2milestone("content: %1", content);
-			y2milestone("basecontent: %1", basecontent);
+		    boolean found = false;
+		    foreach(map prod, Instserver::products, {
+			    if (!found)
+			    {
+				map basecontent = $[];
 
-			if ((tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
-			    && content["BASEVERSION"]:"" == basecontent["BASEVERSION"]:"")
-			    // or it's a service pack for maintained product (e.g. NLD)
-			    // compare BASEPRODUCT and PRODUCT in that case
-			    || (!haskey(basecontent, "BASEPRODUCT") && !haskey(basecontent, "BASEVERSION") &&
-			        tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["PRODUCT"]:"")
-			        && content["BASEVERSION"]:"" == basecontent["VERSION"]:"" )
-			)
-			{
-			    // Same base product => OK
-			    y2milestone("matching base product");
+				// Read content file if source already exists.
+				if (promptmore || Instserver::is_service_pack)
+				{
+				    string cont_file = dir + "/" + prod["name"]:"" + "/content";
+
+				    if (SCR::Read(.target.size, cont_file) < 0)
+				    {
+					cont_file = dir + "/" + prod["name"]:"" + "/CD1/content";
+				    }
+
+				    y2milestone("using content file: %1", cont_file);
+				    basecontent = ReadContentFile(cont_file);
+				    y2milestone("content: %1", content);
+				    y2milestone("basecontent: %1", basecontent);
+
+				    if ((tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
+					&& content["BASEVERSION"]:"" == basecontent["BASEVERSION"]:"")
+					// or it's a service pack for maintained product (e.g. NLD)
+					// compare BASEPRODUCT and PRODUCT in that case
+					|| (!haskey(basecontent, "BASEPRODUCT") && !haskey(basecontent, "BASEVERSION") &&
+					    tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["PRODUCT"]:"")
+					    && content["BASEVERSION"]:"" == basecontent["VERSION"]:"" )
+				    )
+				    {
+					// Same base product => OK
+					found = true;
+					y2milestone("found matching base product: %1", prod);
+				    }
+				}
+			    }
+
 			}
-                        else
-                        {
-			    // add-on medium (e.g. service pack) doesn't match configured source
-                            Report::LongError(sformat(_("The medium requires product '%1'.\nThe configured installation source provides product '%2'.\n\nSelect the right add-on product."), content["BASEPRODUCT"]:"", basecontent["BASEPRODUCT"]:""));
-                            media_id = "";
-                            continue;
-                        }
+		    );
+
+		    if (!found)
+		    {
+			// add-on medium (e.g. service pack) doesn't match configured source
+			Report::LongError(sformat(_("The medium requires product '%1' which is not provided\nby the current installation source.\n\nSelect the base product medium first."), content["BASEPRODUCT"]:""));
+			media_id = "";
+			medianames = [];
+			continue;
 		    }
+
 		    base = content["BASEPRODUCT"]:""; // i.e. SUSE CORE
 		    basever = content["BASEVERSION"]:""; // i.e. 9
 
