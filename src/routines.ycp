@@ -25,6 +25,7 @@ list<string> ReadMediaFile(string media) {
 }
 
 map ReadContentFile(string content) {
+    y2debug("Reading content %1", content);
 
     map contentmap = (map)SCR::Read(.content_file, content);
     return contentmap;
