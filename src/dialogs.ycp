@@ -63,6 +63,49 @@
 	    }
 	}
 
+    string LinkTarget(string source) {
+	string ret = "";
+
+	string command = "ls -l " + source;
+	map res = (map)SCR::Execute(.target.bash_output, command);
+	list<string> out = splitstring(res["stdout"]:"", "\n");
+
+	if (size(out) > 0)
+	{
+	    string line = out[0]:"";
+
+	    ret = regexpsub(line, "^l.* -> (.*)", "\\1");
+	}
+
+	y2milestone("Target of %1: %2", source, ret);
+
+	return ret;
+    }
+
+    boolean IsBaseProduct(map content, string cont_file) {
+	boolean ret = false;
+	map basecontent = ReadContentFile(cont_file);
+
+	y2milestone("using content file: %1", cont_file);
+	y2milestone("content: %1", content);
+	y2milestone("basecontent: %1", basecontent);
+
+	if ((tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
+	    && content["BASEVERSION"]:"" == basecontent["BASEVERSION"]:"")
+	    // or it's a service pack for maintained product (e.g. NLD)
+	    // compare BASEPRODUCT and PRODUCT in that case
+	    || (!haskey(basecontent, "BASEPRODUCT") && !haskey(basecontent, "BASEVERSION") &&
+		tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["PRODUCT"]:"")
+		&& content["BASEVERSION"]:"" == basecontent["VERSION"]:"" )
+	)
+	{
+	    // Same base product => OK
+	    ret = true;
+	    y2milestone("found matching base product");
+	}
+
+	return ret;
+    }
 
     /**
      * Copy CDs to local disk
@@ -340,47 +383,47 @@
 		// This product is based on some other product
 		if ( tolower(content["BASEPRODUCT"]:"") != "" && content["BASEVERSION"]:"" != "")
 		{
-		    y2debug("products: %1", Instserver::products);
+		    y2milestone("products: %1", Instserver::products);
+		    y2milestone("product require base product: %1, version: %2", content["BASEPRODUCT"]:"", content["BASEVERSION"]:"");
 
 		    boolean found = false;
 		    foreach(map prod, Instserver::products, {
 			    if (!found)
 			    {
-				map basecontent = $[];
-
-				// Read content file if source already exists.
-				if (promptmore || Instserver::is_service_pack)
+				string cont_file = dir + "/" + prod["name"]:"" + "/content";
+				if (SCR::Read(.target.size, cont_file) < 0)
 				{
-				    string cont_file = dir + "/" + prod["name"]:"" + "/content";
+				    cont_file = dir + "/" + prod["name"]:"" + "/CD1/content";
+				}
 
-				    if (SCR::Read(.target.size, cont_file) < 0)
-				    {
-					cont_file = dir + "/" + prod["name"]:"" + "/CD1/content";
-				    }
-
-				    y2milestone("using content file: %1", cont_file);
-				    basecontent = ReadContentFile(cont_file);
-				    y2milestone("content: %1", content);
-				    y2milestone("basecontent: %1", basecontent);
-
-				    if ((tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
-					&& content["BASEVERSION"]:"" == basecontent["BASEVERSION"]:"")
-					// or it's a service pack for maintained product (e.g. NLD)
-					// compare BASEPRODUCT and PRODUCT in that case
-					|| (!haskey(basecontent, "BASEPRODUCT") && !haskey(basecontent, "BASEVERSION") &&
-					    tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["PRODUCT"]:"")
-					    && content["BASEVERSION"]:"" == basecontent["VERSION"]:"" )
-				    )
-				    {
-					// Same base product => OK
-					found = true;
-					y2milestone("found matching base product: %1", prod);
-				    }
+				if (IsBaseProduct(content, cont_file)) {
+				    found = true;
 				}
 			    }
-
 			}
 		    );
+
+		    if (!found)
+		    {
+			// check also subdirectories
+			string cmd = sformat("cd %1; find -maxdepth 1 -type d", Installation::sourcedir + "/yast");
+			map out = (map)SCR::Execute(.target.bash_output, cmd);
+
+			list<string> dirs = splitstring(out["stdout"]:"", "\n");
+
+			// remove unusable items
+			dirs = filter(string d, dirs, {return d != "." && d != "";});
+			y2milestone("found product subdirectories: %1", dirs);
+
+			foreach(string d, dirs, {
+				string cont_file = Installation::sourcedir + "/yast/" + d + "/content";
+
+				if (IsBaseProduct(content, cont_file)) {
+				    found = true;
+				}
+			    }
+			);
+		    }
 
 		    if (!found)
 		    {
@@ -507,6 +550,47 @@
 		    });
 		    cmds = [];
                     cds_copied= true;
+		}
+
+		// check if there is a new rescue image
+		if (SCR::Read(.target.size, tgt + "/boot") > 0)
+		{
+		    y2milestone("Found new 'boot' directory");
+
+		    // remember the old "root" file (parse the link)
+		    string linktgt = LinkTarget(dir + "/boot");
+		    y2milestone("link target: %1", linktgt);
+
+		    // remove the old "boot" link
+		    SCR::Execute(.target.bash, sformat("rm -rf %1/boot", dir));
+
+		    // if there are "root" and "rescue" images both then just create a new link
+		    if (SCR::Read(.target.size, tgt + "/boot/rescue") > 0 && SCR::Read(.target.size, tgt + "/boot/root") > 0)
+		    {
+			files = [ "boot" ];
+			cmds = (list<string>)union(cmds, Instserver::createLinks( dir, distprod, files ) );
+			foreach(string cmd , cmds, ``{
+			    y2debug("executing command: %1", cmd );
+			    SCR::Execute(.target.bash, cmd);
+			});
+			cmds = [];
+		    }
+		    else
+		    {
+			string mkdir = sformat("mkdir %1/boot", dir);
+			SCR::Execute(.target.bash, mkdir);
+
+			string relprod = substring(tgt, size(dir) + 1);
+			y2milestone("relative target: %1", relprod);
+
+			// link the new content there (link every file/directory)
+			string linkcommand = sformat("cd %1/boot; ln -s ../%2/boot/* .", dir, relprod);
+			SCR::Execute(.target.bash, linkcommand);
+
+			// add missing liks from the original product
+			linkcommand = sformat("cd %1/boot; ln -s ../%2/* .", dir, linktgt);
+			SCR::Execute(.target.bash, linkcommand);
+		    }
 		}
 
 
