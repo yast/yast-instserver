@@ -427,6 +427,19 @@
 
 		    if (!found)
 		    {
+			// try to search in the base directory (NLD9 workaround)
+			string cont_file = Installation::sourcedir + "/content";
+
+			if (IsBaseProduct(content, cont_file)) {
+			    found = true;
+			    y2milestone("Base product has been found in the base direcory (file %1)", cont_file);
+			}
+		    }
+
+		    y2internal("products; %1", Instserver::products);
+
+		    if (!found)
+		    {
 			// add-on medium (e.g. service pack) doesn't match configured source
 			Report::LongError(sformat(_("The medium requires product '%1' which is not provided\nby the current installation source.\n\nSelect the base product medium first."), content["BASEPRODUCT"]:""));
 			media_id = "";
@@ -552,10 +565,14 @@
                     cds_copied= true;
 		}
 
-		// check if there is a new rescue image
-		if (SCR::Read(.target.size, tgt + "/boot") > 0)
+		// check if there is a new rescue image on the first additional CD
+		if (promptmore && current_cd == 1 && SCR::Read(.target.size, tgt + "/boot") > 0 && dir + "/" != tgt)
 		{
 		    y2milestone("Found new 'boot' directory");
+
+		    // workaround for flat directory structure - preserve the original content
+		    string move = sformat("cd %1; test -d boot && mv -b boot boot.old; ln -s boot.old boot", dir);
+		    SCR::Execute(.target.bash, move);
 
 		    // remember the old "root" file (parse the link)
 		    string linktgt = LinkTarget(dir + "/boot");
@@ -590,6 +607,9 @@
 			// add missing liks from the original product
 			linkcommand = sformat("cd %1/boot; ln -s ../%2/* .", dir, linktgt);
 			SCR::Execute(.target.bash, linkcommand);
+
+			// recreate the index file
+			SCR::Execute(.target.bash, sformat("rm -f %1/boot/directory.yast; cd %1/boot; ls | grep -v -e '^\\.$' -e '^\\.\\.$' > %1/boot/directory.yast", dir));
 		    }
 		}
 
