@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Oct 26 09:59:18 CEST 2005 - lslezak@suse.cz
+
+- use rescue file (and other files) from a service pack (#95413)
+- fixed creating of the order files
+- remove deleted sources correctly
+- workaround for NLD9 (#128062)
+- 2.13.5
+
+-------------------------------------------------------------------
 Wed Oct 19 10:05:27 CEST 2005 - lslezak@suse.cz
 
 - remove partialy configured source if configuration is aborted

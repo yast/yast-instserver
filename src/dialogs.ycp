@@ -546,7 +546,6 @@
 		    if (promptmore)
 		    {
 			files = ["driverupdate", "linux"];
-			// TODO replace boot link by a directory, set root and rescue links #95413
 		    }
 		    else
 		    {
@@ -570,8 +569,8 @@
 		{
 		    y2milestone("Found new 'boot' directory");
 
-		    // workaround for flat directory structure - preserve the original content
-		    string move = sformat("cd %1; test -d boot && mv -b boot boot.old; ln -s boot.old boot", dir);
+		    // workaround for flat directory structure (NLD9) - preserve the original content
+		    string move = sformat("cd %1; test -d boot -a ! -L boot && mv -b boot boot.old && ln -s boot.old boot", dir);
 		    SCR::Execute(.target.bash, move);
 
 		    // remember the old "root" file (parse the link)
