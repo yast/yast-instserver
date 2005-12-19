@@ -441,7 +441,10 @@
 		    if (!found)
 		    {
 			// add-on medium (e.g. service pack) doesn't match configured source
-			Report::LongError(sformat(_("The medium requires product '%1' which is not provided\nby the current installation source.\n\nSelect the base product medium first."), content["BASEPRODUCT"]:""));
+			Report::LongError(sformat(_("The medium requires product %1, which is not provided
+by the current installation source.
+
+Select the base product medium first."), content["BASEPRODUCT"]:""));
 			media_id = "";
 			medianames = [];
 			continue;
@@ -693,10 +696,10 @@
 		      `VBox(
 			    `RadioButtonGroup(`id(`rbg),
 				`VBox(
-				    `Left(`RadioButton(`id(`disk), `opt(`notify),  _("Read &CD/DVD Medium"), iso == false )),
+				    `Left(`RadioButton(`id(`disk), `opt(`notify),  _("Read &CD or DVD Medium"), iso == false )),
 				     `HBox(
 					    `HSpacing(3),
-					    `ComboBox(`id(`drive), _("Data &source"), cddevs),
+					    `ComboBox(`id(`drive), _("Data &Source"), cddevs),
 					    `HStretch()
 				     ),
 				    `VSpacing(1),

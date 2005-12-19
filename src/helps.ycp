@@ -57,9 +57,9 @@ installed and started.</p>
 ") +
 
     _("<p>If the installation source directory chosen is outside
-the FTP server hierarchy, a mount entry is added to <em>/etc/fstab</em>,
-which makes the Installation Source directory available under the
-FTP server (using the <em>--bind</em> option of <em>mount</em>).
+the FTP server hierarchy, a mount entry is added to <tt>/etc/fstab</tt>,
+which makes the installation source directory available under the
+FTP server (using the <tt>--bind</tt> option of <tt>mount</tt>).
 </p>
 ") +
 
@@ -102,16 +102,19 @@ If checked, the installation source will be announced on the network using SLP.<
 </p>
 ") +
 
-_("<p>Select a source drive from the list, insert the first medium of a base product and press
-<b>Next</b> to copy the content into the local repository.</p>") +
+_("<p>Select a source drive from the list, insert the first medium of a base product, and press
+<b>Next</b> to copy the content into the local repository.</p>
+") +
 
-    _("<p>When the base media are copied to the local repository you can add additional
-CDs to the installation source (for example, Service Pack CDs or any add-on CDs).</p>") +
+    _("<p>When the base media are copied to the local repository, you can add additional
+CDs to the installation source (for example, Service Pack CDs or any add-on CDs).</p>
+") +
 
     _("<p><b><big>ISO Images</big></b></p>") +
 
-    _("<p>ISO images can be used instead of CD/DVD media. If you press <b>Next</b> you can
-select ISO image files from the popup dialog.</p>"),
+    _("<p>ISO images can be used instead of CD or DVD media. If you press <b>Next</b>, you can
+select ISO image files.</p>
+"),
 
 
     /* Read dialog help 1/2 */
@@ -143,9 +146,10 @@ Configure the installation server here.<br></p>
 
     /* Summary dialog help 2/3 */
     _("<p><b><big>Adding an Installation Source:</big></b><br>
-YaST searches for unconfigured directories inside 
-the source repository and makes them available for configuration.
-Choose a source from the list of found sources. 
+A search is made in the source repository for 
+unconfigured directories, which are then made 
+available for configuration.
+Choose a source from the list of sources found. 
 Then press <b>Configure</b>.</p>
 ") +
 
