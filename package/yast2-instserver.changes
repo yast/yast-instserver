@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Mar  2 13:25:32 CET 2006 - lslezak@suse.cz
+
+- removed yast2-devel-packages macro from .spec file
+- 2.13.7
+
+-------------------------------------------------------------------
 Mon Dec 19 15:48:46 CET 2005 - jsuchome@suse.cz
 
 - merged texts from proofreading
