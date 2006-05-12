@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri May 12 12:43:29 CEST 2006 - jsuchome@suse.cz
+
+- when creating installation source, use the content file from
+  first CD and create actual directory.yast (#171157)
+- 2.13.8
+
+-------------------------------------------------------------------
 Thu Mar  2 13:25:32 CET 2006 - lslezak@suse.cz
 
 - removed yast2-devel-packages macro from .spec file

@@ -151,6 +151,9 @@
 
 	    symbol pop = `none;
 
+	    // content file at first CD must be preserved (#171157)
+	    string content_first_CD	= "";
+
             // Fix for mounting ISO images over NFS
 	    if (iso)
 	    {
@@ -310,6 +313,10 @@
 		{
 		    content = ReadContentFile(cdpath + "/content");
                     y2debug("Content file: %1", content);
+		    if (current_cd == 1)
+		    {
+			content_first_CD = (string) SCR::Read (.target.string, cdpath + "/content");
+		    }
 		    if (media[2]:"" != "" && media[2]:"" != "doublesided")
 		    {
 			total_cds = tointeger(media[2]:"-1");
@@ -652,6 +659,17 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
             {
                 return `abort;
             }
+
+	    if (stype == `onedir)
+	    {
+		y2milestone ("creating new root directory.yast....");
+		if (content_first_CD != "")
+		{
+		    y2milestone ("writing content file from 1st CD...");
+		    SCR::Write (.target.string, dir + "/content", content_first_CD);
+		}
+		SCR::Execute(.target.bash, sformat("rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast", dir));
+	    }
 
 	    return `next;
 	}
