@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue May 16 16:00:46 CEST 2006 - jsuchome@suse.cz
+
+- recreate MD5SUMS files after copying CDs (#175040)
+
+-------------------------------------------------------------------
 Fri May 12 12:43:29 CEST 2006 - jsuchome@suse.cz
 
 - when creating installation source, use the content file from

@@ -669,6 +669,14 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 		    SCR::Write (.target.string, dir + "/content", content_first_CD);
 		}
 		SCR::Execute(.target.bash, sformat("rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast", dir));
+		// recreate MD5SUM files
+		map out = (map) SCR::Execute(.target.bash_output, sformat ("find %1 -type f -name MD5SUMS", dir));
+		foreach (string file, splitstring(out["stdout"]:"", "\n"), {
+		    string md5dir = substring (file,0,find(file,"/MD5SUMS"));
+		    if (md5dir == nil || md5dir == "") return;
+		    SCR::Execute (.target.remove, file);
+		    SCR::Execute (.target.bash, sformat("cd %1; md5sum * > MD5SUMS", md5dir), $["LANG" : "C"]);
+		});
 	    }
 
 	    return `next;
