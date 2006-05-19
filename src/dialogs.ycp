@@ -133,6 +133,7 @@
 	    integer current_cd = 1;
 	    integer total_cds = 1;
 	    boolean standalone = true;
+	    boolean standalone_product = true;
 	    boolean baseproduct = false;
 	    string base = "";
 	    string basever = "";
@@ -313,9 +314,13 @@
 		{
 		    content = ReadContentFile(cdpath + "/content");
                     y2debug("Content file: %1", content);
-		    if (current_cd == 1)
+		    // don't rewrite the already read content file,
+		    // content file from CORE9 would rewrite already read file from SLES9
+		    if (current_cd == 1 && content_first_CD == "")
 		    {
+			y2milestone("Reading content file %1", cdpath + "/content");
 			content_first_CD = (string) SCR::Read (.target.string, cdpath + "/content");
+			y2debug("content file: %1", content_first_CD);
 		    }
 		    if (media[2]:"" != "" && media[2]:"" != "doublesided")
 		    {
@@ -462,6 +467,8 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 
 		    // its not standalone
 		    standalone = false;
+		    // remember for the finalizing
+		    standalone_product = false;
 
 		    // and its not a base product
 		    baseproduct = false;
@@ -630,7 +637,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 		if (total_cds == current_cd && !standalone && !baseproduct &&
                         !promptmore)
 		{
-                    y2debug("Restarting...");
+                    y2milestone("Restarting media counter...");
                     restart = true;
 		    current_cd = 1;
                     media_id = "";
@@ -660,22 +667,35 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
                 return `abort;
             }
 
-	    if (stype == `onedir)
+	    if (content_first_CD != "")
 	    {
-		y2milestone ("creating new root directory.yast....");
-		if (content_first_CD != "")
-		{
-		    y2milestone ("writing content file from 1st CD...");
-		    SCR::Write (.target.string, dir + "/content", content_first_CD);
-		}
-		SCR::Execute(.target.bash, sformat("rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast", dir));
+		y2milestone ("writing content file from the 1st CD...");
+		SCR::Execute (.target.remove, dir + "/content");
+		SCR::Write (.target.string, dir + "/content", content_first_CD);
+	    }
+
+	    y2milestone ("creating new root directory.yast....");
+	    SCR::Execute(.target.bash, sformat("rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast", dir));
+
+	    y2milestone("standalone_product: %1", standalone_product);
+	    if (standalone_product)
+	    {
 		// recreate MD5SUM files
 		map out = (map) SCR::Execute(.target.bash_output, sformat ("find %1 -type f -name MD5SUMS", dir));
 		foreach (string file, splitstring(out["stdout"]:"", "\n"), {
-		    string md5dir = substring (file,0,find(file,"/MD5SUMS"));
-		    if (md5dir == nil || md5dir == "") return;
-		    SCR::Execute (.target.remove, file);
-		    SCR::Execute (.target.bash, sformat("cd %1; md5sum * > MD5SUMS", md5dir), $["LANG" : "C"]);
+		    if (file != "")
+		    {
+			string md5dir = substring (file,0,search(file,"/MD5SUMS"));
+			// don't change MD5SUMS in product description directory,
+			// SHA1 sum of the file is in _signed_ content file
+			if (md5dir == nil || md5dir == "" || issubstring(file, "/setup/descr")) return;
+
+			SCR::Execute (.target.remove, file);
+
+			string command = sformat("cd %1; md5sum * > MD5SUMS", md5dir);
+			y2milestone("Command: %1", command);
+			SCR::Execute (.target.bash, command, $["LANG" : "C"]);
+		    }
 		});
 	    }
 
@@ -816,8 +836,54 @@ Not copying CDs."));
 
 		if (ret == `next)
 		{
+		    // ask for an addon only when the product is pre-CODE10
+		    boolean ask_for_addon = false;
+
+		    if (SCR::Read(.target.size, target + "/content") > 0)
+		    {
+			map content_file = ReadContentFile(target + "/content");
+			y2debug("Parsed content file: %1", content_file);
+
+			string product_lower = tolower(content_file["PRODUCT"]:"");
+			string version_str = content_file["VERSION"]:"";
+
+			y2milestone("product: %1", product_lower);
+			y2milestone("version: %1", version_str);
+
+			integer version_major = 0;
+			integer version_minor = 0;
+
+			if (issubstring(version_str, "."))
+			{
+			    list<string> parts = splitstring(version_str, ".");
+
+			    version_major = tointeger(parts[0]:"0");
+			    version_minor = tointeger(parts[1]:"0");
+			}
+			else
+			{
+			    version_major = tointeger(version_str);
+			}
+
+			y2milestone("major version number: %1", version_major);
+			y2milestone("minor version number: %1", version_minor);
+
+			integer version = 100 * version_major + version_minor;
+			y2milestone("version: %1", version);
+
+			// SUSE Linux <= 10.0
+			if ( (product_lower == "suse linux" && version <= 1000) ||
+			    // SLES or CORE == 9
+			    ((product_lower == "suse sles" || product_lower == "suse core") && version == 900) )
+			{
+			    ask_for_addon = true;
+			}
+		    }
+
+		    y2milestone("ask_for_addon: %1", ask_for_addon);
+
 		    // for translators: popup question (prefer more shorter lines than few long lines)
-		    while (Popup::YesNo(_("Add an additional product (Service Pack, Additional\nPackage CD, etc.) to the source?")) == true)
+		    while (ask_for_addon && Popup::YesNo(_("Add an additional product (Service Pack, Additional\nPackage CD, etc.) to the source?")) == true)
 		    {
 			CopyCDs(target, `onedir, iso, true, selecteddrive);
 		    }

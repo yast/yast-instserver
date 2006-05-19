@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Thu May 18 14:03:20 CEST 2006 - lslezak@suse.cz
+
+- ask for an add-on product only if the product is pre-CODE10
+  (#170729)
+- don't touch MD5SUMS file in setup/descr subdir (SHA1 sum is in
+  signed content file, it could potentionally break signed sources)
+- don't recreate MD5SUMS for standalone products
+- read content file from CD1 only once (required for SLES9, there
+  is CORE9 CD1)
+- 2.13.9
+
+-------------------------------------------------------------------
 Tue May 16 16:00:46 CEST 2006 - jsuchome@suse.cz
 
 - recreate MD5SUMS files after copying CDs (#175040)
