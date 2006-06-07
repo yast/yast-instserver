@@ -678,7 +678,9 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 	    SCR::Execute(.target.bash, sformat("rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast", dir));
 
 	    y2milestone("standalone_product: %1", standalone_product);
-	    if (standalone_product)
+
+	    // refresh MD5SUMS only when it's a standalone product and number of CDs > 1
+	    if (standalone_product && total_cds > 1)
 	    {
 		// recreate MD5SUM files
 		map out = (map) SCR::Execute(.target.bash_output, sformat ("find %1 -type f -name MD5SUMS", dir));
