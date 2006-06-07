@@ -101,48 +101,6 @@ any ServerSequence() {
     return Sequencer::Run(aliases, sequence);
 }
 
-/**
- * Whole configuration of instserver but without reading and writing.
- * For use with autoinstallation.
- * @return sequence result
- */
-any SetupSequence() {
-
-
-    map aliases = $[
-	"read"	: [ ``( ReadDialog() ), true ],
-	"main"	:   ``( ServerSequence() ),
-	"write"	        : ``(WriteDialog())
-    ];
-
-    map sequence = $[
-	"ws_start" : "read",
-	"read" : $[
-	    `abort	: `abort,
-	    `next	: "main"
-	],
-	"main" : $[
-	    `abort	: `abort,
-	    `next	: "write"
-	],
-	"write" : $[
-	    `abort	: `abort,
-	    `next	: `next
-	]
-    ];
-
-    //Wizard::CreateDialog();
-    //Wizard::SetDesktopIcon("instserver");
-
-    any ret = Sequencer::Run(aliases, sequence);
-
-    //UI::CloseDialog();
-    return ret;
-}
-
-
-
-
 
 
 
@@ -198,14 +156,20 @@ any InstserverSequence() {
     map aliases = $[
 	"read"	: [ ``( ReadDialog() ), true ],
 	"main"	:   ``( MainSequence() ),
-	"write"	        : ``(WriteDialog())
+	"setup" :   ``( ServerSequence() ),
+	"write"	:   ``(WriteDialog())
     ];
 
     map sequence = $[
 	"ws_start" : "read",
 	"read" : $[
 	    `abort	: `abort,
+	    `setup	: "setup",
 	    `next	: "main"
+	],
+	"setup" : $[
+	    `next	: "main",
+	    `abort	: `abort
 	],
 	"main" : $[
 	    `abort	: `abort,

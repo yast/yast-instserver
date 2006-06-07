@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Jun  7 13:31:03 CEST 2006 - lslezak@suse.cz
+
+- fixed the workflow - configure the server at first (#179766)
+- refresh MD5SUM files in a standalone product only when it's
+  required (number of CDs is 2 or more)
+- 2.13.10
+
+-------------------------------------------------------------------
 Thu May 18 14:03:20 CEST 2006 - lslezak@suse.cz
 
 - ask for an add-on product only if the product is pre-CODE10

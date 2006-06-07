@@ -46,7 +46,8 @@ symbol ReadDialog() {
     Wizard::RestoreHelp(HELPS["read"]:"");
     // Instserver::AbortFunction = PollAbort;
     boolean ret = Instserver::Read();
-    return ret ? `next : `abort;
+
+    return ret ? ((Instserver::FirstDialog == "settings") ? `setup : `next ): `abort;
 }
 
 /**
