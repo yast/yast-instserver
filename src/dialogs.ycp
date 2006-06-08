@@ -448,7 +448,7 @@
 			}
 		    }
 
-		    y2internal("products; %1", Instserver::products);
+		    y2milestone("products; %1", Instserver::products);
 
 		    if (!found)
 		    {
@@ -573,10 +573,35 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 
 		if (size(cmds) > 0 )
 		{
+		    boolean aborted = false;
+
 		    foreach(string cmd , cmds, ``{
-                        y2debug("executing command: %1", cmd );
-                        SCR::Execute(.target.bash, cmd);
+                        y2milestone("executing command: %1", cmd );
+
+                        integer res = (integer)SCR::Execute(.target.bash, cmd);
+
+			if (res != 0)
+			{
+			    y2milestone("aborting: command %1 failed, exit=%2", cmd, res);
+
+			    // close the progress popup
+			    Popup::ClearFeedback();
+
+			    // TODO: report more details (stderr)
+			    Report::Error(_("Error while moving installation source content."));
+			    aborted = true;
+
+			    break;
+			}
 		    });
+
+		    if (aborted)
+		    {
+			// unmount the source
+			SCR::Execute (.target.umount, Installation::sourcedir);
+			return `abort;
+		    }
+
 		    cmds = [];
                     cds_copied= true;
 		}
