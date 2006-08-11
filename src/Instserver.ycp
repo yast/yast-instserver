@@ -116,7 +116,8 @@ global list<string> createLinks (string dir, string product, list<string> files)
     foreach(string symlink , files, ``{
 	string f = sformat("%1/%2/%3", dir, shorttgt, symlink );
 
-	cmds=add(cmds, sformat("( test -f %1 || test -d %2) &&  pushd %3 && ln -sf %4/%5 && popd ",
+	// always return success - the link may be missing if the target file doesn't exist
+	cmds=add(cmds, sformat("( test -f %1 || test -d %2) &&  pushd %3 && ln -sf %4/%5 && popd; exit 0",
 			       f,f,dir, shorttgt, symlink));
 
     });

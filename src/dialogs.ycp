@@ -107,6 +107,55 @@
 	return ret;
     }
 
+
+    boolean code10(map content_file)
+    {
+	// ask for an addon only when the product is pre-CODE10
+	boolean ret = true;
+
+	string product_lower = tolower(content_file["PRODUCT"]:"");
+	string version_str = content_file["VERSION"]:"";
+
+	y2milestone("product: %1", product_lower);
+	y2milestone("version: %1", version_str);
+
+	integer version_major = 0;
+	integer version_minor = 0;
+
+	if (issubstring(version_str, "."))
+	{
+	    list<string> parts = splitstring(version_str, ".");
+
+	    version_major = tointeger(parts[0]:"0");
+	    version_minor = tointeger(parts[1]:"0");
+	}
+	else
+	{
+	    version_major = tointeger(version_str);
+	}
+
+	y2milestone("major version number: %1", version_major);
+	y2milestone("minor version number: %1", version_minor);
+
+	integer version = 100 * version_major + version_minor;
+	y2milestone("version: %1", version);
+
+	// SUSE Linux <= 10.0
+	if ( (product_lower == "suse linux" && version <= 1000) ||
+	    // SLES or CORE == 9
+	    ((product_lower == "suse sles" || product_lower == "suse core") && version == 900) ||
+	    (product_lower == "suse sles 9 service-pack"))
+	{
+	    ret = false;
+	}
+
+	y2milestone("CODE10 product: %1", ret);
+
+	return ret;
+    }
+
+
+
     /**
      * Copy CDs to local disk
      * @param string directory
@@ -121,11 +170,9 @@
 	    // free mount point
 	    SCR::Execute (.target.umount, Installation::sourcedir);
 
-
 	    string default_device = cddrive;
 	    string mount_options = "";
 	    any result = nil;
-
 
 	    // CD is mounted. Check contents.
 	    string cdpath = Installation::sourcedir;
@@ -145,6 +192,7 @@
             list medianames = [];
             boolean failed = false;
             boolean cds_copied = false;
+	    boolean code10_source = false;
 
             string media_id = "";
 
@@ -306,7 +354,7 @@
 
 		if (size(media) == 0  || (media_id != media[1]:"" && media_id!="") )
 		{
-		    y2debug("wrong CD or non suse CD");
+		    y2warning("wrong CD or non suse CD");
 		    SCR::Execute (.target.umount, Installation::sourcedir);
 		    continue;
 		}
@@ -371,19 +419,16 @@
                 if (contains(flaglist, "SP"))
                 {
                     Instserver::is_service_pack = true;
-                    y2milestone("Service Pack detected..");
                 } else {
                     Instserver::is_service_pack = false;
                 }
 
+                y2milestone("Service Pack detected: %1", Instserver::is_service_pack);
 
 		list<string> l = splitstring(distprod, " ");
 		distprod = mergestring(l, "-");
 		string tgt = sformat("%1/%2/CD%3", dir, distprod, current_cd );
-		y2debug("tgt: %1", tgt );
-
-		string shorttgt = sformat("%1/CD%2",  distprod, current_cd );
-		y2debug("shorttgt: %1", shorttgt );
+		y2milestone("tgt: %1", tgt);
 
 		list<string> cmds = [];
 
@@ -391,6 +436,9 @@
 		// Now, we check if this product on the CD is based on some other product. If
 		// yes, then it will be copied into  a sub-directory and not in the requested
 		// root.
+
+		code10_source = code10(content);
+		y2milestone("CODE10 source: %1", code10_source);
 
 		// This product is based on some other product
 		if ( tolower(content["BASEPRODUCT"]:"") != "" && content["BASEVERSION"]:"" != "")
@@ -465,10 +513,28 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 		    base = content["BASEPRODUCT"]:""; // i.e. SUSE CORE
 		    basever = content["BASEVERSION"]:""; // i.e. 9
 
-		    // its not standalone
-		    standalone = false;
+
+		    // code10 is always standalone product
+		    standalone = code10_source;
 		    // remember for the finalizing
-		    standalone_product = false;
+		    standalone_product = code10_source;
+
+		    if (code10_source)
+		    {
+			if (total_cds == 1)
+			{
+			    tgt = sformat("%1/", dir);
+			}
+			else
+			{
+			    tgt = sformat("%1/CD%2", dir, current_cd );
+			}
+		    }
+
+		    y2milestone("tgt: %1", tgt );
+		    SCR::Execute(.target.mkdir, tgt);
+		    y2debug("config=%1, products=%2", Instserver::Config,
+			    Instserver::products);
 
 		    // and its not a base product
 		    baseproduct = false;
@@ -500,6 +566,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 		}
 		else if (content["PRODUCT"]:"dummy" == base && content["VERSION"]:"dummy" == basever )
 		{
+		    y2milestone("Product is base.");
 		    if ( current_cd == 1 )
 		    {
 			map proddata = $["standalone": true, "baseproduct": true , "name": distprod, "SP": Instserver::is_service_pack ];
@@ -513,6 +580,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 		}
 		else
 		{
+		    y2milestone("");
 		    if ( current_cd == 1 )
 		    {
 			map proddata = $["standalone": true, "baseproduct": true , "name": distprod, "SP": Instserver::is_service_pack ];
@@ -529,12 +597,12 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
                     {
                         prompt_version = "";
                     }
-		    // else, we create CD1, CD2, etc.
-		    if (stype == `onedir)
+		    // else, we create CD1, CD2, etc. (for code10 always)
+		    if (stype == `onedir && !code10_source)
 			tgt = sformat("%1/", dir);
 		    else
 			tgt = sformat("%1/CD%2", dir, current_cd );
-		    y2debug("tgt: %1", tgt );
+		    y2milestone("tgt: %1", tgt );
 		    SCR::Execute(.target.mkdir, tgt);
 		    y2debug("config=%1, products=%2", Instserver::Config,
 			    Instserver::products);
@@ -645,7 +713,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 			string linkcommand = sformat("cd %1/boot; ln -s ../%2/boot/* .", dir, relprod);
 			SCR::Execute(.target.bash, linkcommand);
 
-			// add missing liks from the original product
+			// add missing links from the original product
 			linkcommand = sformat("cd %1/boot; ln -s ../%2/* .", dir, linktgt);
 			SCR::Execute(.target.bash, linkcommand);
 
@@ -659,8 +727,10 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 
 		SCR::Execute (.target.umount, Installation::sourcedir);
 
-		if (total_cds == current_cd && !standalone && !baseproduct &&
-                        !promptmore)
+		y2milestone("total_cds: %1, current_cd: %2, standalone: %3, baseproduct: %4, promptmore: %5, is_service_pack: %6",
+		    total_cds, current_cd, standalone, baseproduct, promptmore, Instserver::is_service_pack);
+
+		if (total_cds == current_cd && !standalone && !baseproduct && !promptmore)
 		{
                     y2milestone("Restarting media counter...");
                     restart = true;
@@ -672,7 +742,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
                         prompt_version = basever;
                     }
 		}
-		else if ( total_cds == current_cd && ( standalone || baseproduct) )
+		else if ( total_cds == current_cd && ( standalone || baseproduct ) )
 		{
 		    break;
 		}
@@ -683,7 +753,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 		else
 		{
 		    current_cd = current_cd + 1;
-                    y2debug("next cd: %1", current_cd );
+                    y2milestone("next cd: %1", current_cd );
 		}
 		Instserver::standalone = standalone;
 	    }
@@ -692,38 +762,41 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
                 return `abort;
             }
 
-	    if (content_first_CD != "")
+	    if (content_first_CD != "" && !code10_source)
 	    {
 		y2milestone ("writing content file from the 1st CD...");
 		SCR::Execute (.target.remove, dir + "/content");
 		SCR::Write (.target.string, dir + "/content", content_first_CD);
 	    }
 
-	    y2milestone ("creating new root directory.yast....");
-	    SCR::Execute(.target.bash, sformat("rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast", dir));
-
-	    y2milestone("standalone_product: %1", standalone_product);
-
-	    // refresh MD5SUMS only when it's a standalone product and number of CDs > 1
-	    if (standalone_product && total_cds > 1)
+	    if (!code10_source)
 	    {
-		// recreate MD5SUM files
-		map out = (map) SCR::Execute(.target.bash_output, sformat ("find %1 -type f -name MD5SUMS", dir));
-		foreach (string file, splitstring(out["stdout"]:"", "\n"), {
-		    if (file != "")
-		    {
-			string md5dir = substring (file,0,search(file,"/MD5SUMS"));
-			// don't change MD5SUMS in product description directory,
-			// SHA1 sum of the file is in _signed_ content file
-			if (md5dir == nil || md5dir == "" || issubstring(file, "/setup/descr")) return;
+		y2milestone ("creating new root directory.yast....");
+		SCR::Execute(.target.bash, sformat("rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast", dir));
 
-			SCR::Execute (.target.remove, file);
+		y2milestone("standalone_product: %1", standalone_product);
 
-			string command = sformat("cd %1; md5sum * > MD5SUMS", md5dir);
-			y2milestone("Command: %1", command);
-			SCR::Execute (.target.bash, command, $["LANG" : "C"]);
-		    }
-		});
+		// refresh MD5SUMS only when it's a standalone product and number of CDs > 1
+		if (standalone_product && total_cds > 1)
+		{
+		    // recreate MD5SUM files
+		    map out = (map) SCR::Execute(.target.bash_output, sformat ("find %1 -type f -name MD5SUMS", dir));
+		    foreach (string file, splitstring(out["stdout"]:"", "\n"), {
+			if (file != "")
+			{
+			    string md5dir = substring (file,0,search(file,"/MD5SUMS"));
+			    // don't change MD5SUMS in product description directory,
+			    // SHA1 sum of the file is in _signed_ content file
+			    if (md5dir == nil || md5dir == "" || issubstring(file, "/setup/descr")) return;
+
+			    SCR::Execute (.target.remove, file);
+
+			    string command = sformat("cd %1; md5sum * > MD5SUMS", md5dir);
+			    y2milestone("Command: %1", command);
+			    SCR::Execute (.target.bash, command, $["LANG" : "C"]);
+			}
+		    });
+		}
 	    }
 
 	    return `next;
@@ -871,40 +944,7 @@ Not copying CDs."));
 			map content_file = ReadContentFile(target + "/content");
 			y2debug("Parsed content file: %1", content_file);
 
-			string product_lower = tolower(content_file["PRODUCT"]:"");
-			string version_str = content_file["VERSION"]:"";
-
-			y2milestone("product: %1", product_lower);
-			y2milestone("version: %1", version_str);
-
-			integer version_major = 0;
-			integer version_minor = 0;
-
-			if (issubstring(version_str, "."))
-			{
-			    list<string> parts = splitstring(version_str, ".");
-
-			    version_major = tointeger(parts[0]:"0");
-			    version_minor = tointeger(parts[1]:"0");
-			}
-			else
-			{
-			    version_major = tointeger(version_str);
-			}
-
-			y2milestone("major version number: %1", version_major);
-			y2milestone("minor version number: %1", version_minor);
-
-			integer version = 100 * version_major + version_minor;
-			y2milestone("version: %1", version);
-
-			// SUSE Linux <= 10.0
-			if ( (product_lower == "suse linux" && version <= 1000) ||
-			    // SLES or CORE == 9
-			    ((product_lower == "suse sles" || product_lower == "suse core") && version == 900) )
-			{
-			    ask_for_addon = true;
-			}
+			ask_for_addon = !code10(content_file);
 		    }
 
 		    y2milestone("ask_for_addon: %1", ask_for_addon);
@@ -929,7 +969,18 @@ Not copying CDs."));
 		    }
 		    else
 		    {
-			y2error("cant read content file, something nasty happened: %1", contentpath);
+			y2milestone("cannot read %1", contentpath);
+			// try CD1 subdir if the previous attempt has failed
+			contentpath = sformat("%1/CD1/content", target);
+
+			if (SCR::Read(.target.size, contentpath) > 0 )
+			{
+			    content = (map)SCR::Read(.content_file, contentpath);
+			}
+			else
+			{
+			    y2error("cant read content file, something nasty happened: %1", contentpath);
+			}
 		    }
 
 		    y2debug("content: %1", content);
