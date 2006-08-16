@@ -463,10 +463,11 @@
 			}
 		    );
 
-		    if (!found)
+		    if (!found && SCR::Read(.target.size, Installation::sourcedir + "/yast") >= 0)
 		    {
 			// check also subdirectories
 			string cmd = sformat("cd %1; find -maxdepth 1 -type d", Installation::sourcedir + "/yast");
+			y2milestone("find command: %1", cmd);
 			map out = (map)SCR::Execute(.target.bash_output, cmd);
 
 			list<string> dirs = splitstring(out["stdout"]:"", "\n");
@@ -477,6 +478,7 @@
 
 			foreach(string d, dirs, {
 				string cont_file = Installation::sourcedir + "/yast/" + d + "/content";
+				y2milestone("Trying content file: %1", cont_file);
 
 				if (IsBaseProduct(content, cont_file)) {
 				    found = true;
@@ -498,7 +500,8 @@
 
 		    y2milestone("products; %1", Instserver::products);
 
-		    if (!found)
+		    // code10 add-on is a standalone source
+		    if (!found && !code10_source)
 		    {
 			// add-on medium (e.g. service pack) doesn't match configured source
 			Report::LongError(sformat(_("The medium requires product %1, which is not provided
