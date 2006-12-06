@@ -476,6 +476,17 @@ global string GetIPAddr()
     return (IP::ToString(ip));
 }
 
+global string GetHostname()
+{
+    map output = (map)SCR::Execute( .target.bash_output, "/bin/hostname --long" );
+    y2milestone("hostname --long: %1", output);
+    string hostname = output["stdout"]:"";
+
+    hostname = splitstring(hostname, "\n")[0]:"";
+
+    return hostname;
+}
+
 /**
  * Write SLP configuration
  */
@@ -484,6 +495,7 @@ global boolean WriteSLPReg (map<string,any> cm) {
     y2debug("WriteSLPReg(%1)", cm);
 
     string ip = GetIPAddr();
+    string hostname = GetHostname();
     string serv = "";
     string regfile =  sformat("YaST-%1.reg",  cm["name"]:"" );
     if (ServerSettings["service"]:`none == `nfs)
@@ -532,20 +544,16 @@ global boolean WriteSLPReg (map<string,any> cm) {
 	}
     }
 
-    string descr = sformat("%1 ++%2++", cm["LABEL"]:"" , cm["DISTPRODUCT"]:"" );
+    string hostname_reg = "";
+    // add the hostname
+    if (hostname != nil && hostname != "" && haskey(attr, "label"))
+    {
+	hostname_reg = hostname + ": ";
+    }
 
-    string cmd = sformat("grep description  %1 | grep -c \"%2\"", checkfiles, descr);
-    map bashret = (map)SCR::Execute(.target.bash_output, cmd);
-    y2debug("description bashret: %1", bashret);
-    if (bashret["exit"]:-1 == 0)
-    {
-        attr["description"] = sformat("%1  #%2", descr,
-                substring(bashret["stdout"]:"", 0 , 1 ) );
-    }
-    else
-    {
-        attr["description"] = sformat("%1", descr );
-    }
+    string descr = sformat("%1 (%2)", cm["LABEL"]:"" , cm["DISTPRODUCT"]:"" );
+    attr["description"] = hostname_reg + descr;
+
     string machine = "";
     list<string> machines = [];
     foreach(string k, any v, cm, ``{
