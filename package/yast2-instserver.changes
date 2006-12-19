@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Dec 19 16:06:00 CET 2006 - lslezak@suse.cz
+
+- install apache2 when a HTTP source is configured (#192147)
+- 2.13.14
+
+-------------------------------------------------------------------
 Wed Dec  6 14:17:39 CET 2006 - lslezak@suse.cz
 
 - write hostname to SLP registration file (#158172)
