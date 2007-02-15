@@ -16,6 +16,7 @@
     import "Popup";
     import "Wizard";
     import "Instserver";
+    import "CWMFirewallInterfaces";
 
     include "instserver/helps.ycp";
     include "instserver/routines.ycp";
@@ -1263,23 +1264,40 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
         string nfsoptions = "ro,root_squash,sync";
         string wildcard = "*";
 
+	// firewall widget using CWM
+	map<string, any> fw_settings = $[
+	    "services": [ "nfs-server" ],
+	    "display_details": true,
+	    ];
+
+	map<string,any> fw_cwm_widget = CWMFirewallInterfaces::CreateOpenFirewallWidget(fw_settings);
+
         /* Instserver nfs dialog contents */
         term contents =
             `HVSquash( 
 		      `VBox(
 			    `Left(`TextEntry(`id(`wildcard), _("&Host Wild Card"), wildcard)),
-			    `Left(`TextEntry(`id(`nfsoptions), _("&Options"), nfsoptions))
+			    `VSpacing(0.5),
+			    `Left(`TextEntry(`id(`nfsoptions), _("&Options"), nfsoptions)),
+			    `VSpacing(1),
+			    fw_cwm_widget["custom_widget"]:`Empty()
 			    )
 		      );
 
 
-        Wizard::SetContentsButtons(caption, contents, HELPS["nfs"]:"nfs",
+        Wizard::SetContentsButtons(caption, contents, HELPS["nfs"]:"nfs" + fw_cwm_widget["help"]:"",
 				   Label::BackButton(), Label::NextButton());
 
+	// initialize the firewall widget (set the current value)
+	CWMFirewallInterfaces::OpenFirewallInit (fw_cwm_widget, "");
+
         any ret = nil;
+	map event = $[];
+
         while(true) {
 
-            ret = UI::UserInput();
+	    event = UI::WaitForEvent();
+	    ret = event["ID"]:nil;
 
             /* abort? */
             if(ret == `abort || ret == `cancel) {
@@ -1295,6 +1313,9 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
                 wildcard = (string)UI::QueryWidget(`id(`wildcard), `Value);
                 if (!Instserver::ServerSettings["dry"]:false)
                 {
+		    // store the firewall setting, (activation is in SetupNFS())
+		    CWMFirewallInterfaces::OpenFirewallStore (fw_cwm_widget, "", event);
+
                     r = Instserver::SetupNFS(Instserver::ServerSettings["directory"]:"" , wildcard + "(" + deletechars(nfsoptions," ") + ")" );
                     if (!r)
                     {
@@ -1303,12 +1324,13 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
                     }
                 }
                 Instserver::modified = true;
+
+
                 break;
             }
-            else {
-                y2error("unexpected retcode: %1", ret);
-                continue;
-            }
+
+	    // handle the events, enable/disable the button, show the popup if button clicked
+	    CWMFirewallInterfaces::OpenFirewallHandle (fw_cwm_widget, "", event);
         }
 
         return ret;
@@ -1390,23 +1412,39 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
         /* Instserver configure2 dialog caption */
         string caption = _("Installation Server -- HTTP");
 
+	// firewall widget using CWM
+	map<string, any> fw_settings = $[
+	    "services": [ "http" ],
+	    "display_details": true,
+	    ];
+
+	map<string,any> fw_cwm_widget = CWMFirewallInterfaces::CreateOpenFirewallWidget(fw_settings);
+
         string alias = Instserver::ServerSettings["alias"]:"";
         /* Instserver nfs dialog contents */
         term contents =
             `HVSquash(
 		      `VBox(
-			    `Left(`TextEntry(`id(`alias), _("&Directory Alias"), alias ))
+			    `Left(`TextEntry(`id(`alias), _("&Directory Alias"), alias )),
+			    `VSpacing(1),
+			    fw_cwm_widget["custom_widget"]:`Empty()
 			    )
 		      );
 
 
-        Wizard::SetContentsButtons(caption, contents, HELPS["http"]:"http",
+        Wizard::SetContentsButtons(caption, contents, HELPS["http"]:"http" + fw_cwm_widget["help"]:"",
 				   Label::BackButton(), Label::NextButton());
 
+	// initialize the firewall widget (set the current value)
+	CWMFirewallInterfaces::OpenFirewallInit (fw_cwm_widget, "");
+
         any ret = nil;
+	map event = $[];
+
         while(true) {
 
-            ret = UI::UserInput();
+	    event = UI::WaitForEvent();
+	    ret = event["ID"]:nil;
 
             /* abort? */
             if(ret == `abort || ret == `cancel) {
@@ -1421,6 +1459,9 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
                 Instserver::ServerSettings["alias"] = alias;
                 if (!Instserver::ServerSettings["dry"]:false)
                 {
+		    // store the firewall setting, (activation is in SetupHTTP())
+		    CWMFirewallInterfaces::OpenFirewallStore (fw_cwm_widget, "", event);
+
                     if (!Instserver::SetupHTTP(Instserver::ServerSettings["directory"]:"", alias))
                     {
                         Popup::Error(_("Error creating HTTPD configuration."));
@@ -1431,10 +1472,9 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
                 Instserver::modified = true;
                 break;
             }
-            else {
-                y2error("unexpected retcode: %1", ret);
-                continue;
-            }
+
+	    // handle the events, enable/disable the button, show the popup if button clicked
+	    CWMFirewallInterfaces::OpenFirewallHandle (fw_cwm_widget, "", event);
         }
 
         return ret;

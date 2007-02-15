@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Feb 15 13:18:17 CET 2007 - lslezak@suse.cz
+
+- configure firewall in the network setup dialogs (#243326)
+- install required packages for the selected service
+- preserve modified attributes in SLP reg file (#238957)
+- remove the old reg file when a source is renamed
+- 2.13.15
+
+-------------------------------------------------------------------
 Tue Dec 19 16:06:00 CET 2006 - lslezak@suse.cz
 
 - install apache2 when a HTTP source is configured (#192147)
