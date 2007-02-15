@@ -26,6 +26,7 @@ import "Service";
 import "SLP";
 import "IP";
 import "Message";
+import "SuSEFirewall";
 
 include "instserver/routines.ycp";
 
@@ -256,11 +257,12 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
     string help = _("The FTP installation server requires an FTP server package. The vsftpd package
 will now be installed.
 ");
-    if ( !Package::InstalledAll( [ "xinetd", "vsftpd", "openslp-server" ] ) ) {
+    if ( !Package::InstalledAll( [ "xinetd", "vsftpd", "openslp-server", "yast2-inetd" ] ) ) {
         y2milestone("some packages are not installed");
     }
 
-    if ( !Package::InstallAll( [ "xinetd", "vsftpd" , "openslp-server"])) {
+    if ( !Package::InstallAll( [ "xinetd", "vsftpd" , "openslp-server", "yast2-inetd"])) {
+	Report::Error( Message::CannotContinueWithoutPackagesInstalled() );
         y2error("Error while installing packages");
         return false;
     }
@@ -404,9 +406,16 @@ will now be installed.");
             y2error("Error writing apache2 config file");
         }
     } else {
+	y2error("/etc/apache2/conf.d/inst_server.conf.in does not exist");
         return false;
     }
     RunSuseConfigApache(true);
+
+    // write firewall config if it has been modified
+    if (SuSEFirewall::GetModified())
+    {
+	SuSEFirewall::Write();
+    }
 
     Service::Enable("apache2");
     if (Service::Status("apache2") == 0 )
@@ -424,6 +433,13 @@ will now be installed.");
  * @return boolean
  */
 global boolean SetupNFS(string dir, string options) {
+
+    if (!Package::InstallAll( [ "yast2-nfs-server"])) {
+	Report::Error( Message::CannotContinueWithoutPackagesInstalled() );
+
+        y2error("Error while installing packages");
+        return false;
+    }
 
     map resource = (map)ReadServiceSettings("nfs_server_auto");
     list<map> oldexp = resource["nfs_exports"]:[];
@@ -463,6 +479,13 @@ Leave NFS exports unmodified?");
         Service::Reload("nfsserver");
     else
         Service::Start("nfsserver");
+
+    // write firewall config if it has been modified
+    if (SuSEFirewall::GetModified())
+    {
+	SuSEFirewall::Write();
+    }
+
     return true;
 }
 
@@ -673,6 +696,9 @@ global boolean Read() {
     y2milestone("Server config: %1", c["servers"]:$[]);
 
     ServerSettings = c["servers"]:$[];
+
+    // read firewall settings
+    SuSEFirewall::Read();
 
     sleep(sl);
 
