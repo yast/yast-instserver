@@ -26,6 +26,7 @@ import "Service";
 import "SLP";
 import "IP";
 import "Message";
+import "SuSEFirewall";
 
 include "instserver/routines.ycp";
 
@@ -256,11 +257,12 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
     string help = _("The FTP installation server requires an FTP server package. The vsftpd package
 will now be installed.
 ");
-    if ( !Package::InstalledAll( [ "xinetd", "vsftpd", "openslp-server" ] ) ) {
+    if ( !Package::InstalledAll( [ "xinetd", "vsftpd", "openslp-server", "yast2-inetd" ] ) ) {
         y2milestone("some packages are not installed");
     }
 
-    if ( !Package::InstallAll( [ "xinetd", "vsftpd" , "openslp-server"])) {
+    if ( !Package::InstallAll( [ "xinetd", "vsftpd" , "openslp-server", "yast2-inetd"])) {
+	Report::Error( Message::CannotContinueWithoutPackagesInstalled() );
         y2error("Error while installing packages");
         return false;
     }
@@ -404,9 +406,16 @@ will now be installed.");
             y2error("Error writing apache2 config file");
         }
     } else {
+	y2error("/etc/apache2/conf.d/inst_server.conf.in does not exist");
         return false;
     }
     RunSuseConfigApache(true);
+
+    // write firewall config if it has been modified
+    if (SuSEFirewall::GetModified())
+    {
+	SuSEFirewall::Write();
+    }
 
     Service::Enable("apache2");
     if (Service::Status("apache2") == 0 )
@@ -424,6 +433,13 @@ will now be installed.");
  * @return boolean
  */
 global boolean SetupNFS(string dir, string options) {
+
+    if (!Package::InstallAll( [ "yast2-nfs-server"])) {
+	Report::Error( Message::CannotContinueWithoutPackagesInstalled() );
+
+        y2error("Error while installing packages");
+        return false;
+    }
 
     map resource = (map)ReadServiceSettings("nfs_server_auto");
     list<map> oldexp = resource["nfs_exports"]:[];
@@ -463,6 +479,13 @@ Leave NFS exports unmodified?");
         Service::Reload("nfsserver");
     else
         Service::Start("nfsserver");
+
+    // write firewall config if it has been modified
+    if (SuSEFirewall::GetModified())
+    {
+	SuSEFirewall::Write();
+    }
+
     return true;
 }
 
@@ -531,21 +554,8 @@ global boolean WriteSLPReg (map<string,any> cm) {
 
     // Check if the description is already used
     // don't check file which will be rewritten
-    string checkfiles = "/etc/slp.reg.d/YaST-*.reg";
+//    string checkfiles = "/etc/slp.reg.d/YaST-*.reg";
     string targetfile = "/etc/slp.reg.d/" + regfile;
-
-    if (SCR::Read(.target.size, targetfile) >= 0)
-    {
-	// don't check the overwritten config file
-	// get names of all config files except the rewritten one
-	map lsout = (map)SCR::Execute(.target.bash_output, "/bin/ls /etc/slp.reg.d/* | grep -v /etc/slp.reg.d/YaST-sles9.reg");
-	if (lsout["exit"]:-1 == 0)
-	{
-	    // merge the output into single line
-	    checkfiles = mergestring(splitstring(lsout["stdout"]:"", "\n"), " ");
-	    y2debug("files to check: %1", checkfiles);
-	}
-    }
 
     string hostname_reg = "";
     // add the hostname
@@ -554,8 +564,21 @@ global boolean WriteSLPReg (map<string,any> cm) {
 	hostname_reg = hostname + ": ";
     }
 
-    string descr = sformat("%1 (%2)", cm["LABEL"]:"" , cm["DISTPRODUCT"]:"" );
-    attr["description"] = hostname_reg + descr;
+    string descr = hostname_reg + sformat("%1 (%2)", cm["LABEL"]:"" , cm["DISTPRODUCT"]:"" );
+    attr["description"] = descr;
+
+    string read_file = targetfile;
+
+    foreach(string orig, string new, renamed,
+	{
+	    if (new == cm["name"]:"")
+	    {
+		y2milestone("Config renamed from %1 to %2", orig, new);
+
+		read_file = "/etc/slp.reg.d/" + sformat("YaST-%1.reg", orig);
+	    }
+	}
+    );
 
     string machine = "";
     list<string> machines = [];
@@ -570,6 +593,40 @@ global boolean WriteSLPReg (map<string,any> cm) {
     y2debug("machines: %1", machines);
     attr["machine"] = mergestring(machines, ",");
     y2debug("machine: %1", machine);
+
+    // preserve the old configuration
+    if (SCR::Read(.target.size, read_file) >= 0)
+    {
+	y2milestone("Existing reg.d file found: %1", read_file);
+
+	string reg_cont = (string)SCR::Read(.target.string, read_file);
+	list<string> lines = splitstring(reg_cont, "\n");
+
+	foreach(string l, lines,
+	    {
+		string parsed_name = regexpsub(l, "^[ \t]*([^ \t]*)[ \t]*=(.*)", "\\1");
+		string parsed_value = regexpsub(l, "^[ \t]*([^ \t]*)[ \t]*=(.*)", "\\2");
+		if (parsed_name != nil)
+		{
+		    y2milestone("Reusing attribute: %1=%2", parsed_name, parsed_value);
+		    attr[parsed_name] = parsed_value;
+		}
+	    }
+	);
+
+/*
+TODO: checking?
+	// don't check the overwritten config file
+	// get names of all config files except the rewritten one
+	map lsout = (map)SCR::Execute(.target.bash_output, "/bin/ls /etc/slp.reg.d/* | grep -v /etc/slp.reg.d/YaST-sles9.reg");
+	if (lsout["exit"]:-1 == 0)
+	{
+	    // merge the output into single line
+	    checkfiles = mergestring(splitstring(lsout["stdout"]:"", "\n"), " ");
+	    y2debug("files to check: %1", checkfiles);
+	}
+*/
+    }
 
     y2milestone("registering SLP service: serv: %1, attr: %2, regfile: %3", serv, attr, regfile);
 
@@ -673,6 +730,12 @@ global boolean Read() {
     y2milestone("Server config: %1", c["servers"]:$[]);
 
     ServerSettings = c["servers"]:$[];
+
+    // disable progress for firewall
+    boolean prg = Progress::set(false);
+    // read firewall settings
+    SuSEFirewall::Read();
+    Progress::set(prg);
 
     sleep(sl);
 
@@ -808,7 +871,14 @@ global boolean Write() {
         });
 
     // move content of the renamed sources
-    foreach(string orig, string new, renamed, {
+    foreach(string orig, string new, renamed,
+	{
+	    // remove old reg file
+	    string old_regfile = sformat("/etc/slp.reg.d/YaST-%1.reg", orig);
+	    y2milestone("removing old reg file: %1", old_regfile);
+	    SCR::Execute(.target.bash, "rm -f " + old_regfile );
+
+	    // rename the directory
 	    string cmd = sformat("mv %1/%2 %1/%3", Instserver::ServerSettings["directory"]:"", orig, new);
 	    y2milestone("moving directory: %1", cmd);
 
