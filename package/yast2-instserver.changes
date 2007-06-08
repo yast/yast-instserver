@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jun  8 14:03:25 CEST 2007 - lslezak@suse.cz
+
+- added support for OES1 (#84086)
+- 2.15.3
+
+-------------------------------------------------------------------
 Thu Feb 15 13:18:17 CET 2007 - lslezak@suse.cz
 
 - configure firewall in the network setup dialogs (#243326)

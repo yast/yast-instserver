@@ -91,6 +91,11 @@
 	y2milestone("content: %1", content);
 	y2milestone("basecontent: %1", basecontent);
 
+	if (basecontent == nil)
+	{
+	    basecontent = $[];
+	}
+
 	if ((tolower(content["BASEPRODUCT"]:"") == tolower(basecontent["BASEPRODUCT"]:"")
 	    && content["BASEVERSION"]:"" == basecontent["BASEVERSION"]:"")
 	    // or it's a service pack for maintained product (e.g. NLD)
@@ -135,6 +140,18 @@
 	    version_major = tointeger(version_str);
 	}
 
+	if (version_major == nil)
+	{
+	    y2warning("version_major is nil, setting to 0");
+	    version_major = 0;
+	}
+
+	if (version_minor == nil)
+	{
+	    y2warning("version_minor is nil, setting to 0");
+	    version_minor = 0;
+	}
+
 	y2milestone("major version number: %1", version_major);
 	y2milestone("minor version number: %1", version_minor);
 
@@ -145,7 +162,8 @@
 	if ( (product_lower == "suse linux" && version <= 1000) ||
 	    // SLES or CORE == 9
 	    ((product_lower == "suse sles" || product_lower == "suse core") && version == 900) ||
-	    (product_lower == "suse sles 9 service-pack"))
+	    (product_lower == "suse sles 9 service-pack")
+	    || (product_lower == "open enterprise server" && version == 0))
 	{
 	    ret = false;
 	}
@@ -350,8 +368,15 @@
 		y2debug("mounted cdrom");
 
 		list<string> media = ReadMediaFile( sformat("%1/media.%2/media", cdpath, current_cd ));
-		y2debug("media: %1", media);
+		y2milestone("media: %1", media);
 		map content = $[];
+
+		// remove empty string at the end if it's present
+		if (size(media) >= 1 && media[size(media) - 1]:nil == "")
+		{
+		    media = remove(media, size(media) - 1);
+		    y2milestone("media: %1", media);
+		}
 
 		if (size(media) == 0  || (media_id != media[1]:"" && media_id!="") )
 		{
@@ -361,8 +386,15 @@
 		}
 		else
 		{
+		    // media names at the end of file
+		    if (tointeger(media[2]:"-1") == nil && size(media) > 3)
+		    {
+			media[2] = sformat("%1", size(media) - 2);
+			y2milestone("Setting media number to %1", media[2]:nil);
+		    }
+
 		    content = ReadContentFile(cdpath + "/content");
-                    y2debug("Content file: %1", content);
+                    y2milestone("Content file: %1", content);
 		    // don't rewrite the already read content file,
 		    // content file from CORE9 would rewrite already read file from SLES9
 		    if (current_cd == 1 && content_first_CD == "")
@@ -374,8 +406,8 @@
 		    if (media[2]:"" != "" && media[2]:"" != "doublesided")
 		    {
 			total_cds = tointeger(media[2]:"-1");
+			y2milestone("total_cds: %1", total_cds);
                         media_id = media[1]:"";
-			y2debug("total cds expected: %1", total_cds);
 		    }
 
                     y2debug("base: %1 basever: %2", base, basever );
@@ -399,13 +431,17 @@
 
                             if (substring(m, 0, 5 ) == "MEDIA" )
                             {
-                            if (doublesided)
-                                medianame = regexpsub(m, "(.*)SIDE A(.*)", "\\1SIDE %1\\2");
-                            else
-                                medianame = regexpsub(m, "(.*)CD.", "\\1CD%1");
+				if (doublesided)
+				    medianame = regexpsub(m, "(.*)SIDE A(.*)", "\\1SIDE %1\\2");
+				else
+				    medianame = regexpsub(m, "(.*)CD.", "\\1CD%1");
 
-                            medianames=add(medianames, substring(m,7,
-                                    size(m)));
+				m = substring(m, 7);
+
+				if (!contains(medianames, m))
+				{
+				    medianames = add(medianames, m);
+				}
                             }
                             });
                     y2milestone("medianames: %1", medianames);
@@ -737,14 +773,17 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 		if (total_cds == current_cd && !standalone && !baseproduct && !promptmore)
 		{
                     y2milestone("Restarting media counter...");
+
+		    // ask for the base product
                     restart = true;
 		    current_cd = 1;
                     media_id = "";
-                    if (size(medianames) == 0)
-                    {
-                        prompt_string = base;
-                        prompt_version = basever;
-                    }
+		    total_cds = 1;
+		    prompt_totalcds = 0;
+		    medianames = [];
+
+		    prompt_string = base;
+		    prompt_version = basever;
 		}
 		else if ( total_cds == current_cd && ( standalone || baseproduct ) )
 		{
