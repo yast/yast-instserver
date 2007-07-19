@@ -19,7 +19,7 @@ import "Instserver";
 
 include "instserver/helps.ycp";
 
-// selected installation source
+// selected repository
 string selected_source = "";
 
 /**
@@ -78,7 +78,7 @@ define list<map<string,any> > createOverviewTable() {
 
 		if (haskey(cfg, "LABEL") && cfg["LABEL"]:"" != nil)
 		{
-		    // source overview - %1 is product name (e.g. "SUSE LINUX Version 10.0")
+		    // repository overview - %1 is product name (e.g. "SUSE LINUX Version 10.0")
 		    descr = add(descr, sformat(_("Label: %1"), cfg["LABEL"]:""));
 		}
 
@@ -131,13 +131,13 @@ any OverviewDialog() {
     any ret = nil;
     while(true) {
 
-	// initilize selected selected source
+	// initilize selected selected repository
 	if (selected_source == "")
 	{
 	    selected_source = WizardHW::SelectedItem();
 	}
 
-	// set previously selected source
+	// set previously selected repository
 	WizardHW::SetSelectedItem(selected_source);
 
 
@@ -174,7 +174,7 @@ any OverviewDialog() {
 	    WizardHW::SetContents(items);
 	    WizardHW::SetSelectedItem("");
 
-	    // the selected source has just been removed
+	    // the selected repository has just been removed
 	    selected_source = "";
 
             continue;

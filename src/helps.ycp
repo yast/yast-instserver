@@ -20,7 +20,7 @@ map HELPS = $[
     "server": _("<p><b><big>Network Server Configuration</big></b><br>
 </p>") +
 
-    _("<p>Select one of the server options and specify where all the sources
+    _("<p>Select one of the server options and specify where all the repositories
 should be hosted on the local system.
 </p>") +
     _("<p>If you have one of the services already running and want to do the
@@ -47,8 +47,8 @@ options, see the manual page for <em>exports</em> (man exports(5))
 </p>
 ") +
 
-    _("<p>The source will be available at the following URL:
-<tt>nfs://Host_IP/Source_Name</tt></p>"),
+    _("<p>The repository will be available at the following URL:
+<tt>nfs://Host_IP/Repository_Name</tt></p>"),
     "ftp": _("<p><b><big>FTP Server Configuration</big></b><br>
 </p>") +
 
@@ -67,7 +67,7 @@ FTP server (using the <tt>--bind</tt> option of <tt>mount</tt>).
 </p>
 ") +
 
-    _("<p><tt>ftp://&lt;Host IP&gt;/&lt;Source Name&gt;</tt>
+    _("<p><tt>ftp://&lt;Host IP&gt;/&lt;Repository Name&gt;</tt>
 </p>"),
     "http": _("<p><b><big>HTTP Server Configuration</big></b><br>
 </p>") +
@@ -78,27 +78,27 @@ server root directory.</p>
 ") +
 
     _("<p>Select a short and easy to remember alias. For example, if you select
-<em>SUSE</em> as the alias, the sources will be available as shown below:</p>
+<em>SUSE</em> as the alias, the repositories will be available as shown below:</p>
 ") +
 
-    _("<p><tt>http://&lt;Host IP&gt;/SUSE/&lt;Source Name&gt;</tt>
+    _("<p><tt>http://&lt;Host IP&gt;/SUSE/&lt;Repository Name&gt;</tt>
 </p>"),
 
-    "initial": _("<p><b><big>Configuration of the Installation Source</big></b><br>
+    "initial": _("<p><b><big>Configuration of the Repository</big></b><br>
 </p>
 ") +
 
-    _("<p>The source name is used to create a directory under which all product
-CDs are copied and managed. The installation source is accessed using the
+    _("<p>The repository name is used to create a directory under which all product
+CDs are copied and managed. The repository is accessed using the
 configured protocol (NFS, FTP, or HTTP)</p> ") +
 
     _("<p><b><big>SLP Support</big></b></p>") +
 
     _("<p>SLP (Service Location Protocol) makes finding an installation server easier. 
-If checked, the installation source will be announced on the network using SLP.</p>
+If checked, the repository will be announced on the network using SLP.</p>
 "),
 
-    "initial2": _("<p><b><big>Configuration of the Installation Source</big></b><br>
+    "initial2": _("<p><b><big>Configuration of the Repository</big></b><br>
 </p>
 ") +
 
@@ -107,7 +107,7 @@ _("<p>Select a source drive from the list, insert the first medium of a base pro
 ") +
 
     _("<p>When the base media are copied to the local repository, you can add additional
-CDs to the installation source (for example, Service Pack CDs or any add-on CDs).</p>
+CDs to the repository (for example, Service Pack CDs or any add-on CDs).</p>
 ") +
 
     _("<p><b><big>ISO Images</big></b></p>") +
@@ -128,7 +128,7 @@ Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
 "),
 
     /* Write dialog help 1/2 */
-    "write" : _("<p><b><big>Saving Source Configuration</big></b><br>
+    "write" : _("<p><b><big>Saving Repository Configuration</big></b><br>
 Please wait...<br></p>
 ") +
 
@@ -140,16 +140,16 @@ An additional dialog informs whether it is safe to do so.
 "),
 
     /* Summary dialog help 1/3 */
-    "summary" : _("<p><b><big>Installation Source Configuration</big></b><br>
+    "summary" : _("<p><b><big>Repository Configuration</big></b><br>
 Configure the installation server here.<br></p>
 ") +
 
     /* Summary dialog help 2/3 */
-    _("<p><b><big>Adding an Installation Source:</big></b><br>
-A search is made in the source repository for 
+    _("<p><b><big>Adding a Repository:</big></b><br>
+A search is made in the repository directory for 
 unconfigured directories, which are then made 
 available for configuration.
-Choose a source from the list of sources found. 
+Choose a repository from the list of found repositories. 
 Then press <b>Configure</b>.</p>
 ") +
 
@@ -160,18 +160,18 @@ the configuration opens.</p>
 "),
 
     /* Ovreview dialog help 1/3 */
-    "overview" : _("<p><b><big>Installation Sources Overview</big></b><br>
-Obtain an overview of configured installation sources. Additionally
+    "overview" : _("<p><b><big>Repositories Overview</big></b><br>
+Obtain an overview of configured repositories. Additionally
 edit their configuration.<br></p>
 ") +
 
     /* Ovreview dialog help 2/3 */
-_("<p><b><big>Adding an Installation Source:</big></b><br>
-Press <b>Add</b> to configure an installation source.</p>") +
+_("<p><b><big>Adding a Repository:</big></b><br>
+Press <b>Add</b> to configure a repository.</p>") +
 
     /* Ovreview dialog help 3/3 */
 _("<p><b><big>Editing or Deleting:</big></b><br>
-Choose an installation source to change or remove.
+Choose a repository to change or remove.
 Then press <b>Edit</b> or <b>Delete</b> as desired.</p>
 "),
 

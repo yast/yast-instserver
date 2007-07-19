@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jul 19 14:26:21 CEST 2007 - lslezak@suse.cz
+
+- "installation source" changed to "repository"
+- 2.15.4
+
+-------------------------------------------------------------------
 Fri Jun  8 14:03:25 CEST 2007 - lslezak@suse.cz
 
 - added support for OES1 (#84086)

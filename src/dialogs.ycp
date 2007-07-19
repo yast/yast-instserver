@@ -475,7 +475,7 @@
 		// root.
 
 		code10_source = code10(content);
-		y2milestone("CODE10 source: %1", code10_source);
+		y2milestone("CODE10 repository: %1", code10_source);
 
 		// This product is based on some other product
 		if ( tolower(content["BASEPRODUCT"]:"") != "" && content["BASEVERSION"]:"" != "")
@@ -537,12 +537,12 @@
 
 		    y2milestone("products; %1", Instserver::products);
 
-		    // code10 add-on is a standalone source
+		    // code10 add-on is a standalone repository
 		    if (!found && !code10_source)
 		    {
-			// add-on medium (e.g. service pack) doesn't match configured source
+			// add-on medium (e.g. service pack) doesn't match configured repository
 			Report::LongError(sformat(_("The medium requires product %1, which is not provided
-by the current installation source.
+by the current repository.
 
 Select the base product medium first."), content["BASEPRODUCT"]:""));
 			media_id = "";
@@ -696,7 +696,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 			    Popup::ClearFeedback();
 
 			    // TODO: report more details (stderr)
-			    Report::Error(_("Error while moving installation source content."));
+			    Report::Error(_("Error while moving repository content."));
 			    aborted = true;
 
 			    break;
@@ -705,7 +705,7 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
 
 		    if (aborted)
 		    {
-			// unmount the source
+			// unmount the repository
 			SCR::Execute (.target.umount, Installation::sourcedir);
 			return `abort;
 		    }
@@ -867,13 +867,13 @@ Select the base product medium first."), content["BASEPRODUCT"]:""));
     }
 
     /**
-     * Source configuration dialog
+     * Repository configuration dialog
      * @return dialog result
      */
     any MediaDialog () {
 
         /* Instserver configuration dialog caption */
-        string caption = _("Source Configuration");
+        string caption = _("Repository Configuration");
 
         string isodir = Instserver::ServerSettings["iso-dir"]:"";
 	list<term> cddevs = CDdevices();
@@ -993,7 +993,7 @@ Not copying CDs."));
 		    y2milestone("ask_for_addon: %1", ask_for_addon);
 
 		    // for translators: popup question (prefer more shorter lines than few long lines)
-		    while (ask_for_addon && Popup::YesNo(_("Add an additional product (Service Pack, Additional\nPackage CD, etc.) to the source?")) == true)
+		    while (ask_for_addon && Popup::YesNo(_("Add an additional product (Service Pack, Additional\nPackage CD, etc.) to the repository?")) == true)
 		    {
 			CopyCDs(target, `onedir, iso, true, selecteddrive);
 		    }
@@ -1031,7 +1031,7 @@ Not copying CDs."));
 		}
 		else
 		{
-		    // copying has been aborted, remove the source
+		    // copying has been aborted, remove the repository
 		    string cmd = "/bin/rm -rf " + target;
 		    y2milestone("Removing directory %1", target);
 
@@ -1057,13 +1057,13 @@ Not copying CDs."));
     }
 
     /**
-     * Source configuration dialog
+     * Repository configuration dialog
      * @return dialog result
      */
     any SourceConfigDialog () {
 
         /* Instserver configuration dialog caption */
-        string caption = _("Source Configuration");
+        string caption = _("Repository Configuration");
 
         string dir = Instserver::Config["directory"]:"";
         boolean slp = Instserver::Config["slp"]:false;
@@ -1072,7 +1072,7 @@ Not copying CDs."));
         term contents =
             `HVSquash(
 		      `VBox(
-			    `Left(`TextEntry(`id(`dir), _("Source &Name:"), dir)),
+			    `Left(`TextEntry(`id(`dir), _("Repository &Name:"), dir)),
 			    `VSpacing(1),
 			    `Left(
 				  `CheckBox(`id(`slp), _("A&nnounce as Installation Service with SLP"), slp )
@@ -1112,23 +1112,23 @@ Not copying CDs."));
                         || size (dir) > 127
                         )
                 {
-                    string errmsg = _("Invalid source name.");
+                    string errmsg = _("Invalid repository name.");
                     Popup::Error(errmsg);
                     continue;
                 }
                 else if (dir != Instserver::Config["name"]:"" && haskey(Instserver::Configs, dir)){
-		    // an error message - entered source name already exists
-		    Popup::Error(sformat(_("Source '%1' already exists,\nenter another name."), dir));
+		    // an error message - entered repository name already exists
+		    Popup::Error(sformat(_("Repository '%1' already exists,\nenter another name."), dir));
 		    continue;
 		}
-		// create directory only for a new source
+		// create directory only for a new repository
 		else if (Instserver::Config == $[]) {
                     string mkdircmd = "mkdir -p " + target;
 
                     y2debug("executing: %1", mkdircmd );
                     if (SCR::Execute(.target.bash, mkdircmd) != 0 )
                     {
-                        Popup::Error(sformat(_("Error while creating 'source' directory.
+                        Popup::Error(sformat(_("Error while creating 'repository' directory.
 Verify that the directory 
  %1 
 is writable and try again."), Instserver::ServerSettings["directory"]:""));
@@ -1153,7 +1153,7 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
 
 		if (current != $[])
 		{
-		    // update modified source now, the workflow has in this case only one step
+		    // update modified repository now, the workflow has in this case only one step
 		    Instserver::UpdateConfig();
 		    Instserver::modified = true;
 		}
@@ -1189,7 +1189,7 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
                         `Left(`CheckBox(`id(`dry), `opt(`notify), _("Do Not Configure Any Net&work Services"))),
                         `VSquash(
 				 `HBox(
-				       `TextEntry(`id(`dir), _("Di&rectory to Contain Sources:"), dir),
+				       `TextEntry(`id(`dir), _("Di&rectory to Contain Repositories:"), dir),
 				       `VBox(
 					     `VSpacing(),
 					     `Bottom(`PushButton(`id(`select_dir),
@@ -1204,13 +1204,13 @@ is writable and try again."), Instserver::ServerSettings["directory"]:""));
             `VBox (
 		   // radio button label
 		   `Left (`RadioButton (`id (`http),
-					_("&Configure as HTTP Source"), source == `http)),
+					_("&Configure as HTTP Repository"), source == `http)),
 		   // radio button label
 		   `Left (`RadioButton (`id (`ftp),
-					_("&Configure as FTP Source"), source == `ftp)),
+					_("&Configure as FTP Repository"), source == `ftp)),
 		   // radio button label
 		   `Left (`RadioButton (`id (`nfs),
-					_("&Configure as NFS Source"), source == `nfs))
+					_("&Configure as NFS Repository"), source == `nfs))
 
 		   );
 
