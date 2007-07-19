@@ -62,7 +62,7 @@ global list<string> Detected = [];
 
 global boolean standalone = false;
 
-// renamed sources: $["old" : "new"]
+// renamed repositories: $["old" : "new"]
 global map<string, string> renamed = $[];
 
 
@@ -267,7 +267,7 @@ will now be installed.
         return false;
     }
 
-    // create source directory if it doesn't exist
+    // create repository directory if it doesn't exist
     SCR::Execute(.target.bash, sformat("[ -d %1 ] || /bin/mkdir %1", dir));
 
     if (!issubstring(dir, ftproot))
@@ -693,12 +693,12 @@ global boolean Read() {
 	    /* Progress stage 1/2 */
 	    _("Read configuration file"),
 	    /* Progress stage 2/2 */
-	    _("Look for new source media"),
+	    _("Look for a new repository"),
 	], [
 	    /* Progress step 1/2 */
 	    _("Reading configuration file..."),
 	    /* Progress step 2/2 */
-	    _("Looking for new source media..."),
+	    _("Looking for a new repository..."),
 	    /* Progress finished */
 	    _("Finished")
 	],
@@ -830,7 +830,7 @@ global boolean Write() {
 
     list<string> regs_delete = to_delete;
 
-    // remove the deleted sources
+    // remove the deleted repositories
     foreach(string c, regs_delete, ``{
        string dir = Instserver::ServerSettings["directory"]:"" + "/" + c;
        y2milestone("removing directory: %1", dir);
@@ -839,7 +839,7 @@ global boolean Write() {
        SCR::Execute(.target.bash, rm);
     });
 
-    // add disabled SLP sources
+    // add disabled SLP repositories
     foreach(string confname, map<string, any> conf, Instserver::Configs, {
 	    if (conf["slp"]:true == false)
 	    {
@@ -848,7 +848,7 @@ global boolean Write() {
 	}
     );
 
-    // Remove the SLP files of removed or SLP disabled sources
+    // Remove the SLP files of removed or SLP disabled repositories
     foreach(string c, regs_delete, ``{
        string regfile =  sformat("/etc/slp.reg.d/YaST-%1.reg",  c );
        if (SCR::Read(.target.size, regfile) > 0 )
@@ -870,7 +870,7 @@ global boolean Write() {
             }
         });
 
-    // move content of the renamed sources
+    // move content of the renamed repositories
     foreach(string orig, string new, renamed,
 	{
 	    // remove old reg file
@@ -884,7 +884,7 @@ global boolean Write() {
 
 	    if (SCR::Execute(.target.bash, cmd) != 0 )
 	    {
-		Popup::Error(_("Error while moving installation source content."));
+		Popup::Error(_("Error while moving repository content."));
 		continue;
 	    }
 	}
@@ -989,7 +989,7 @@ global list Summary() {
             return(`item(`id(dir), avail["LABEL"]:"" + "(" + avail["DEFAULTBASE"]:"" + ")" )) ;
             });
 
-    sum = Summary::AddHeader(sum, _("Configured Sources"));
+    sum = Summary::AddHeader(sum, _("Configured Repositories"));
     sum = Summary::OpenList(sum);
 
     foreach(string name , map cfg, Configs , ``{
