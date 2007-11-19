@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Nov 19 17:30:06 CET 2007 - locilka@suse.cz
+
+- Unified used terminology (repositories) (FATE #302970).
+
+-------------------------------------------------------------------
 Thu Jul 19 14:26:21 CEST 2007 - lslezak@suse.cz
 
 - "installation source" changed to "repository"

@@ -56,9 +56,9 @@ options, see the manual page for <em>exports</em> (man exports(5))
 installed and started.</p>
 ") +
 
-    _("<p>If the installation source directory chosen is outside
+    _("<p>If the chosen software repository directory is outside
 the FTP server hierarchy, a mount entry is added to <tt>/etc/fstab</tt>,
-which makes the installation source directory available under the
+which makes the software repository directory available under the
 FTP server (using the <tt>--bind</tt> option of <tt>mount</tt>).
 </p>
 ") +
