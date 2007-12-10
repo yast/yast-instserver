@@ -146,7 +146,7 @@ Configure the installation server here.<br></p>
 
     /* Summary dialog help 2/3 */
     _("<p><b><big>Adding a Repository:</big></b><br>
-A search is made in the repository directory for 
+In the repository directory is searched for 
 unconfigured directories, which are then made 
 available for configuration.
 Choose a repository from the list of found repositories. 
