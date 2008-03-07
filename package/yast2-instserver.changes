@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Mar  7 17:53:45 CET 2008 - lslezak@suse.cz
+
+- check the network service status at startup (#308662)
+
+-------------------------------------------------------------------
 Mon Dec 10 15:41:41 CET 2007 - lslezak@suse.cz
 
 - merged proofread texts (2007-18-23)
