@@ -529,19 +529,19 @@ global boolean WriteSLPReg (map<string,any> cm) {
         serv =  sformat("service:install.suse:nfs://%1/%2/%3%4,en,65535",
                 ip,
                 ServerSettings["directory"]:"", cm["name"]:"",
-                (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1" );
+                "/CD1" );
     }
     else if (ServerSettings["service"]:`none == `ftp)
     {
         serv =  sformat("service:install.suse:ftp://%1/%2%3,en,65535", ip,
-                cm["name"]:"", (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
+                cm["name"]:"", "/CD1");
     }
     else if (ServerSettings["service"]:`none == `http)
     {
         serv = sformat("service:install.suse:http://%1/%2/%3%4,en,65535",
                 ip,
                 ServerSettings["alias"]:"", cm["name"]:"",
-                (cm["dir-type"]:`onedir  == `onedir ) ? "":"/CD1");
+                "/CD1");
     }
 
     map<string, string> attr = $[];
