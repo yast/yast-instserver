@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar  7 18:01:58 CET 2008 - lslezak@suse.cz
+
+- fixed path in the slp.reg file (add "/CD1") (#365187)
+- 2.13.16
+
+-------------------------------------------------------------------
 Thu Feb 15 13:18:17 CET 2007 - lslezak@suse.cz
 
 - configure firewall in the network setup dialogs (#243326)
