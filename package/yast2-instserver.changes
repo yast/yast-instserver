@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Mar 13 07:20:45 CET 2008 - lslezak@suse.cz
+
+- added missing translation mark (#366082)
+- 2.13.17
+
+-------------------------------------------------------------------
 Fri Mar  7 18:01:58 CET 2008 - lslezak@suse.cz
 
 - fixed path in the slp.reg file (add "/CD1") (#365187)
