@@ -447,8 +447,8 @@ global boolean SetupNFS(string dir, string options) {
 
     list oldexists = filter(map e, oldexp, ``(e["mountpoint"]:"" == dir) );
     if (size(oldexists) > 0 ) {
-        boolean yesno = Popup::YesNo("Directory is already exported via NFS, 
-Leave NFS exports unmodified?");
+        boolean yesno = Popup::YesNo(_("Directory is already exported via NFS,
+Leave NFS exports unmodified?"));
         if (yesno)
         {
             return true;

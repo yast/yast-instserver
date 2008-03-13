@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Mar 13 07:20:45 CET 2008 - lslezak@suse.cz
+
+- added missing translation mark (#366082)
+- 2.16.1
+
+-------------------------------------------------------------------
 Fri Mar  7 17:53:45 CET 2008 - lslezak@suse.cz
 
 - check the network service status at startup (#308662)
