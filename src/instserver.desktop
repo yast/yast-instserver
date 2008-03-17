@@ -21,3 +21,4 @@ Exec=/sbin/yast2 instserver
 Name=Installation Server
 GenericName=Configure and manage installation servers
 X-KDE-SubstituteUID=true
+StartupNotify=true
