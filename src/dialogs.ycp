@@ -1128,10 +1128,11 @@ Not copying CDs."));
                     y2debug("executing: %1", mkdircmd );
                     if (SCR::Execute(.target.bash, mkdircmd) != 0 )
                     {
-                        Popup::Error(sformat(_("Error while creating 'repository' directory.
+                        Popup::Error(sformat(_("Error while creating <tt>repository</tt> directory.
 Verify that the directory 
  %1 
-is writable and try again."), Instserver::ServerSettings["directory"]:""));
+is writable and try again.
+"), Instserver::ServerSettings["directory"]:""));
                         continue;
                     }
                 }

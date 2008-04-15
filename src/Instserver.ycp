@@ -447,8 +447,9 @@ global boolean SetupNFS(string dir, string options) {
 
     list oldexists = filter(map e, oldexp, ``(e["mountpoint"]:"" == dir) );
     if (size(oldexists) > 0 ) {
-        boolean yesno = Popup::YesNo(_("Directory is already exported via NFS,
-Leave NFS exports unmodified?"));
+        boolean yesno = Popup::YesNo(_("Directory is already exported via NFS.
+Leave NFS exports unmodified?
+"));
         if (yesno)
         {
             return true;
@@ -813,12 +814,12 @@ global boolean Read() {
 	    /* Progress stage 1/2 */
 	    _("Read configuration file"),
 	    /* Progress stage 2/2 */
-	    _("Look for a new repository"),
+	    _("Search for a new repository"),
 	], [
 	    /* Progress step 1/2 */
 	    _("Reading configuration file..."),
 	    /* Progress step 2/2 */
-	    _("Looking for a new repository..."),
+	    _("Searching for a new repository..."),
 	    /* Progress finished */
 	    _("Finished")
 	],

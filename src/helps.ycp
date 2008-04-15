@@ -57,8 +57,8 @@ installed and started.</p>
 ") +
 
     _("<p>If the chosen software repository directory is outside
-the FTP server hierarchy, a mount entry is added to <tt>/etc/fstab</tt>,
-which makes the software repository directory available under the
+the FTP server hierarchy, a mount entry is added to <tt>/etc/fstab</tt>.
+This makes the software repository directory available under the
 FTP server (using the <tt>--bind</tt> option of <tt>mount</tt>).
 </p>
 ") +
@@ -84,21 +84,22 @@ server root directory.</p>
     _("<p><tt>http://&lt;Host IP&gt;/SUSE/&lt;Repository Name&gt;</tt>
 </p>"),
 
-    "initial": _("<p><b><big>Configuration of the Repository</big></b><br>
+    "initial": _("<p><b>Configuration of the Repository</b><br>
 </p>
 ") +
 
     _("<p>The repository name is used to create a directory under which all product
 CDs are copied and managed. The repository is accessed using the
-configured protocol (NFS, FTP, or HTTP)</p> ") +
+configured protocol (NFS, FTP, or HTTP).</p> 
+") +
 
     _("<p><b><big>SLP Support</big></b></p>") +
 
-    _("<p>SLP (Service Location Protocol) makes finding an installation server easier. 
+    _("<p>SLP (Service Location Protocol) facilitates to find an installation server. 
 If checked, the repository will be announced on the network using SLP.</p>
 "),
 
-    "initial2": _("<p><b><big>Configuration of the Repository</big></b><br>
+    "initial2": _("<p><b>Configuration of the Repository</b><br>
 </p>
 ") +
 
@@ -128,7 +129,7 @@ Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
 "),
 
     /* Write dialog help 1/2 */
-    "write" : _("<p><b><big>Saving Repository Configuration</big></b><br>
+    "write" : _("<p><b>Saving Repository Configuration</b><br>
 Please wait...<br></p>
 ") +
 
@@ -140,17 +141,15 @@ An additional dialog informs whether it is safe to do so.
 "),
 
     /* Summary dialog help 1/3 */
-    "summary" : _("<p><b><big>Repository Configuration</big></b><br>
+    "summary" : _("<p><b>Repository Configuration</b><br>
 Configure the installation server here.<br></p>
 ") +
 
     /* Summary dialog help 2/3 */
-    _("<p><b><big>Adding a Repository:</big></b><br>
-In the repository directory is searched for 
-unconfigured directories, which are then made 
+    _("<p><b>Adding a Repository:</b><br>
+Unconfigured directories are detected in the repository directory and then made 
 available for configuration.
-Choose a repository from the list of found repositories. 
-Then press <b>Configure</b>.</p>
+To add a repository, select it from the list of unconfigured repositories and press <b>Configure</b>.</p>
 ") +
 
     /* Summary dialog help 3/3 */
@@ -160,20 +159,20 @@ the configuration opens.</p>
 "),
 
     /* Ovreview dialog help 1/3 */
-    "overview" : _("<p><b><big>Repositories Overview</big></b><br>
-Obtain an overview of configured repositories. Additionally
-edit their configuration.<br></p>
+    "overview" : _("<p><b>Repositories Overview</b><br>
+Here you get an overview of the configured repositories. Additionally,
+you are able to edit their configuration.<br></p>
 ") +
 
     /* Ovreview dialog help 2/3 */
-_("<p><b><big>Adding a Repository:</big></b><br>
-Press <b>Add</b> to configure a repository.</p>") +
+_("<p><b>Adding a Repository:</b><br>
+Press <b>Add</b> to configure a repository.</p>
+") +
 
     /* Ovreview dialog help 3/3 */
 _("<p><b><big>Editing or Deleting:</big></b><br>
-Choose a repository to change or remove.
-Then press <b>Edit</b> or <b>Delete</b> as desired.</p>
-"),
+Choose the repository you want to change or remove and
+press  <b>Edit</b> or <b>Delete</b>, respectively.</p>\n"),
 
 
 ];
