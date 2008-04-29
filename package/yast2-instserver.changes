@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Apr 29 15:21:17 CEST 2008 - lslezak@suse.cz
+
+- ag_content agent moved to yast2.rpm (bnc#339126)
+- 2.16.4
+
+-------------------------------------------------------------------
 Tue Apr 15 14:53:45 CEST 2008 - lslezak@suse.cz
 
 - merged proofread texts (2008-04-15)

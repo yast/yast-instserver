@@ -2,7 +2,10 @@
 #
 @HEADER@
 BuildRequires: perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-slp
-Requires:	yast2, yast2-slp
+
+# ag_content agent
+Requires:	yast2 >= 2.16.60
+Requires:	yast2-slp
 
 BuildArchitectures:	noarch
 
