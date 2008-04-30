@@ -32,7 +32,5 @@ Summary:	Configuration of instserver
 %doc @docdir@
 /etc/YaST2/instserver
 /etc/apache2/conf.d/inst_server.conf.in
-@scrconfdir@/*.scr
-@agentdir@/ag_*
 %dir /etc/apache2
 %dir /etc/apache2/conf.d
