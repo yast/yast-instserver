@@ -246,6 +246,28 @@ any ReadServiceSettings(string module_auto) {
     return ret;
 }
 
+global boolean InstallFTPPackages()
+{
+    string help = _("The FTP installation server requires an FTP server package. The vsftpd package
+will now be installed.
+");
+    if ( !Package::InstalledAll( [ "xinetd", "vsftpd", "openslp-server", "yast2-inetd" ] ) ) {
+        y2milestone("some packages are not installed");
+    }
+    else
+    {
+	return true;
+    }
+
+    if ( !Package::InstallAll( [ "xinetd", "vsftpd" , "openslp-server", "yast2-inetd"])) {
+	Report::Error( Message::CannotContinueWithoutPackagesInstalled() );
+        y2error("Error while installing packages");
+        return false;
+    }
+
+    return true;
+}
+
 /**
  * Setup FTP server
  * @param string inst server root
@@ -254,17 +276,9 @@ any ReadServiceSettings(string module_auto) {
  */
 global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 
-    string help = _("The FTP installation server requires an FTP server package. The vsftpd package
-will now be installed.
-");
-    if ( !Package::InstalledAll( [ "xinetd", "vsftpd", "openslp-server", "yast2-inetd" ] ) ) {
-        y2milestone("some packages are not installed");
-    }
-
-    if ( !Package::InstallAll( [ "xinetd", "vsftpd" , "openslp-server", "yast2-inetd"])) {
-	Report::Error( Message::CannotContinueWithoutPackagesInstalled() );
-        y2error("Error while installing packages");
-        return false;
+    if (!InstallFTPPackages())
+    {
+	return false;
     }
 
     // create repository directory if it doesn't exist
@@ -360,15 +374,8 @@ define void RunSuseConfigApache( boolean enable ) ``{
     }
 }
 
-
-/**
- * Setup HTTP server
- * @param string inst server root
- * @param string alias
- * @return boolean
- */
-global boolean SetupHTTP(string dir, string alias) {
-
+global boolean InstallHTTPPackages()
+{
     string help = _("The HTTP installation server requires an HTTP server package. The apache2 package
 will now be installed.");
      if ( !Package::InstalledAll( [ "apache2" , "openslp-server" ] ) ) {
@@ -380,6 +387,22 @@ will now be installed.");
             y2error("Error while installing packages");
             return false;
         } 
+    }
+
+    return true;
+}
+
+/**
+ * Setup HTTP server
+ * @param string inst server root
+ * @param string alias
+ * @return boolean
+ */
+global boolean SetupHTTP(string dir, string alias) {
+
+    if (!InstallHTTPPackages())
+    {
+	return false;
     }
 
     if ((integer)SCR::Read(.target.size, "/etc/apache2/conf.d/inst_server.conf.in") > 0 )

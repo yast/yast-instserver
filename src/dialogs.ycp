@@ -1306,7 +1306,7 @@ is writable and try again.
 
 	// firewall widget using CWM
 	map<string, any> fw_settings = $[
-	    "services": [ "nfs-server" ],
+	    "services": [ "service:nfs-kernel-server" ],
 	    "display_details": true,
 	    ];
 
@@ -1382,6 +1382,13 @@ is writable and try again.
      * @return dialog result
      */
     any FtpDialog () {
+	// firewall widget using CWM
+	map<string, any> fw_settings = $[
+	    "services": [ "service:vsftpd" ],
+	    "display_details": true,
+	    ];
+
+	map<string,any> fw_cwm_widget = CWMFirewallInterfaces::CreateOpenFirewallWidget(fw_settings);
 
         /* Instserver configure2 dialog caption */
         string caption = _("Installation Server -- FTP");
@@ -1393,7 +1400,9 @@ is writable and try again.
             `HVSquash(
 		      `VBox(
 			    `Left(`TextEntry(`id(`ftproot), _("&FTP Server Root Directory:"), ftproot )),
-			    `Left(`TextEntry(`id(`ftpalias), _("&Directory Alias:"), ftpalias ))
+			    `Left(`TextEntry(`id(`ftpalias), _("&Directory Alias:"), ftpalias )),
+			    `VSpacing(1),
+			    fw_cwm_widget["custom_widget"]:`Empty()
 			    )
 		      );
 
@@ -1401,10 +1410,24 @@ is writable and try again.
         Wizard::SetContentsButtons(caption, contents, HELPS["ftp"]:"ftp",
 				   Label::BackButton(), Label::NextButton());
 
+	// install packages before calling SuSEFirewall::Read()
+	// to read the service definition file
+	if (!Instserver::InstallFTPPackages())
+	{
+	    y2error("FTP server package is not installed, cannot continue");
+	    return `abort;
+	}
+
+	// initialize the firewall widget (set the current value)
+	CWMFirewallInterfaces::OpenFirewallInit (fw_cwm_widget, "");
+
         any ret = nil;
+	map event = $[];
+
         while(true) {
 
-            ret = UI::UserInput();
+	    event = UI::WaitForEvent();
+	    ret = event["ID"]:nil;
 
             ftproot = (string)UI::QueryWidget(`id(`ftproot), `Value);
 	    ftpalias = (string)UI::QueryWidget(`id(`ftpalias), `Value);
@@ -1423,6 +1446,8 @@ is writable and try again.
                 Instserver::ServerSettings["ftpalias"] = ftpalias;
                 if (!Instserver::ServerSettings["dry"]:false)
                 {
+		    // store the firewall setting, (activation is in SetupFTP())
+		    CWMFirewallInterfaces::OpenFirewallStore (fw_cwm_widget, "", event);
                     r = Instserver::SetupFTP(Instserver::ServerSettings["directory"]:"" , ftproot , ftpalias);
                     if (!r)
                     {
@@ -1434,10 +1459,9 @@ is writable and try again.
                 Instserver::modified = true;
                 break;
             }
-            else {
-                y2error("unexpected retcode: %1", ret);
-                continue;
-            }
+
+	    // handle the events, enable/disable the button, show the popup if the firewall button has been clicked
+	    CWMFirewallInterfaces::OpenFirewallHandle (fw_cwm_widget, "", event);
         }
 
         return ret;
@@ -1454,7 +1478,7 @@ is writable and try again.
 
 	// firewall widget using CWM
 	map<string, any> fw_settings = $[
-	    "services": [ "http" ],
+	    "services": [ "service:apache2" ],
 	    "display_details": true,
 	    ];
 
@@ -1480,6 +1504,14 @@ is writable and try again.
 
         any ret = nil;
 	map event = $[];
+
+	// install packages before calling SuSEFirewall::Read()
+	// to read the service definition file
+	if (!Instserver::InstallHTTPPackages())
+	{
+	    y2error("HTTP server package is not installed, cannot continue");
+	    return `abort;
+	}
 
         while(true) {
 
