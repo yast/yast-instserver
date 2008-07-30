@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Jul 30 09:13:55 CEST 2008 - lslezak@suse.cz
+
+- fixed service name in the firewallconfiguration, install the
+  needed packages before reading service files (bnc#403377)
+- added firewall config in the FTP server configuration dialog
+- 2.17.0
+
+-------------------------------------------------------------------
 Fri May 16 16:40:22 CEST 2008 - jsrain@suse.cz
 
 - added categories Settings and System into desktop file
