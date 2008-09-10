@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Sep 10 10:49:03 CEST 2008 - lslezak@suse.cz
+
+- merged proofread texts (2008-09-08)
+- 2.17.1
+
+-------------------------------------------------------------------
 Wed Jul 30 09:13:55 CEST 2008 - lslezak@suse.cz
 
 - fixed service name in the firewallconfiguration, install the

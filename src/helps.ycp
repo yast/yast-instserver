@@ -95,9 +95,8 @@ configured protocol (NFS, FTP, or HTTP).</p>
 
     _("<p><b><big>SLP Support</big></b></p>") +
 
-    _("<p>SLP (Service Location Protocol) facilitates to find an installation server. 
-If checked, the repository will be announced on the network using SLP.</p>
-"),
+    _("<p>SLP (Service Location Protocol) facilitates finding an installation server. 
+If checked, the repository will be announced on the network using SLP.</p>\n"),
 
     "initial2": _("<p><b>Configuration of the Repository</b><br>
 </p>
