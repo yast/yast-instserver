@@ -17,6 +17,7 @@
     import "Wizard";
     import "Instserver";
     import "CWMFirewallInterfaces";
+    import "String";
 
     include "instserver/helps.ycp";
     include "instserver/routines.ycp";
@@ -1138,6 +1139,44 @@ is writable and try again.
                         continue;
                     }
                 }
+
+		// check if the repository has been already removed (bnc#187280)
+		if (contains(Instserver::to_delete, dir))
+		{
+		    y2milestone("Repository %1 has been marked to delete", dir);
+
+		    // confirm removal of a repository, the action is done immediately and cannot be reverted
+		    string confirm = sformat(_("Repository '%1' has been marked to delete.
+When adding a new repository with the same name
+the old content must deleted right now.
+
+Really delete the old content and create it from cratch?"), dir);
+
+		    if (Popup::YesNo(confirm))
+		    {
+			y2milestone("Removing the old repository");
+			string rmdir = Instserver::ServerSettings["directory"]:"" + "/" + dir;
+			string rm = sformat("rm -rf '%1'", String::Quote(rmdir));
+
+			y2milestone("Executing: %1", rm);
+			SCR::Execute(.target.bash, rm);
+
+			// remove it from to_delete list, it has just been deleted
+			Instserver::to_delete = filter(string del, Instserver::to_delete,
+			    {
+				return del != dir;
+			    }
+			);
+
+			y2milestone("Updated list of removed repositories: %1", Instserver::to_delete);
+		    }
+		    else
+		    {
+			y2milestone("Not removing the old repository");
+			continue;
+		    }
+		}
+
 
 		if (dir != Instserver::Config["name"]:"" && Instserver::Config["name"]:"" != "")
 		{
