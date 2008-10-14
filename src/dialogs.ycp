@@ -163,7 +163,9 @@
 	    // SLES or CORE == 9
 	    ((product_lower == "suse sles" || product_lower == "suse core") && version == 900) ||
 	    (product_lower == "suse sles 9 service-pack")
-	    || (product_lower == "open enterprise server" && version == 0))
+	    || (product_lower == "open enterprise server" && version == 0)
+	    || (product_lower == "suse sles" && version <= 800)
+	    )
 	{
 	    ret = false;
 	}
