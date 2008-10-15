@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Oct 15 15:38:13 CEST 2008 - lslezak@suse.cz
+
+- fixed UI syntax error when asking for a CD (bnc#435658)
+
+-------------------------------------------------------------------
 Tue Oct 14 16:15:38 CEST 2008 - lslezak@suse.cz
 
 - fixed adding of a removed repository - do not remove the new
