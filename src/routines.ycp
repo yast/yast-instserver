@@ -11,7 +11,7 @@
 
 textdomain "instserver";
 
-
+import "String";
 
 list<string> ReadMediaFile(string media) {
     if (SCR::Read(.target.size, media) != -1 )
@@ -24,10 +24,18 @@ list<string> ReadMediaFile(string media) {
     }
 }
 
-map ReadContentFile(string content) {
+map<string,string> ReadContentFile(string content) {
     y2debug("Reading content %1", content);
 
-    map contentmap = (map)SCR::Read(.content_file, content);
+    map<string,string> contentmap = (map<string,string>)SCR::Read(.content_file, content);
+
+    contentmap = mapmap(string key, string value, contentmap,
+	{
+	    return $[key : String::CutBlanks(value)];
+	}
+    );
+    y2milestone("Read content file %1: %2", content, contentmap);
+
     return contentmap;
 }
 

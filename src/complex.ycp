@@ -88,9 +88,16 @@ define list<map<string,any> > createOverviewTable() {
 		    descr = add(descr, sformat(_("Announce Using SLP: %1"), (cfg["slp"]:false) ? _("Yes") : _("No")));
 		}
 
+		string product_name = cfg["PRODUCT"]:"";
+		if (product_name == "")
+		{
+		    // code11
+		    product_name = cfg["NAME"]:"";
+		}
+
 		map<string,any> r = $[
 		    "id" : name,
-		    "table_descr" : [ name, cfg["PRODUCT"]:"" + " " + cfg["VERSION"]:"" ],
+		    "table_descr" : [ name, product_name + " " + cfg["VERSION"]:"" ],
 		    "rich_descr" : WizardHW::CreateRichTextDescription(name, descr)
 		];
 

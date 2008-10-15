@@ -115,12 +115,19 @@
     }
 
 
+    // see http://en.opensuse.org/Standards/YaST2_Repository_Metadata/content
     boolean code10(map content_file)
     {
 	// ask for an addon only when the product is pre-CODE10
 	boolean ret = true;
 
 	string product_lower = tolower(content_file["PRODUCT"]:"");
+	if (product_lower == "")
+	{
+	    // code11
+	    product_lower = tolower(content_file["NAME"]:"");
+	}
+
 	string version_str = content_file["VERSION"]:"";
 
 	y2milestone("product: %1", product_lower);
@@ -1011,7 +1018,7 @@ Not copying CDs."));
 
 		    if (SCR::Read(.target.size, contentpath) > 0 )
 		    {
-			content = (map)SCR::Read(.content_file, contentpath);
+			content = ReadContentFile(contentpath);
 		    }
 		    else
 		    {
@@ -1021,7 +1028,7 @@ Not copying CDs."));
 
 			if (SCR::Read(.target.size, contentpath) > 0 )
 			{
-			    content = (map)SCR::Read(.content_file, contentpath);
+			    content = ReadContentFile(contentpath);
 			}
 			else
 			{

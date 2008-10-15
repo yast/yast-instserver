@@ -2,6 +2,9 @@
 Wed Oct 15 15:38:13 CEST 2008 - lslezak@suse.cz
 
 - fixed UI syntax error when asking for a CD (bnc#435658)
+- minor code11 fixes - remove cut blanks from content file values,
+  use NAME key (instead of PRODUCT) (bnc#428463) 
+- 2.17.3
 
 -------------------------------------------------------------------
 Tue Oct 14 16:15:38 CEST 2008 - lslezak@suse.cz
