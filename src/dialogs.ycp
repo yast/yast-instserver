@@ -49,15 +49,15 @@
 	    {
 		symbol pop =  Popup::AnyQuestion3(_("Change Media"),
 						  msg,
-						  Label::ContinueButton(),
-						  _("Ski&p"),
-						  Label::CancelButton(),
+						  Label::ContinueButton(),	// `yes
+						  Label::CancelButton(),	// `no
+						  Label::SkipButton(),		// `retry
 						  `focus_yes );
-		if (pop == `retry)
+		if (pop == `no)
 		{
 		    return `abort;
 		}
-		else if (pop == `no)
+		else if (pop == `retry)
 		{
 		    y2debug("skipping media");
 		    return `skip;
