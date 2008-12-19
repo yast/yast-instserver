@@ -106,6 +106,13 @@ global boolean Modified() {
 }
 
 
+boolean vsftpd_is_standalone()
+{
+    boolean ret = SCR::Execute(.target.bash, "grep -q '^listen=YES$' /etc/vsftpd.conf") == 0;
+
+    y2milestone("vsftpd in standalone mode: %1", ret);
+    return ret;
+}
 
 /**
  * Create links
@@ -302,7 +309,7 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 
     // check if vsftpd is configured in standalone mode (listen=YES) (bnc#438694)
     // see 'man vsftpd.conf'
-    boolean vsftpd_standalone = SCR::Execute(.target.bash, "grep -q '^listen=YES$' /etc/vsftpd.conf") == 0;
+    boolean vsftpd_standalone = vsftpd_is_standalone();
 
     if (vsftpd_standalone)
     {
@@ -762,6 +769,15 @@ boolean NFSValid(map config)
 
 boolean FTPValid(map config)
 {
+    if (vsftpd_is_standalone())
+    {
+	// is the service running?
+	boolean ret = (Service::Status("vsftpd") == 0 );
+	y2milestone("FTP (vsftpd) server running: %1", ret);
+
+	return ret;
+    }
+
     // read the current configuration
     map resource = (map)ReadServiceSettings("inetd_auto");
 
