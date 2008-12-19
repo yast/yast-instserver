@@ -300,59 +300,78 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
         y2warning("not implemented");
     }
 
-    y2debug("configuring services");
-    // read the current configuration
-    map resource = (map)ReadServiceSettings("inetd_auto");
-    list<map> netdconf = [];
+    // check if vsftpd is configured in standalone mode (listen=YES) (bnc#438694)
+    // see 'man vsftpd.conf'
+    boolean vsftpd_standalone = SCR::Execute(.target.bash, "grep -q '^listen=YES$' /etc/vsftpd.conf") == 0;
 
-    // replace vsftpd config
-    boolean ftpdenabled = false;
-    boolean servicefound = false;
-    foreach(map conf, resource["netd_conf"]:[], {
-	    // the service is ftp with vsftpd server
-	    if (conf["service"]:"" == "ftp" && conf["script"]:"" == "vsftpd")
-	    {
-		servicefound = true;
-
-		// enable disabled service
-		if (conf["enabled"]:false != true)
-		{
-		    conf["enabled"] = true;
-		}
-		else
-		{
-		    ftpdenabled = true;
-		}
-	    }
-
-	    // add the configuration to the list
-	    netdconf = add(netdconf, conf);
-	}
-    );
-
-    if (servicefound == false)
+    if (vsftpd_standalone)
     {
-	// the FTP service config was not found, add it
-	map vsftpdconf =  $["protocol":"tcp", "script":"vsftpd", "server":"/usr/sbin/vsftpd", "service":"ftp"];
-	netdconf = add(netdconf, vsftpdconf);
+	y2milestone("Configuring FTP service in standalone mode");
+
+	// enable/start the service
+	Service::Enable("vsftpd");
+	if (Service::Status("vsftpd") == 0 )
+	    Service::Reload("vsftpd");
+	else
+	    Service::Start("vsftpd");
     }
-
-    // ftp service was not enabled/configured
-    if (ftpdenabled == false)
-    {
-	// update the configuration
-	resource["netd_conf"] = netdconf;
-
-	// write the configuration
-	ConfigureService("inetd_auto", resource);
-    }
-
-    // enable/start the service
-    Service::Enable("xinetd");
-    if (Service::Status("xinetd") == 0 )
-        Service::Reload("xinetd");
     else
-        Service::Start("xinetd");
+    {
+	y2milestone("Configuring FTP service in xinetd mode");
+	// read the current configuration
+	map resource = (map)ReadServiceSettings("inetd_auto");
+	list<map> netdconf = [];
+
+	// replace vsftpd config
+	boolean ftpdenabled = false;
+	boolean servicefound = false;
+	foreach(map conf, resource["netd_conf"]:[], {
+		// the service is ftp with vsftpd server
+		if (conf["service"]:"" == "ftp" && conf["script"]:"" == "vsftpd")
+		{
+		    servicefound = true;
+
+		    // enable disabled service
+		    if (conf["enabled"]:false != true)
+		    {
+			conf["enabled"] = true;
+		    }
+		    else
+		    {
+			ftpdenabled = true;
+		    }
+		}
+
+		// add the configuration to the list
+		netdconf = add(netdconf, conf);
+	    }
+	);
+
+	if (servicefound == false)
+	{
+	    // the FTP service config was not found, add it
+	    map vsftpdconf =  $["protocol":"tcp", "script":"vsftpd", "server":"/usr/sbin/vsftpd", "service":"ftp"];
+	    netdconf = add(netdconf, vsftpdconf);
+	}
+
+	// ftp service was not enabled/configured
+	if (ftpdenabled == false)
+	{
+	    // update the configuration
+	    resource["netd_conf"] = netdconf;
+
+	    // write the configuration
+	    ConfigureService("inetd_auto", resource);
+	}
+
+	// enable/start the service
+	Service::Enable("xinetd");
+	if (Service::Status("xinetd") == 0 )
+	    Service::Reload("xinetd");
+	else
+	    Service::Start("xinetd");
+    }
+
     return true;
 }
 

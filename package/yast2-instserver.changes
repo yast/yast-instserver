@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 19 12:57:33 CET 2008 - lslezak@suse.cz
+
+- do not configure vsftpd in xinetd mode if it's set to standalone
+  mode in the config file (bnc#438694)
+
+-------------------------------------------------------------------
 Wed Oct 15 15:38:13 CEST 2008 - lslezak@suse.cz
 
 - fixed UI syntax error when asking for a CD (bnc#435658)
