@@ -546,8 +546,16 @@ Leave NFS exports unmodified?
 global string GetIPAddr()
 {
     list<map> ifconfig =(list<map>)SCR::Read(.run.ifconfig);
-    ifconfig = filter(map iface, ifconfig, ``( iface["name"]:"" == "eth0"));
-    integer ip = ifconfig[0,"value", "inet", "addr"]:0;
+    list<map> ifc = filter(map iface, ifconfig, ``( iface["name"]:"" == "eth0"));
+    integer ip = ifc[0,"value", "inet", "addr"]:0;
+    if (ip == 0)
+    {
+	ifc = filter(map iface, ifconfig, ``( iface["name"]:"" != "lo" && !issubstring(iface["name"]:"", "dummy") && iface["value", "inet", "addr"]:0 != 0));
+	if (ifc != nil) 
+	{
+		ip = ifc[0,"value", "inet", "addr"]:0;
+	}
+    }
 
     return (IP::ToString(ip));
 }
