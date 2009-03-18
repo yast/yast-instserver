@@ -513,7 +513,7 @@ Leave NFS exports unmodified?
     nfs["start_nfsserver"] = true;
     list allowed = [];
     if (size(options) == 0 ) {
-        options = "*(ro,root_squash,sync)";
+        options = "*(ro,root_squash,sync,no_subtree_check)";
     }
     allowed=add(allowed, options);
     map ex = $[];

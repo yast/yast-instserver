@@ -1351,7 +1351,7 @@ Really delete the old content and create it from cratch?"), dir);
         /* Instserver configure2 dialog caption */
         string caption = _("Installation Server -- NFS");
 
-        string nfsoptions = "ro,root_squash,sync";
+        string nfsoptions = "ro,root_squash,sync,no_subtree_check";
         string wildcard = "*";
 
 	// firewall widget using CWM

@@ -3,6 +3,7 @@ Wed Mar 18 09:05:43 CET 2009 - lslezak@suse.cz
 
 - write correct IP address to SLP config file when there is no eth0
   device (bnc#475676)
+- add 'no_subtree_check' option to NFS exports
 - 2.18.0
 
 -------------------------------------------------------------------
