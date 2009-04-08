@@ -27,6 +27,7 @@ import "SLP";
 import "IP";
 import "Message";
 import "SuSEFirewall";
+import "String";
 
 include "instserver/routines.ycp";
 
