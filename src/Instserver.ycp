@@ -27,6 +27,7 @@ import "SLP";
 import "IP";
 import "Message";
 import "SuSEFirewall";
+import "String";
 
 include "instserver/routines.ycp";
 
@@ -489,6 +490,39 @@ Leave NFS exports unmodified?"));
     return true;
 }
 
+// some values are not allowed in SLP attributes
+// and must be escaped ('\' followed by two hex numbers)
+// see RFC2614 (http://www.openslp.org/doc/rfc/rfc2614.txt)
+map<string, string> EscapeSLPData(map<string, string> a)
+{
+    map<string, string> ret = $[];
+
+    foreach(string key, string value, a,
+	{
+	    // String::Replace() enters endless loop in '\' -> '\5c' conversion
+	    // use splitstring() and mergestring() builtins instead
+	    string new_key = mergestring(splitstring(key, "\\"), "\\5c");
+	    new_key = String::Replace(new_key, ".", "\\2e");
+	    new_key = String::Replace(new_key, "=", "\\3d");
+	    new_key = String::Replace(new_key, "#", "\\23");
+	    new_key = String::Replace(new_key, ";", "\\3b");
+
+	    string new_value = mergestring(splitstring(value, "\\"), "\\5c");
+	    new_value = String::Replace(new_value, "(", "\\28");
+	    new_value = String::Replace(new_value, ")", "\\29");
+	    new_value = String::Replace(new_value, ",", "\\2c");
+	    new_value = String::Replace(new_value, "#", "\\23");
+	    new_value = String::Replace(new_value, ";", "\\3b");
+
+	    ret[new_key] = new_value;
+	}
+    );
+
+    y2milestone("Escaped SLP attributes: %1 -> %2", a, ret);
+
+    return ret;
+}
+
 /*
  * Return the IP address of the local machine	
  * @return string IP Address
@@ -572,7 +606,12 @@ global boolean WriteSLPReg (map<string,any> cm) {
 	hostname_reg = hostname + ": ";
     }
 
-    string descr = hostname_reg + sformat("%1 (%2)", cm["LABEL"]:"" , cm["DISTPRODUCT"]:"" );
+    string descr = hostname_reg + cm["LABEL"]:"";
+    if (cm["DISTPRODUCT"]:"" != "")
+    {
+	descr = descr + sformat(" [%2]", cm["DISTPRODUCT"]:"");
+    }
+
     attr["description"] = descr;
 
     string read_file = targetfile;
@@ -635,6 +674,9 @@ TODO: checking?
 	}
 */
     }
+
+    // escape invalid characters
+    attr = EscapeSLPData(attr);
 
     y2milestone("registering SLP service: serv: %1, attr: %2, regfile: %3", serv, attr, regfile);
 
