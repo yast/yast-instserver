@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Apr  8 15:18:39 CEST 2009 - lslezak@suse.cz
+
+- write correct IP address to SLP config file when there is no eth0
+  device (bnc#475676)
+
+-------------------------------------------------------------------
 Thu Mar 13 07:20:45 CET 2008 - lslezak@suse.cz
 
 - added missing translation mark (bnc#366082)
