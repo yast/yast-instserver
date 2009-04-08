@@ -1,2 +1,6 @@
 Dump	Instserver::Modified
 Return	false
+Dump	Instserver::EscapeSLPData()
+Return	$["description":"No need to escpace anything."]
+Return	$["description":"Rounded brackets \\28\\29\\2c \\5c backslash and comma \\2c must be escpaced."]
+Return	$["escaped\\2e\\3dname":"value\\5c\\5c\\5c."]
