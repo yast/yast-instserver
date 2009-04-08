@@ -1230,7 +1230,7 @@ Really delete the old content and create it from cratch?"), dir);
         /* Instserver server dialog caption */
         string caption = _("Initial Setup -- Servers");
 
-        string dir = Instserver::ServerSettings["directory"]:"";
+        string dir = Instserver::ServerSettings["directory"]:"/srv/install";
         boolean dry = Instserver::ServerSettings["dry"]:false;
         symbol source = Instserver::ServerSettings["service"]:`http;
 

@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Apr  8 16:55:18 CEST 2009 - lslezak@suse.cz
+
+- propose "/srv/install" as the default location (bnc#462556)
+
+-------------------------------------------------------------------
 Wed Apr  8 14:48:26 CEST 2009 - lslezak@suse.cz
 
 - fixed SLP config - escape special characters and use [] brackets
