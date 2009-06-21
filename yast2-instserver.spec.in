@@ -9,7 +9,7 @@ Requires:	yast2-slp
 
 BuildArchitectures:	noarch
 
-Summary:	Configuration of instserver
+Summary:	YaST2 - Installation Server Configuration and Management
 
 %description
 -
