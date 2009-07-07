@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Apr  8 14:48:26 CEST 2009 - lslezak@suse.cz
+
+- fixed SLP config - escape special characters and use [] brackets
+  instead of (), they have special meaning (bnc#492367)
+
+-------------------------------------------------------------------
 Wed Mar 18 09:05:43 CET 2009 - lslezak@suse.cz
 
 - write correct IP address to SLP config file when there is no eth0
