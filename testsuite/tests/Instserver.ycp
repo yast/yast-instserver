@@ -10,4 +10,8 @@ import "Instserver";
 DUMP("Instserver::Modified");
 TEST(``(Instserver::Modified()), [], nil);
 
+DUMP("Instserver::EscapeSLPData()");
+TEST(``(Instserver::EscapeSLPData($["description" : "No need to escpace anything."])), [], nil);
+TEST(``(Instserver::EscapeSLPData($["description" : "Rounded brackets (), \\ backslash and comma , must be escpaced."])), [], nil);
+TEST(``(Instserver::EscapeSLPData($["escaped.=name" : "value\\\\\\."])), [], nil);
 }
