@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 18 09:05:43 CET 2009 - lslezak@suse.cz
+
+- write correct IP address to SLP config file when there is no eth0
+  device (bnc#475676)
+
+-------------------------------------------------------------------
 Fri Dec 19 12:57:33 CET 2008 - lslezak@suse.cz
 
 - do not configure vsftpd in xinetd mode if it's set to standalone
