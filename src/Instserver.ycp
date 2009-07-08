@@ -723,6 +723,126 @@ global define map<string, map> FindAvailable() ``{
     return Available;
 }
 
+boolean NFSExported(string dir)
+{
+    map nfs_config = (map)ReadServiceSettings("nfs_server_auto");
+    list<map> exports = nfs_config["nfs_exports"]:[];
+
+    boolean ret = false;
+
+    foreach(map e, exports,
+	{
+	    if (e["mountpoint"]:"" == dir)
+	    {
+		ret = true;
+	    }
+	}
+    );
+
+    y2milestone("Directory %1 is exported: %2", dir, ret);
+
+    return ret;
+}
+
+boolean NFSValid(map config)
+{
+    string dir = config["directory"]:"";
+
+    if (dir == nil || dir == "")
+    {
+	y2milestone("Empty or missing directory in the configuration");
+	return false;
+    }
+
+    // is the directory in /etc/exports?
+    if (!NFSExported(dir))
+    {
+	return false;
+    }
+
+    boolean nfsserver_running = Service::Status("nfsserver") == 0;
+    y2milestone("NFS server running: %1", nfsserver_running);
+
+    // is the nfsserver running?
+    return nfsserver_running;
+}
+
+boolean FTPValid(map config)
+{
+    // read the current configuration
+    map resource = (map)ReadServiceSettings("inetd_auto");
+
+    // check vsftpd config
+    boolean ftpdenabled = false;
+    boolean servicefound = false;
+
+    foreach(map conf, resource["netd_conf"]:[], {
+	    // the service is ftp with vsftpd server
+	    if (conf["service"]:"" == "ftp" && conf["script"]:"" == "vsftpd")
+	    {
+		servicefound = true;
+		// the default is true: missing tag means the service is enabled (!)
+		ftpdenabled = conf["enabled"]:true;
+	    }
+	}
+    );
+
+    y2milestone("FTP service check: found: %1, enabled: %2", servicefound, ftpdenabled);
+
+    if (servicefound == false || ftpdenabled == false)
+    {
+	return false;
+    }
+
+    // is the service running?
+    boolean ret = (Service::Status("xinetd") == 0 );
+    y2milestone("FTP server running: %1", ret);
+
+    return ret;
+}
+
+boolean HTTPValid(map config)
+{
+    string config = "/etc/apache2/conf.d/inst_server.conf";
+
+    // is the config missing
+    integer config_size = (integer)SCR::Read(.target.size, config);
+    y2milestone("Size of %1: %2", config, config_size);
+
+    if (config_size <= 0)
+    {
+	y2warning("Missing config file: %1", config);
+	return false;
+    }
+
+    // is the service running?
+    boolean ret = (Service::Status("apache2") == 0 );
+    y2milestone("HTTP server running: %1", ret);
+
+    return ret;
+}
+
+boolean ServiceValid(map config)
+{
+    symbol service = (symbol)config["service"]:`unknown;
+
+    if (service == `nfs)
+    {
+	return NFSValid(config);
+    }
+    else if (service == `ftp)
+    {
+	return FTPValid(config);
+    }
+    else if (service == `http)
+    {
+	return HTTPValid(config);
+    }
+
+    y2warning("Unknown service type %1, cannot check configuration", service);
+
+    return false;
+}
 
 /**
  * Read all instserver settings
@@ -774,12 +894,14 @@ global boolean Read() {
             });
     y2milestone("Configs: %1", Configs);
 
-    if (c["servers"]:$[] == $[])
-        FirstDialog = "settings";
-
-    y2milestone("Server config: %1", c["servers"]:$[]);
-
     ServerSettings = c["servers"]:$[];
+    y2milestone("Server config: %1", ServerSettings);
+
+    // check the server status here
+    if (ServerSettings == $[] || !ServiceValid(ServerSettings))
+    {
+        FirstDialog = "settings";
+    }
 
     // disable progress for firewall
     boolean prg = Progress::set(false);
