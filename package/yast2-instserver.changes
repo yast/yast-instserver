@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jul  8 16:21:36 CEST 2009 - lslezak@suse.cz
+
+- check the network service status at startup (#308662)
+- 2.13.19
+
+-------------------------------------------------------------------
 Wed Apr  8 15:18:39 CEST 2009 - lslezak@suse.cz
 
 - write correct IP address to SLP config file when there is no eth0
