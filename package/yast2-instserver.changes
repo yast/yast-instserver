@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Wed Jul  8 16:21:36 CEST 2009 - lslezak@suse.cz
 
-- check the network service status at startup (#308662)
+- check the network service status at startup (bnc#308662)
 - 2.13.19
 
 -------------------------------------------------------------------
