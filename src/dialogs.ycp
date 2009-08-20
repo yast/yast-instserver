@@ -1228,7 +1228,7 @@ Really delete the old content and create it from cratch?"), dir);
     any ServerDialog () {
 
         /* Instserver server dialog caption */
-        string caption = _("Initial Setup -- Servers");
+        string caption = _("Initial Setup -- Initial Setup");
 
         string dir = Instserver::ServerSettings["directory"]:"/srv/install";
         boolean dry = Instserver::ServerSettings["dry"]:false;
