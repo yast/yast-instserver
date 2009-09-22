@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Sep 22 17:23:42 CEST 2009 - lslezak@suse.cz
+
+- added minimal command line support (help command) (bnc#531593)
+- 2.18.3
+
+-------------------------------------------------------------------
 Thu Aug 20 11:41:38 CEST 2009 - lslezak@suse.cz
 
 - Improved dialog title (bnc#532738)
