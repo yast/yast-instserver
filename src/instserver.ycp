@@ -24,6 +24,7 @@ y2milestone ("Instserver module started");
 import "Progress";
 import "Report";
 import "Summary";
+import "CommandLine";
 
 include "instserver/wizards.ycp";
 /* is this proposal or not? */
@@ -36,10 +37,12 @@ if(size(args) > 0) {
     }
 }
 
-/* main ui function */
-any ret = nil;
+map cmdline_description = $[
+    "id"	: "instserver",
+    "guihandler": InstserverSequence,
+];
 
-ret = InstserverSequence();
+any ret = CommandLine::Run(cmdline_description);
 y2debug("ret=%1", ret);
 
 /* Finish */
