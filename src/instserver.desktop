@@ -16,9 +16,8 @@ X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
 
 Icon=yast-instserver
-Exec=/sbin/yast2 instserver 
+Exec=xdg-su -c "/sbin/yast2 instserver"
 
 Name=Installation Server
 GenericName=Configure and manage installation servers
-X-KDE-SubstituteUID=true
 StartupNotify=true
