@@ -1,3 +1,12 @@
+-------------------------------------------------------------------
+Tue Jun 29 10:14:47 UTC 2010 - lslezak@suse.cz
+
+- fixed creating SLP reg. files: fixed reading supported
+  architectures from content file (bnc#608834), fixed also for
+  SLES10 repositories (bnc#616307)
+- fixed reescaping already escaped values
+- 2.19.0
+
 ------------------------------------------------------------------
 Wed Jan 13 18:56:03 CET 2010 - kmachalkova@suse.cz
 
