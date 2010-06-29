@@ -572,6 +572,76 @@ map<string, string> EscapeSLPData(map<string, string> a)
     return ret;
 }
 
+string subreplace(string text, string in, string out)
+{
+    list<string> parts = splitstring(text, "\\");
+
+    // don't modify the first item, it's the non-matched prefix
+    boolean first = true;
+    list<string> new_parts = maplist(string p, parts,
+        {
+	    if (first)
+	    {
+		first = false;
+		return p;
+	    }
+
+	    string new_part = p;
+
+	    if (in == substring(p, 0, 2))
+	    {
+		new_part = out + substring(p, 2);
+	    }
+	    else
+	    {
+		// put the backslash back if the remaining part doesn't match
+		new_part = "\\" + p;
+	    }
+
+	    return new_part;
+	}
+    );
+
+    string ret = mergestring(new_parts, "");
+    y2debug("unescaped str: text: %1, in: %2, out: %3 => %4", text, in, out, ret);
+
+    return ret;
+}
+
+// this is an oppsite function to EscapeSLPData()
+// it takes SLP input and unescpaes the backslash sequences
+map<string, string> UnEscapeSLPData(map<string, string> a)
+{
+    map<string, string> ret = $[];
+
+    foreach(string key, string value, a,
+	{
+	    // String::Replace() enters endless loop in '\' -> '\5c' conversion
+	    // use splitstring() and mergestring() builtins instead
+	    string new_key = key;
+	    new_key = subreplace(new_key, "2e", ".");
+	    new_key = subreplace(new_key, "3d", "=");
+	    new_key = subreplace(new_key, "23", "#");
+	    new_key = subreplace(new_key, "3b", ";");
+	    new_key = subreplace(new_key, "5c", "\\");
+
+	    string new_value = value;
+	    new_value = subreplace(new_value, "28", "(");
+	    new_value = subreplace(new_value, "29", ")");
+	    new_value = subreplace(new_value, "2c", ",");
+	    new_value = subreplace(new_value, "23", "#");
+	    new_value = subreplace(new_value, "3b", ";");
+	    new_value = subreplace(new_value, "5c", "\\");
+
+	    ret[new_key] = new_value;
+	}
+    );
+
+    y2milestone("Unescaped SLP attributes: %1 -> %2", a, ret);
+
+    return ret;
+}
+
 /*
  * Return the IP address of the local machine	
  * @return string IP Address
@@ -603,6 +673,48 @@ global string GetHostname()
 
     return hostname;
 }
+
+list<string> basearch_mapping(string basearch)
+{
+    map<string,list<string> > mapping = $[
+	"i586"	: [ "i586", "i686" ],
+        "mips"	: [ "mips", "mips64" ],
+        "ppc"	: [ "ppc", "ppc64" ],
+        "sparc"	: [ "sparc", "sparc64"],
+	"x86_64" : [ "x86_64"]
+    ];
+
+    if (!haskey(mapping, basearch))
+    {
+	y2warning("Unknown BASEARCH: %1", basearch);
+    }
+
+    // return the original basearch if mapping is unknown
+    list<string> ret = mapping[basearch]:[basearch];
+
+    y2milestone("Using BASEARCH mapping: %1 -> %2", basearch, ret);
+
+    return ret;
+}
+
+list<string> get_machines(string basearch_value)
+{
+    list<string> archs = splitstring(basearch_value, " ");
+    archs = filter(string a, archs, {return a != nil && a != "";});
+
+    list<string> ret = [];
+
+    foreach(string a, archs,
+	{
+	    ret = (list<string>)merge(ret, basearch_mapping(a));
+	}
+    );
+
+    y2milestone("Final BASEARCH mapping: %1", ret);
+
+    return ret;
+}
+
 
 /**
  * Write SLP configuration
@@ -679,21 +791,38 @@ global boolean WriteSLPReg (map<string,any> cm) {
     string machine = "";
     list<string> machines = [];
     foreach(string k, any v, cm, ``{
-            if (issubstring(k, "ARCH"))
+	    y2debug("Read Key: '%1'", k);
+
+	    if (k == "BASEARCHS")
+	    {
+		// machine mapping
+		machines = get_machines((string)v);
+	    }
+            else if (issubstring(k, "ARCH"))
             {
-                machines = (list<string>)union (machines, splitstring((string)v, " ") );
+		string a = regexpsub(k, "ARCH\\.(.*)", "\\1");
+
+		if (a != nil)
+		{
+		    y2milestone("Found %1 key, adding arch %2 to the list", k, a);
+		    machines = add(machines, a);
+		}
             }
             });
     machines = filter(string m , machines, ``(m!="" && m!="noarch"));
     machines = toset(machines);
+
+    // sort the list so it looks better
+    machines = sort(machines);
+    string machines_string = mergestring(machines, ",");
+
     y2debug("machines: %1", machines);
-    attr["machine"] = mergestring(machines, ",");
-    y2debug("machine: %1", machine);
 
     // preserve the old configuration
     if (SCR::Read(.target.size, read_file) >= 0)
     {
 	y2milestone("Existing reg.d file found: %1", read_file);
+	map<string, string> old_attr = $[];
 
 	string reg_cont = (string)SCR::Read(.target.string, read_file);
 	list<string> lines = splitstring(reg_cont, "\n");
@@ -705,10 +834,23 @@ global boolean WriteSLPReg (map<string,any> cm) {
 		if (parsed_name != nil)
 		{
 		    y2milestone("Reusing attribute: %1=%2", parsed_name, parsed_value);
-		    attr[parsed_name] = parsed_value;
+		    old_attr[parsed_name] = parsed_value;
 		}
 	    }
 	);
+
+	// unescape the read value
+	old_attr = UnEscapeSLPData(old_attr);
+
+	if (haskey(old_attr, "machine"))
+	{
+	    // backup the "machine" value
+	    machines_string = old_attr["machine"]:"";
+	}
+
+	// merge them with read values,
+	// keep the original setting if a value was already set
+	attr = (map<string, string>)union(attr, old_attr);
 
 /*
 TODO: checking?
@@ -726,6 +868,11 @@ TODO: checking?
 
     // escape invalid characters
     attr = EscapeSLPData(attr);
+
+    // replace the machine option after escaping,
+    // it actually _is_ a list so "," is valid here
+    attr["machine"] = machines_string;
+    y2milestone("machine: %1", attr["machine"]:"");
 
     y2milestone("registering SLP service: serv: %1, attr: %2, regfile: %3", serv, attr, regfile);
 
