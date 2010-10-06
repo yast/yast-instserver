@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Oct  6 19:16:34 UTC 2010 - lslezak@suse.cz
+
+- fixed creating SLP reg. files: fixed writing architectures,
+  fixed reescaping already escaped values (bnc#492367)
+- 2.13.20
+
+-------------------------------------------------------------------
 Wed Jul  8 16:21:36 CEST 2009 - lslezak@suse.cz
 
 - check the network service status at startup (bnc#308662)
