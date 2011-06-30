@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jun 30 14:35:48 UTC 2011 - lslezak@suse.cz
+
+- fixed a typo (bnc#703123)
+- 2.21.0
+
+-------------------------------------------------------------------
 Tue Jun 29 10:14:47 UTC 2010 - lslezak@suse.cz
 
 - fixed creating SLP reg. files: fixed reading supported

@@ -1159,7 +1159,7 @@ is writable and try again.
 When adding a new repository with the same name
 the old content must deleted right now.
 
-Really delete the old content and create it from cratch?"), dir);
+Really delete the old content and create it from scratch?"), dir);
 
 		    if (Popup::YesNo(confirm))
 		    {
