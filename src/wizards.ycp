@@ -182,7 +182,7 @@ any InstserverSequence() {
     ];
 
     Wizard::CreateDialog();
-    Wizard::SetDesktopIcon("instserver");
+    Wizard::SetDesktopTitleAndIcon("instserver");
 
     any ret = Sequencer::Run(aliases, sequence);
 
