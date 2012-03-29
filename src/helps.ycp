@@ -129,7 +129,7 @@ Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
 
     /* Write dialog help 1/2 */
     "write" : _("<p><b>Saving Repository Configuration</b><br>
-Please wait...<br></p>
+</p>
 ") +
 
     /* Write dialog help 2/2 */
@@ -159,8 +159,8 @@ the configuration opens.</p>
 
     /* Ovreview dialog help 1/3 */
     "overview" : _("<p><b>Repositories Overview</b><br>
-Here you get an overview of the configured repositories. Additionally,
-you are able to edit their configuration.<br></p>
+Get an overview of the configured repositories and edit their 
+configuration if necessary.<br></p>
 ") +
 
     /* Ovreview dialog help 2/3 */
