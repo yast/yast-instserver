@@ -18,9 +18,11 @@
     import "Instserver";
     import "CWMFirewallInterfaces";
     import "String";
+    import "Report";
 
     include "instserver/helps.ycp";
     include "instserver/routines.ycp";
+    include "instserver/complex.ycp";
 
 
 
