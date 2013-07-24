@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Jul 24 14:30:38 UTC 2013 - lslezak@suse.cz
+
+- removed obsoleted documentation network-install.pdf (described
+  SLES9 installation media)
+- split the development documentation to devel-doc subpackage
+- 2.24.1
+
+-------------------------------------------------------------------
 Mon Apr 15 10:51:57 UTC 2013 - lslezak@suse.cz
 
 - dialogs.ycp - added missing import/include (found by YCP -> Ruby
