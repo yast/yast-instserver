@@ -12,6 +12,8 @@ Requires:	yast2-slp
 
 BuildArchitectures:	noarch
 
+Requires:       yast2-ruby-bindings >= 1.0.0
+
 Summary:	YaST2 - Installation Server Configuration and Management
 
 %description
@@ -41,7 +43,7 @@ provided by this package.
 %defattr(-,root,root)
 %dir @yncludedir@/instserver
 @yncludedir@/instserver/*
-@clientdir@/instserver.ycp
+@clientdir@/instserver.rb
 @moduledir@/Instserver.*
 @desktopdir@/instserver.desktop
 /etc/YaST2/instserver
