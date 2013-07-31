@@ -1,37 +1,22 @@
-# Makefile.am for instserver/src
-#
+# Sources for instserver
 
-SUBDIRS = httpd
+module_DATA = \
+  modules/Instserver.rb
+
+client_DATA = \
+  clients/instserver.rb
 
 yncludedir = @yncludedir@/instserver
-YCPCFLAGS = -I ./include
+ynclude_DATA = \
+  include/instserver/wizards.rb \
+  include/instserver/dialogs.rb \
+  include/instserver/complex.rb \
+  include/instserver/routines.rb \
+  include/instserver/helps.rb
 
-client_DATA =			\
-	instserver.ycp		
+desktop_DATA = \
+  desktop/instserver.desktop
 
-ynclude_DATA =			\
-	helps.ycp		\
-	routines.ycp		\
-	wizards.ycp		\
-	dialogs.ycp		\
-	complex.ycp
-
-desktop_DATA =			\
-	instserver.desktop
-
-module_DATA =			\
-	Instserver.ycp	
-
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
-
-install-data-local:
-	install -d -m 755 $(DESTDIR)/etc/YaST2/instserver
-
-
-include:
-	mkdir include && ln -sf ../ include/instserver
-
-ycpchook = include
-
+EXTRA_DIST = $(module_DATA) $(client_DATA) $(ynclude_DATA) $(desktop_DATA)
 
 include $(top_srcdir)/Makefile.am.common
