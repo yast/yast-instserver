@@ -24,7 +24,6 @@ module Yast
       Yast.import "Package"
       Yast.import "Call"
       Yast.import "Service"
-      Yast.import "SLP"
       Yast.import "IP"
       Yast.import "Message"
       Yast.import "SuSEFirewall"
@@ -783,6 +782,20 @@ module Yast
     end
 
 
+    # Register service with SLP using a reg file
+    # @param [String] service The service to be registered
+    # @param [Hash{String => String}] attr Attributes
+    # @param [String] regfile Reg File
+    # @return [Boolean] True on Success
+    def SLPRegFile(service, attr, regfile)
+
+      slp = attr.reduce([service]) { |res, pair| res << "#{pair[0].downcase}=#{pair[1]}"}
+
+      regd_path = "/etc/slp.reg.d"
+      SCR.Execute(path(".target.mkdir"), regd_path)
+      SCR.Write(path(".target.string"), "#{regd_path}/#{regfile}", slp.join("\n"))
+    end
+
     # Write SLP configuration
     def WriteSLPReg(cm)
       cm = deep_copy(cm)
@@ -972,7 +985,7 @@ module Yast
         regfile
       )
 
-      ret = SLP.RegFile(serv, attr, regfile)
+      ret = SLPRegFile(serv, attr, regfile)
 
       ret
     end
