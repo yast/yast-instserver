@@ -793,8 +793,7 @@ module Yast
 
       regd_path = "/etc/slp.reg.d"
       SCR.Execute(path(".target.mkdir"), regd_path)
-
-      ret = SCR.Write(path(".target.string"), "#{regd_path}/#{regfile}", slp.join("\n"))
+      SCR.Write(path(".target.string"), "#{regd_path}/#{regfile}", slp.join("\n"))
     end
 
     # Write SLP configuration
