@@ -789,14 +789,12 @@ module Yast
     # @return [Boolean] True on Success
     def SLPRegFile(service, attr, regfile)
 
-      slp       = [ service ]
-      attr.each { |k, v| slp << k.downcase + "=" + v }
+      slp = attr.reduce([service]) { |res, pair| res << "#{pair[0].downcase}=#{pair[1]}"}
 
       regd_path = "/etc/slp.reg.d"
       SCR.Execute(path(".target.mkdir"), regd_path)
 
       ret = SCR.Write(path(".target.string"), "#{regd_path}/#{regfile}", slp.join("\n"))
-      ret
     end
 
     # Write SLP configuration
