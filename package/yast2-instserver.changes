@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Sep  4 17:26:15 CEST 2013 - jsuchome@suse.cz
+
+- remove dependency on yast2-slp
+- 3.0.1 
+
+-------------------------------------------------------------------
 Wed Jul 31 08:31:06 UTC 2013 - yast-devel@opensuse.org
 
 - converted from YCP to Ruby by YCP Killer
