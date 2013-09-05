@@ -789,7 +789,7 @@ module Yast
     # @return [Boolean] True on Success
     def SLPRegFile(service, attr, regfile)
 
-      slp = attr.reduce([service]) { |res, pair| res << "#{pair[0].downcase}=#{pair[1]}"}
+      slp = [service] + attr.map { |k, v| k.downcase + "=" + v }
 
       regd_path = "/etc/slp.reg.d"
       SCR.Execute(path(".target.mkdir"), regd_path)
