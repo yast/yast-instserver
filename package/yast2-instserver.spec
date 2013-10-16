@@ -75,7 +75,6 @@ provided by this package.
 %dir /etc/apache2
 %dir /etc/apache2/conf.d
 %dir %{yast_docdir}
-%doc %{yast_docdir}/README
 %doc %{yast_docdir}/COPYING
 
 %files devel-doc
