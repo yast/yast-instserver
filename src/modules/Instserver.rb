@@ -1003,7 +1003,7 @@ module Yast
         found = Builtins.splitstring(Ops.get_string(ret, "stdout", ""), "\n")
         found = Builtins.filter(found) { |s| s != "" }
         found = Builtins.filter(found) do |file|
-          d = dirname(file)
+          d = File.dirname(file)
           media = Builtins.sformat("%1/media.1/media", d)
           SCR.Read(path(".target.size"), media) != -1
         end
@@ -1018,8 +1018,8 @@ module Yast
       _Available = {}
       Builtins.foreach(@Detected) do |c|
         ret = ReadContentFile(c)
-        d = dirname(c)
-        config_name = basename(d)
+        d = File.dirname(c)
+        config_name = File.basename(d)
         if ret != {} && !Builtins.haskey(@Configs, config_name)
           Ops.set(_Available, d, ret)
         end
@@ -1446,10 +1446,10 @@ module Yast
       # Configuration summary text for autoyast
       sum = ""
       _Available = Builtins.filter(FindAvailable()) do |d, avail|
-        !Builtins.haskey(@Configs, basename(d))
+        !Builtins.haskey(@Configs, File.basename(d))
       end
       unconf = Builtins.maplist(_Available) do |d, avail|
-        dir = basename(d)
+        dir = File.basename(d)
         Item(
           Id(dir),
           Ops.add(

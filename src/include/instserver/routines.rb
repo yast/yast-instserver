@@ -44,32 +44,5 @@ module Yast
       deep_copy(contentmap)
     end
 
-    def basename(file)
-      pathComponents = Builtins.splitstring(file, "/")
-      ret = Ops.get_string(
-        pathComponents,
-        Ops.subtract(Builtins.size(pathComponents), 1),
-        ""
-      )
-      ret
-    end
-
-    # Get directory name
-    # @param string path
-    # @return  [String] dirname
-    def dirname(file)
-      pathComponents = Builtins.splitstring(file, "/")
-      last = Ops.get_string(
-        pathComponents,
-        Ops.subtract(Builtins.size(pathComponents), 1),
-        ""
-      )
-      ret = Builtins.substring(
-        file,
-        0,
-        Ops.subtract(Ops.subtract(Builtins.size(file), Builtins.size(last)), 1)
-      )
-      ret
-    end
   end
 end
