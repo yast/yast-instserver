@@ -1,11 +1,9 @@
 # encoding: utf-8
 
-# File:	modules/Instserver.ycp
+# File:	modules/Instserver.rb
 # Package:	Configuration of Installation Server
 # Summary:	Installation Server settings, input and output functions
 # Authors:	Anas Nashif <nashif@suse.de>
-#
-# $Id$
 #
 # Representation of the configuration of Installation Server.
 # Input and output routines.
@@ -833,6 +831,7 @@ module Yast
       attr = {}
       Builtins.foreach(
         [
+          "CPEID",
           "LABEL",
           "VERSION",
           "VENDOR",
@@ -880,8 +879,6 @@ module Yast
         end
       end 
 
-
-      machine = ""
       machines = []
       Builtins.foreach(cm) do |k, v|
         Builtins.y2debug("Read Key: '%1'", k)
@@ -975,7 +972,7 @@ module Yast
 
       # replace the machine option after escaping,
       # it actually _is_ a list so "," is valid here
-      Ops.set(attr, "machine", machines_string)
+      attr["machine"] = machines_string unless machines_string.empty?
       Builtins.y2milestone("machine: %1", Ops.get(attr, "machine", ""))
 
       Builtins.y2milestone(
