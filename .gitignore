@@ -1,5 +1,6 @@
+*.ami
 Makefile
-Makefile.am
+/Makefile.am
 Makefile.am.common
 Makefile.in
 aclocal.m4
@@ -10,7 +11,7 @@ config.log
 config.status
 config.sub
 configure
-configure.in
+configure.ac
 depcomp
 install-sh
 missing
