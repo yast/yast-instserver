@@ -24,6 +24,21 @@ list<string> ReadMediaFile(string media) {
     }
 }
 
+// split CPE ID and distro label (separated by comma)
+list<string> parse_distro(string distro)
+{
+    integer comma_pos = search(distro, ",");
+
+    if (comma_pos == nil)
+    {
+        return nil;
+    }
+
+    return [ substring(distro, 0, comma_pos),
+        substring(distro, comma_pos + 1, size(distro)) ];
+}
+
+
 map<string,string> ReadContentFile(string content) {
     y2debug("Reading content %1", content);
 
@@ -35,6 +50,27 @@ map<string,string> ReadContentFile(string content) {
 	}
     );
     y2milestone("Read content file %1: %2", content, contentmap);
+
+    // "DISTRO" flag is used in SLE12, "NAME" and "LABEL" are missing
+    string distro = contentmap["DISTRO"]:nil;
+
+    if (distro != nil)
+    {
+        list<string> distro_values = parse_distro(distro);
+
+        if (distro_values != nil)
+        {
+            string name = distro_values[1]:"";
+
+            // name is displayed in overview
+            contentmap["NAME"] = name;
+            // label is written to SLP config
+            contentmap["LABEL"] = name;
+
+            string cpeid = distro_values[0]:"";
+            contentmap["CPEID"] = cpeid;
+        }
+    }
 
     return contentmap;
 }
