@@ -25,8 +25,13 @@ list<string> ReadMediaFile(string media) {
 }
 
 // split CPE ID and distro label (separated by comma)
-list<string> parse_distro(string distro)
+map<string, string> distro_map(string distro)
 {
+    if (distro == nil)
+    {
+        return nil;
+    }
+
     integer comma_pos = search(distro, ",");
 
     if (comma_pos == nil)
@@ -34,8 +39,8 @@ list<string> parse_distro(string distro)
         return nil;
     }
 
-    return [ substring(distro, 0, comma_pos),
-        substring(distro, comma_pos + 1, size(distro)) ];
+    return $[ "cpeid" : substring(distro, 0, comma_pos),
+        "name" : substring(distro, comma_pos + 1, size(distro)) ];
 }
 
 
@@ -52,23 +57,22 @@ map<string,string> ReadContentFile(string content) {
     y2milestone("Read content file %1: %2", content, contentmap);
 
     // "DISTRO" flag is used in SLE12, "NAME" and "LABEL" are missing
+    // format: "<cpeid>,<product_name>", CPE ID is defined here:
+    // http://csrc.nist.gov/publications/nistir/ir7695/NISTIR-7695-CPE-Naming.pdf
     string distro = contentmap["DISTRO"]:nil;
 
     if (distro != nil)
     {
-        list<string> distro_values = parse_distro(distro);
+        map<string, string> distro_values = distro_map(distro);
 
         if (distro_values != nil)
         {
-            string name = distro_values[1]:"";
-
             // name is displayed in overview
-            contentmap["NAME"] = name;
+            contentmap["NAME"] = distro_values["name"]:"";
             // label is written to SLP config
-            contentmap["LABEL"] = name;
+            contentmap["LABEL"] = distro_values["name"]:"";
 
-            string cpeid = distro_values[0]:"";
-            contentmap["CPEID"] = cpeid;
+            contentmap["CPEID"] = distro_values["cpeid"]:"";
         }
     }
 
