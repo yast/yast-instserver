@@ -422,6 +422,9 @@ module Yast
         end
       end
 
+      # write firewall config if it has been modified
+      SuSEFirewall.Write if SuSEFirewall.GetModified
+
       true
     end
 
