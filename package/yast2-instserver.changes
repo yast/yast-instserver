@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Thu Oct  9 11:52:33 UTC 2014 - lslezak@suse.cz
+
+- added support for SLE12 products (bnc#882849)
+- write "cpeid" attribute to SLP configuration (SLE12 products)
+- save FTP firewall port configuration option
+- install "nfs-kernel-server" package when NFS server is selected
+  (missing in minimal system)
+- 2.17.7
+
+-------------------------------------------------------------------
 Tue Jun 29 10:14:47 UTC 2010 - lslezak@suse.cz
 
 - fixed creating SLP reg. files: fixed reading supported
