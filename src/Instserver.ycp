@@ -379,6 +379,12 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 	    Service::Start("xinetd");
     }
 
+    // write firewall config if it has been modified
+    if (SuSEFirewall::GetModified())
+    {
+	SuSEFirewall::Write();
+    }
+
     return true;
 }
 
