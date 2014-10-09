@@ -6,8 +6,6 @@
         Options +Indexes +FollowSymLinks
         IndexOptions +NameWidth=*
 
-        Order allow,deny
-        Allow from all
-
+        Require all granted
     </Directory>
 </IfDefine>
