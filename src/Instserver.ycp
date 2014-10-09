@@ -379,11 +379,8 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 	    Service::Start("xinetd");
     }
 
-    // write firewall config if it has been modified
-    if (SuSEFirewall::GetModified())
-    {
-	SuSEFirewall::Write();
-    }
+    // write firewall config
+    SuSEFirewall::Write();
 
     return true;
 }
@@ -466,11 +463,8 @@ global boolean SetupHTTP(string dir, string alias) {
     }
     RunSuseConfigApache(true);
 
-    // write firewall config if it has been modified
-    if (SuSEFirewall::GetModified())
-    {
-	SuSEFirewall::Write();
-    }
+    // write firewall config
+    SuSEFirewall::Write();
 
     Service::Enable("apache2");
     if (Service::Status("apache2") == 0 )
@@ -536,11 +530,8 @@ Leave NFS exports unmodified?
     else
         Service::Start("nfsserver");
 
-    // write firewall config if it has been modified
-    if (SuSEFirewall::GetModified())
-    {
-	SuSEFirewall::Write();
-    }
+    // write firewall config
+    SuSEFirewall::Write();
 
     return true;
 }
