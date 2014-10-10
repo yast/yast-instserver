@@ -379,6 +379,8 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 	    Service::Start("xinetd");
     }
 
+    SuSEFirewall::Write();
+
     return true;
 }
 
@@ -460,11 +462,7 @@ global boolean SetupHTTP(string dir, string alias) {
     }
     RunSuseConfigApache(true);
 
-    // write firewall config if it has been modified
-    if (SuSEFirewall::GetModified())
-    {
-	SuSEFirewall::Write();
-    }
+    SuSEFirewall::Write();
 
     Service::Enable("apache2");
     if (Service::Status("apache2") == 0 )
@@ -483,7 +481,7 @@ global boolean SetupHTTP(string dir, string alias) {
  */
 global boolean SetupNFS(string dir, string options) {
 
-    if (!Package::InstallAll( [ "yast2-nfs-server"])) {
+    if (!Package::InstallAll( [ "yast2-nfs-server", "nfs-kernel-server" ])) {
 	Report::Error( Message::CannotContinueWithoutPackagesInstalled() );
 
         y2error("Error while installing packages");
@@ -530,11 +528,7 @@ Leave NFS exports unmodified?
     else
         Service::Start("nfsserver");
 
-    // write firewall config if it has been modified
-    if (SuSEFirewall::GetModified())
-    {
-	SuSEFirewall::Write();
-    }
+    SuSEFirewall::Write();
 
     return true;
 }
@@ -748,7 +742,7 @@ global boolean WriteSLPReg (map<string,any> cm) {
     }
 
     map<string, string> attr = $[];
-    foreach(string a, ["LABEL", "VERSION", "VENDOR", "DEFAULTBASE", "BASEPRODUCT", "BASEVERSION"], ``{
+    foreach(string a, ["CPEID", "LABEL", "VERSION", "VENDOR", "DEFAULTBASE", "BASEPRODUCT", "BASEVERSION"], ``{
         if (cm[a]:"" != "" )
         {
             attr[tolower(a)] =  cm[a]:"";
@@ -869,10 +863,15 @@ TODO: checking?
     // escape invalid characters
     attr = EscapeSLPData(attr);
 
-    // replace the machine option after escaping,
-    // it actually _is_ a list so "," is valid here
-    attr["machine"] = machines_string;
-    y2milestone("machine: %1", attr["machine"]:"");
+    // in SLE12 supported architectures are missing in metadata,
+    // do not write the attribute in that case
+    if (machines_string != "")
+    {
+        // replace the machine option after escaping,
+        // it actually _is_ a list so "," is valid here
+        attr["machine"] = machines_string;
+        y2milestone("machine: %1", attr["machine"]:"");
+    }
 
     y2milestone("registering SLP service: serv: %1, attr: %2, regfile: %3", serv, attr, regfile);
 
@@ -1110,7 +1109,7 @@ global boolean Read() {
 
     // disable progress for firewall
     boolean prg = Progress::set(false);
-    // read firewall settings
+
     SuSEFirewall::Read();
     Progress::set(prg);
 

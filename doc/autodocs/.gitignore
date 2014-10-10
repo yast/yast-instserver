@@ -1,0 +1,4 @@
+*.html
+.yardoc/
+js/
+css/
