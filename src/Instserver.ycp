@@ -379,7 +379,6 @@ global boolean SetupFTP(string dir, string ftproot, string ftpalias) {
 	    Service::Start("xinetd");
     }
 
-    // write firewall config
     SuSEFirewall::Write();
 
     return true;
@@ -463,7 +462,6 @@ global boolean SetupHTTP(string dir, string alias) {
     }
     RunSuseConfigApache(true);
 
-    // write firewall config
     SuSEFirewall::Write();
 
     Service::Enable("apache2");
@@ -530,7 +528,6 @@ Leave NFS exports unmodified?
     else
         Service::Start("nfsserver");
 
-    // write firewall config
     SuSEFirewall::Write();
 
     return true;
@@ -1112,7 +1109,7 @@ global boolean Read() {
 
     // disable progress for firewall
     boolean prg = Progress::set(false);
-    // read firewall settings
+
     SuSEFirewall::Read();
     Progress::set(prg);
 

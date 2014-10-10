@@ -24,11 +24,16 @@ list<string> ReadMediaFile(string media) {
     }
 }
 
-// split CPE ID and distro label (separated by comma)
+/**
+* split CPE ID and distro label (separated by comma)
+* @param string distro "DISTRO" value from content file
+* @return map parsed value, map: $["name":<string>, "cpeid":<string>]
+*/
 map<string, string> distro_map(string distro)
 {
     if (distro == nil)
     {
+        y2warning("Received nil distro value");
         return nil;
     }
 
@@ -36,6 +41,7 @@ map<string, string> distro_map(string distro)
 
     if (comma_pos == nil)
     {
+        y2warning("Cannot parse DISTRO value: %1", distro)
         return nil;
     }
 
