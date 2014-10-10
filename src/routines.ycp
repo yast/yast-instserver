@@ -41,7 +41,7 @@ map<string, string> distro_map(string distro)
 
     if (comma_pos == nil)
     {
-        y2warning("Cannot parse DISTRO value: %1", distro)
+        y2warning("Cannot parse DISTRO value: %1", distro);
         return nil;
     }
 
