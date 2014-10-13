@@ -2,7 +2,7 @@
 # Makefile.am for instserver/test
 #
 
-TESTS = routines_test.rb
+TESTS = routines_test.rb Instserver_test.rb
 
 TEST_EXTENSIONS = .rb
 RB_LOG_COMPILER = rspec
