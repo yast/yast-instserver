@@ -390,7 +390,7 @@ module Yast
           end
           # add the configuration to the list
           netdconf = Builtins.add(netdconf, conf)
-        end 
+        end
 
 
         if servicefound == false
@@ -631,7 +631,7 @@ module Yast
         new_value = String.Replace(new_value, "#", "\\23")
         new_value = String.Replace(new_value, ";", "\\3b")
         Ops.set(ret, new_key, new_value)
-      end 
+      end
 
 
       Builtins.y2milestone("Escaped SLP attributes: %1 -> %2", a, ret)
@@ -694,7 +694,7 @@ module Yast
         new_value = subreplace(new_value, "3b", ";")
         new_value = subreplace(new_value, "5c", "\\")
         Ops.set(ret, new_key, new_value)
-      end 
+      end
 
 
       Builtins.y2milestone("Unescaped SLP attributes: %1 -> %2", a, ret)
@@ -771,7 +771,7 @@ module Yast
           :from => "list",
           :to   => "list <string>"
         )
-      end 
+      end
 
 
       Builtins.y2milestone("Final BASEARCH mapping: %1", ret)
@@ -877,7 +877,7 @@ module Yast
             Builtins.sformat("YaST-%1.reg", orig)
           )
         end
-      end 
+      end
 
       machines = []
       Builtins.foreach(cm) do |k, v|
@@ -936,7 +936,7 @@ module Yast
             )
             Ops.set(old_attr, parsed_name, parsed_value)
           end
-        end 
+        end
 
 
         # unescape the read value
@@ -953,7 +953,7 @@ module Yast
           Builtins.union(attr, old_attr),
           :from => "map",
           :to   => "map <string, string>"
-        ) 
+        )
 
         # TODO: checking?
         # 	// don't check the overwritten config file
@@ -1032,7 +1032,7 @@ module Yast
 
       Builtins.foreach(exports) do |e|
         ret = true if Ops.get_string(e, "mountpoint", "") == dir
-      end 
+      end
 
 
       Builtins.y2milestone("Directory %1 is exported: %2", dir, ret)
@@ -1084,7 +1084,7 @@ module Yast
           # the default is true: missing tag means the service is enabled (!)
           ftpdenabled = Ops.get_boolean(conf, "enabled", true)
         end
-      end 
+      end
 
 
       Builtins.y2milestone(
@@ -1316,7 +1316,7 @@ module Yast
             Ops.get_string(conf, "name", "")
           )
         end
-      end 
+      end
 
 
       # Remove the SLP files of removed or SLP disabled repositories
@@ -1358,7 +1358,7 @@ module Yast
           Popup.Error(_("Error while moving repository content."))
           next
         end
-      end 
+      end
 
 
 
