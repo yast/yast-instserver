@@ -422,8 +422,7 @@ module Yast
         end
       end
 
-      # write firewall config if it has been modified
-      SuSEFirewall.Write if SuSEFirewall.GetModified
+      SuSEFirewall.Write
 
       true
     end
@@ -534,8 +533,7 @@ module Yast
       end
       RunSuseConfigApache(true)
 
-      # write firewall config if it has been modified
-      SuSEFirewall.Write if SuSEFirewall.GetModified
+      SuSEFirewall.Write
 
       Service.Enable("apache2")
       if Service.Status("apache2") == 0
@@ -603,8 +601,7 @@ module Yast
         Service.Start("nfsserver")
       end
 
-      # write firewall config if it has been modified
-      SuSEFirewall.Write if SuSEFirewall.GetModified
+      SuSEFirewall.Write
 
       true
     end
