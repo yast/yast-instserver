@@ -1147,11 +1147,7 @@ module Yast
     def Read
       # Instserver read dialog caption
       caption = _("Initializing Configuration")
-
       steps = 4
-
-      sl = 1
-      Builtins.sleep(sl)
 
       # We do not set help text here, because it was set outside
       Progress.New(
@@ -1180,10 +1176,12 @@ module Yast
       Progress.NextStage
       c = {}
 
-
       if SCR.Read(path(".target.size"), @ConfigFile) != -1
         c = XML.XMLToYCPFile(@ConfigFile)
+        # TRANSLATORS: Error message
+        Report.Error(_("Cannot read current settings.")) unless c
       end
+
       all = Ops.get_list(c, "configurations", [])
       @ServerSettings = Ops.get_map(c, "servers", {})
 
@@ -1197,7 +1195,7 @@ module Yast
       Builtins.y2milestone("Server config: %1", @ServerSettings)
 
       # check the server status here
-      if @ServerSettings == {} || !ServiceValid(@ServerSettings)
+      if @ServerSettings.empty? || !ServiceValid(@ServerSettings)
         @FirstDialog = "settings"
       end
 
@@ -1207,32 +1205,18 @@ module Yast
       SuSEFirewall.Read
       Progress.set(prg)
 
-      Builtins.sleep(sl)
-
-
       # read current settings
       return false if Abort()
       Progress.NextStage
 
-
       @Detected = DetectMedia()
 
-      # Error message
-      Report.Error(_("Cannot read current settings.")) if false
-      Builtins.sleep(sl)
-
-
-      return false if Abort()
       # Progress finished
       Progress.NextStage
-      Builtins.sleep(sl)
 
-      return false if Abort()
       @modified = false
       true
     end
-
-
 
     # Prepare map for writing  into XML
     # @return [Array]s of configurations
@@ -1241,7 +1225,6 @@ module Yast
       deep_copy(c)
     end
 
-
     # Write all instserver settings
     # @return true on success
     def Write
@@ -1249,11 +1232,7 @@ module Yast
 
       # Instserver read dialog caption
       caption = _("Saving Installation Server Configuration")
-
       steps = 2
-
-      sl = 1
-      Builtins.sleep(sl)
 
       # We do not set help text here, because it was set outside
       Progress.New(
@@ -1286,8 +1265,7 @@ module Yast
       ret = XML.YCPToXMLFile(:instserver, xml, @ConfigFile)
 
       # Error message
-      Report.Error(_("Cannot write settings.")) if false
-      Builtins.sleep(sl)
+      Report.Error(_("Cannot write settings.")) unless ret
 
       # run SuSEconfig
       return false if Abort()
@@ -1317,7 +1295,6 @@ module Yast
           )
         end
       end
-
 
       # Remove the SLP files of removed or SLP disabled repositories
       Builtins.foreach(regs_delete) do |c2|
@@ -1360,7 +1337,7 @@ module Yast
         end
       end
 
-
+      return false if Abort()
 
       # slp service reload is required - the configuration has been changed
       if slpreload
@@ -1371,15 +1348,11 @@ module Yast
         end
       end
 
-      return false if Abort()
       # Progress finished
       Progress.NextStage
-      Builtins.sleep(sl)
 
-      return false if Abort()
       true
     end
-
 
     def UpdateConfig
       Builtins.y2debug("current config: %1", @Configs)
