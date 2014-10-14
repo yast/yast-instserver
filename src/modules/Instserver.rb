@@ -621,6 +621,7 @@ module Yast
         new_key = String.Replace(new_key, "=", "\\3d")
         new_key = String.Replace(new_key, "#", "\\23")
         new_key = String.Replace(new_key, ";", "\\3b")
+
         new_value = Builtins.mergestring(
           Builtins.splitstring(value, "\\"),
           "\\5c"
@@ -630,6 +631,11 @@ module Yast
         new_value = String.Replace(new_value, ",", "\\2c")
         new_value = String.Replace(new_value, "#", "\\23")
         new_value = String.Replace(new_value, ";", "\\3b")
+        new_value = String.Replace(new_value, "!", "\\21")
+        new_value = String.Replace(new_value, "<", "\\3c")
+        new_value = String.Replace(new_value, "=", "\\3d")
+        new_value = String.Replace(new_value, ">", "\\3e")
+        new_value = String.Replace(new_value, "~", "\\7e")
         Ops.set(ret, new_key, new_value)
       end
 

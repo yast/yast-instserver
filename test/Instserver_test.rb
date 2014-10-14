@@ -21,13 +21,13 @@ describe "Yast::Instserver" do
       expect(subject.EscapeSLPData(input)).to eq(input)
     end
     
-    it "escapes special characters in values" do
-      input = { "description" => "must be escaped: () , \\" }
-      result = { "description" => "must be escaped: \\28\\29 \\2c \\5c" }
+    it "escapes SLP reserved characters (()<>=!#,;\\) in values" do
+      input = { "description" => "must be escaped: ()<>=!#,;\\" }
+      result = { "description" => "must be escaped: \\28\\29\\3c\\3e\\3d\\21\\23\\2c\\3b\\5c" }
       expect(subject.EscapeSLPData(input)).to eq(result)
     end
     
-    it "escapes special characters in keys" do
+    it "escapes SLP reserved characters (.=%:\\) in keys" do
       input = { "escaped.=name" => "value" }
       result = { "escaped\\2e\\3dname" => "value" }
       expect(subject.EscapeSLPData(input)).to eq(result)

@@ -36,21 +36,21 @@ module Yast
       end
 
       # split at the first comma, resulting in 2 parts at max.
-      parsed = distro.split(",", 2)
+      cpeid, name = distro.split(",", 2)
 
-      if parsed.size != 2
+      if !name
         log.warn "Cannot parse DISTRO value: #{distro}"
         return nil
       end
 
-      { "cpeid" => parsed[0], "name" => parsed[1] }
+      { "cpeid" => cpeid, "name" => name }
     end
 
     def ReadContentFile(content)
       Builtins.y2debug("Reading content %1", content)
 
       contentmap = SCR.Read(path(".content_file"), content)
-      contentmap.each { |key, value| value.strip! }
+      contentmap.values.each(&:strip!)
 
       # "DISTRO" flag is used in SLE12, "NAME" and "LABEL" are missing
       # format: "<cpeid>,<product_name>", CPE ID is defined here:
