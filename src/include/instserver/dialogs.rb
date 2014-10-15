@@ -192,8 +192,7 @@ module Yast
       SCR.Execute(path(".target.umount"), Installation.sourcedir)
 
       default_device = cddrive
-      mount_options = ""
-      result = nil
+      mount_options = iso ? "-oloop,ro " : ""
 
       # CD is mounted. Check contents.
       cdpath = Installation.sourcedir
@@ -206,10 +205,7 @@ module Yast
       base = ""
       basever = ""
       prompt_string = ""
-      prompt_version = ""
       prompt_totalcds = 0
-      medianame = ""
-      doublesided = false
       medianames = []
       failed = false
       cds_copied = false
@@ -223,13 +219,6 @@ module Yast
 
       # content file at first CD must be preserved (#171157)
       content_first_CD = ""
-
-      # Fix for mounting ISO images over NFS
-      if iso
-        mount_options = "-oloop,ro "
-      else
-        mount_options = ""
-      end
 
       # Loop for all CDs
       while true
@@ -435,18 +424,7 @@ module Yast
           end
 
           Builtins.foreach(media) do |m|
-            doublesided = true if m == "doublesided"
             if Builtins.substring(m, 0, 5) == "MEDIA"
-              if doublesided
-                medianame = Builtins.regexpsub(
-                  m,
-                  "(.*)SIDE A(.*)",
-                  "\\1SIDE %1\\2"
-                )
-              else
-                medianame = Builtins.regexpsub(m, "(.*)CD.", "\\1CD%1")
-              end
-
               m = Builtins.substring(m, 7)
 
               if !Builtins.contains(medianames, m)
@@ -615,9 +593,6 @@ module Yast
           # No media names, so we have to create the string for media request
           if Builtins.size(medianames) == 0
             prompt_string = Ops.get_string(content, "LABEL", "")
-            prompt_version = Ops.get_string(content, "VERSION", "")
-          else
-            prompt_version = ""
           end
 
           prompt_totalcds = total_cds
@@ -674,9 +649,6 @@ module Yast
           baseproduct = true
           if Builtins.size(medianames) == 0
             prompt_string = Ops.get_string(content, "LABEL", "")
-            prompt_version = Ops.get_string(content, "VERSION", "")
-          else
-            prompt_version = ""
           end
           # else, we create CD1, CD2, etc. (for code10 always)
           if stype == :onedir && !code10_source
@@ -876,7 +848,6 @@ module Yast
           medianames = []
 
           prompt_string = base
-          prompt_version = basever
         elsif total_cds == current_cd && (standalone || baseproduct)
           break
         elsif total_cds == current_cd && promptmore

@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        3.1.1
+Version:        3.1.2
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -25,8 +25,9 @@ Source0:        %{name}-%{version}.tar.bz2
 
 Group:	        System/YaST
 License:        GPL-2.0+
-BuildRequires:  perl-XML-Writer update-desktop-files yast2 yast2-testsuite
+BuildRequires:  perl-XML-Writer update-desktop-files yast2
 BuildRequires:  yast2-devtools >= 3.1.10
+BuildRequires:  rubygem(rspec)
 
 # ag_content agent
 # Wizard::SetDesktopTitleAndIcon
