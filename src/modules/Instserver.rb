@@ -1,11 +1,9 @@
 # encoding: utf-8
 
-# File:	modules/Instserver.ycp
+# File:	modules/Instserver.rb
 # Package:	Configuration of Installation Server
 # Summary:	Installation Server settings, input and output functions
 # Authors:	Anas Nashif <nashif@suse.de>
-#
-# $Id$
 #
 # Representation of the configuration of Installation Server.
 # Input and output routines.
@@ -392,7 +390,7 @@ module Yast
           end
           # add the configuration to the list
           netdconf = Builtins.add(netdconf, conf)
-        end 
+        end
 
 
         if servicefound == false
@@ -423,6 +421,8 @@ module Yast
           Service.Start("xinetd")
         end
       end
+
+      SuSEFirewall.Write
 
       true
     end
@@ -533,8 +533,7 @@ module Yast
       end
       RunSuseConfigApache(true)
 
-      # write firewall config if it has been modified
-      SuSEFirewall.Write if SuSEFirewall.GetModified
+      SuSEFirewall.Write
 
       Service.Enable("apache2")
       if Service.Status("apache2") == 0
@@ -602,8 +601,7 @@ module Yast
         Service.Start("nfsserver")
       end
 
-      # write firewall config if it has been modified
-      SuSEFirewall.Write if SuSEFirewall.GetModified
+      SuSEFirewall.Write
 
       true
     end
@@ -623,6 +621,7 @@ module Yast
         new_key = String.Replace(new_key, "=", "\\3d")
         new_key = String.Replace(new_key, "#", "\\23")
         new_key = String.Replace(new_key, ";", "\\3b")
+
         new_value = Builtins.mergestring(
           Builtins.splitstring(value, "\\"),
           "\\5c"
@@ -632,8 +631,13 @@ module Yast
         new_value = String.Replace(new_value, ",", "\\2c")
         new_value = String.Replace(new_value, "#", "\\23")
         new_value = String.Replace(new_value, ";", "\\3b")
+        new_value = String.Replace(new_value, "!", "\\21")
+        new_value = String.Replace(new_value, "<", "\\3c")
+        new_value = String.Replace(new_value, "=", "\\3d")
+        new_value = String.Replace(new_value, ">", "\\3e")
+        new_value = String.Replace(new_value, "~", "\\7e")
         Ops.set(ret, new_key, new_value)
-      end 
+      end
 
 
       Builtins.y2milestone("Escaped SLP attributes: %1 -> %2", a, ret)
@@ -696,7 +700,7 @@ module Yast
         new_value = subreplace(new_value, "3b", ";")
         new_value = subreplace(new_value, "5c", "\\")
         Ops.set(ret, new_key, new_value)
-      end 
+      end
 
 
       Builtins.y2milestone("Unescaped SLP attributes: %1 -> %2", a, ret)
@@ -773,7 +777,7 @@ module Yast
           :from => "list",
           :to   => "list <string>"
         )
-      end 
+      end
 
 
       Builtins.y2milestone("Final BASEARCH mapping: %1", ret)
@@ -833,6 +837,7 @@ module Yast
       attr = {}
       Builtins.foreach(
         [
+          "CPEID",
           "LABEL",
           "VERSION",
           "VENDOR",
@@ -878,10 +883,8 @@ module Yast
             Builtins.sformat("YaST-%1.reg", orig)
           )
         end
-      end 
+      end
 
-
-      machine = ""
       machines = []
       Builtins.foreach(cm) do |k, v|
         Builtins.y2debug("Read Key: '%1'", k)
@@ -939,7 +942,7 @@ module Yast
             )
             Ops.set(old_attr, parsed_name, parsed_value)
           end
-        end 
+        end
 
 
         # unescape the read value
@@ -956,7 +959,7 @@ module Yast
           Builtins.union(attr, old_attr),
           :from => "map",
           :to   => "map <string, string>"
-        ) 
+        )
 
         # TODO: checking?
         # 	// don't check the overwritten config file
@@ -975,7 +978,7 @@ module Yast
 
       # replace the machine option after escaping,
       # it actually _is_ a list so "," is valid here
-      Ops.set(attr, "machine", machines_string)
+      attr["machine"] = machines_string unless machines_string.empty?
       Builtins.y2milestone("machine: %1", Ops.get(attr, "machine", ""))
 
       Builtins.y2milestone(
@@ -1003,7 +1006,7 @@ module Yast
         found = Builtins.splitstring(Ops.get_string(ret, "stdout", ""), "\n")
         found = Builtins.filter(found) { |s| s != "" }
         found = Builtins.filter(found) do |file|
-          d = dirname(file)
+          d = File.dirname(file)
           media = Builtins.sformat("%1/media.1/media", d)
           SCR.Read(path(".target.size"), media) != -1
         end
@@ -1018,8 +1021,8 @@ module Yast
       _Available = {}
       Builtins.foreach(@Detected) do |c|
         ret = ReadContentFile(c)
-        d = dirname(c)
-        config_name = basename(d)
+        d = File.dirname(c)
+        config_name = File.basename(d)
         if ret != {} && !Builtins.haskey(@Configs, config_name)
           Ops.set(_Available, d, ret)
         end
@@ -1035,7 +1038,7 @@ module Yast
 
       Builtins.foreach(exports) do |e|
         ret = true if Ops.get_string(e, "mountpoint", "") == dir
-      end 
+      end
 
 
       Builtins.y2milestone("Directory %1 is exported: %2", dir, ret)
@@ -1087,7 +1090,7 @@ module Yast
           # the default is true: missing tag means the service is enabled (!)
           ftpdenabled = Ops.get_boolean(conf, "enabled", true)
         end
-      end 
+      end
 
 
       Builtins.y2milestone(
@@ -1150,11 +1153,7 @@ module Yast
     def Read
       # Instserver read dialog caption
       caption = _("Initializing Configuration")
-
       steps = 4
-
-      sl = 1
-      Builtins.sleep(sl)
 
       # We do not set help text here, because it was set outside
       Progress.New(
@@ -1183,10 +1182,12 @@ module Yast
       Progress.NextStage
       c = {}
 
-
       if SCR.Read(path(".target.size"), @ConfigFile) != -1
         c = XML.XMLToYCPFile(@ConfigFile)
+        # TRANSLATORS: Error message
+        Report.Error(_("Cannot read current settings.")) unless c
       end
+
       all = Ops.get_list(c, "configurations", [])
       @ServerSettings = Ops.get_map(c, "servers", {})
 
@@ -1200,7 +1201,7 @@ module Yast
       Builtins.y2milestone("Server config: %1", @ServerSettings)
 
       # check the server status here
-      if @ServerSettings == {} || !ServiceValid(@ServerSettings)
+      if @ServerSettings.empty? || !ServiceValid(@ServerSettings)
         @FirstDialog = "settings"
       end
 
@@ -1210,32 +1211,18 @@ module Yast
       SuSEFirewall.Read
       Progress.set(prg)
 
-      Builtins.sleep(sl)
-
-
       # read current settings
       return false if Abort()
       Progress.NextStage
 
-
       @Detected = DetectMedia()
 
-      # Error message
-      Report.Error(_("Cannot read current settings.")) if false
-      Builtins.sleep(sl)
-
-
-      return false if Abort()
       # Progress finished
       Progress.NextStage
-      Builtins.sleep(sl)
 
-      return false if Abort()
       @modified = false
       true
     end
-
-
 
     # Prepare map for writing  into XML
     # @return [Array]s of configurations
@@ -1244,7 +1231,6 @@ module Yast
       deep_copy(c)
     end
 
-
     # Write all instserver settings
     # @return true on success
     def Write
@@ -1252,11 +1238,7 @@ module Yast
 
       # Instserver read dialog caption
       caption = _("Saving Installation Server Configuration")
-
       steps = 2
-
-      sl = 1
-      Builtins.sleep(sl)
 
       # We do not set help text here, because it was set outside
       Progress.New(
@@ -1289,8 +1271,7 @@ module Yast
       ret = XML.YCPToXMLFile(:instserver, xml, @ConfigFile)
 
       # Error message
-      Report.Error(_("Cannot write settings.")) if false
-      Builtins.sleep(sl)
+      Report.Error(_("Cannot write settings.")) unless ret
 
       # run SuSEconfig
       return false if Abort()
@@ -1319,8 +1300,7 @@ module Yast
             Ops.get_string(conf, "name", "")
           )
         end
-      end 
-
+      end
 
       # Remove the SLP files of removed or SLP disabled repositories
       Builtins.foreach(regs_delete) do |c2|
@@ -1361,9 +1341,9 @@ module Yast
           Popup.Error(_("Error while moving repository content."))
           next
         end
-      end 
+      end
 
-
+      return false if Abort()
 
       # slp service reload is required - the configuration has been changed
       if slpreload
@@ -1374,15 +1354,11 @@ module Yast
         end
       end
 
-      return false if Abort()
       # Progress finished
       Progress.NextStage
-      Builtins.sleep(sl)
 
-      return false if Abort()
       true
     end
-
 
     def UpdateConfig
       Builtins.y2debug("current config: %1", @Configs)
@@ -1446,10 +1422,10 @@ module Yast
       # Configuration summary text for autoyast
       sum = ""
       _Available = Builtins.filter(FindAvailable()) do |d, avail|
-        !Builtins.haskey(@Configs, basename(d))
+        !Builtins.haskey(@Configs, File.basename(d))
       end
       unconf = Builtins.maplist(_Available) do |d, avail|
-        dir = basename(d)
+        dir = File.basename(d)
         Item(
           Id(dir),
           Ops.add(

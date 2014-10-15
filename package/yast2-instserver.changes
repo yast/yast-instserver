@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Tue Oct 14 07:16:12 UTC 2014 - lslezak@suse.cz
+
+- added support for SLE12 products (bnc#900660)
+- write "cpeid" attribute to SLP configuration (SLE12 products
+  only)
+- save FTP firewall port configuration option
+- install "nfs-kernel-server" package when NFS server is selected
+  (missing in minimal system)
+- fixed Apache configuration template to work with Apache 2.4.x
+- 3.1.2
+
+-------------------------------------------------------------------
 Wed Nov 13 15:56:18 UTC 2013 - jreidinger@suse.com
 
 - Add explicit COPYING file
