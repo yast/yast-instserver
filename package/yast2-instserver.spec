@@ -22,18 +22,21 @@ Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
+Source1:        inst_server.conf.in
 
+url:            http://github.com/yast/yast-instserver
 Group:	        System/YaST
 License:        GPL-2.0+
-BuildRequires:  perl-XML-Writer update-desktop-files yast2
+BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  rubygem(rspec)
+BuildRequires:  rubygem(yast-rake)
 
 # ag_content agent
 # Wizard::SetDesktopTitleAndIcon
 Requires:	yast2 >= 2.21.22
 
-BuildArchitectures:	noarch
+BuildArch:	noarch
 
 Requires:       yast2-ruby-bindings >= 1.0.0
 
@@ -57,11 +60,16 @@ provided by this package.
 %prep
 %setup -n %{name}-%{version}
 
+%check
+rake test:unit
+
 %build
-%yast_build
+yardoc
 
 %install
-%yast_install
+rake install DESTDIR="%{buildroot}"
+install -D %{SOURCE1} %{buildroot}/etc/apache2/conf.d/inst_server.conf.in
+mkdir -p %{buildroot}/etc/YaST2/instserver
 
 
 %files
@@ -79,4 +87,6 @@ provided by this package.
 %doc %{yast_docdir}/COPYING
 
 %files devel-doc
+%defattr(-,root,root)
 %doc %{yast_docdir}/autodocs
+%doc %{yast_docdir}/CONTRIBUTING.md
