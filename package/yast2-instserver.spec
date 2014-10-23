@@ -90,3 +90,4 @@ mkdir -p %{buildroot}/etc/YaST2/instserver
 %defattr(-,root,root)
 %doc %{yast_docdir}/autodocs
 %doc %{yast_docdir}/CONTRIBUTING.md
+%doc %{yast_docdir}/README.md
