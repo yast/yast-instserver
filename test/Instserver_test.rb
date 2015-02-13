@@ -11,7 +11,7 @@ describe "Yast::Instserver" do
   
   describe "#Modified" do
     it "returns false initially" do
-      expect(subject.Modified).to be_false
+      expect(subject.Modified).to eq false
     end
   end
 
