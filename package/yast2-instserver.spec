@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        3.1.4
+Version:        3.1.5
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -47,16 +47,6 @@ This package allows you to configure an installation server suitable
 for installaing SUSE Linux over the network. Currently FTP, HTTP and
 NFS sources are supported.
 
-%package devel-doc
-Requires:       yast2-instserver = %version
-Group:          System/YaST
-Summary:        YaST2 - Installation Server - Development Documentation
-
-%description devel-doc
-This package contains development documentation for using the API
-provided by this package.
-
-
 %prep
 %setup -n %{name}-%{version}
 
@@ -64,7 +54,6 @@ provided by this package.
 rake test:unit
 
 %build
-yardoc
 
 %install
 rake install DESTDIR="%{buildroot}"
@@ -84,10 +73,6 @@ mkdir -p %{buildroot}/etc/YaST2/instserver
 %dir /etc/apache2
 %dir /etc/apache2/conf.d
 %dir %{yast_docdir}
-%doc %{yast_docdir}/COPYING
-
-%files devel-doc
-%defattr(-,root,root)
-%doc %{yast_docdir}/autodocs
 %doc %{yast_docdir}/CONTRIBUTING.md
+%doc %{yast_docdir}/COPYING
 %doc %{yast_docdir}/README.md
