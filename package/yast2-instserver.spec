@@ -40,6 +40,8 @@ BuildArch:	noarch
 
 Requires:       yast2-ruby-bindings >= 1.0.0
 
+Obsoletes:      yast2-instserver-devel-doc
+
 Summary:	YaST2 - Installation Server Configuration and Management
 
 %description
