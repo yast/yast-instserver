@@ -22,3 +22,6 @@ Makefile.am.common
 tmp.*
 *.log
 *.ybc
+/.yardoc
+/doc
+!/doc/SPEC
