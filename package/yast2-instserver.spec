@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        3.1.5
+Version:        3.3.0
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
