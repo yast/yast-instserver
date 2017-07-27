@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Jul 27 12:16:29 UTC 2017 - jreidinger@suse.com
+
+- move from yast2 agent for reading /content to support install of
+  old distros, as other parts of YaST2 already drop reading of 
+  /content (FATE#322386)
+- 3.3.0
+
+-------------------------------------------------------------------
 Wed Jun  1 13:58:26 UTC 2016 - igonzalezsosa@suse.com
 
 - Drop yast2-instserver-devel-doc package (fate#320356)

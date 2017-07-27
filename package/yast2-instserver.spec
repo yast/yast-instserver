@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        3.1.5
+Version:        3.3.0
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -32,9 +32,9 @@ BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  rubygem(rspec)
 BuildRequires:  rubygem(yast-rake)
 
-# ag_content agent
-# Wizard::SetDesktopTitleAndIcon
-Requires:	yast2 >= 2.21.22
+Requires:	yast2 > 3.3.4
+# file conflict, move of ag_content
+Conflicts:      yast2 <= 3.3.4
 
 BuildArch:	noarch
 
@@ -70,6 +70,8 @@ mkdir -p %{buildroot}/etc/YaST2/instserver
 %{yast_clientdir}/instserver.rb
 %{yast_moduledir}/Instserver.*
 %{yast_desktopdir}/instserver.desktop
+%{yast_scrconfdir}/*
+%{yast_agentdir}/ag_*
 /etc/YaST2/instserver
 /etc/apache2/conf.d/inst_server.conf.in
 %dir /etc/apache2
