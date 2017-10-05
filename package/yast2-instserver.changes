@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Oct  5 13:13:54 UTC 2017 - mvidner@suse.com
+
+- Stop using tmpnam, it is no longer supported in perl 5.26
+  (bsc#1061620)
+- 4.0.0
+
+-------------------------------------------------------------------
 Thu Jul 27 12:16:29 UTC 2017 - jreidinger@suse.com
 
 - move from yast2 agent for reading /content to support install of
