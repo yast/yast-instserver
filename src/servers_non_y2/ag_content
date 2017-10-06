@@ -8,7 +8,6 @@ use YaST::SCRAgent;
 use diagnostics;
 
 use Getopt::Long;
-use POSIX qw(tmpnam);
 use IO::File;
 
 our @ISA = ("YaST::SCRAgent");
