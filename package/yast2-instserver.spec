@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        4.0.0
+Version:        4.0.1
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -32,7 +32,8 @@ BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  rubygem(rspec)
 BuildRequires:  rubygem(yast-rake)
 
-Requires:	yast2 > 3.3.4
+# SuSEFirewall2 replaced by firewalld (fate#323460)
+Requires:	yast2 > 4.0.39
 # file conflict, move of ag_content
 Conflicts:      yast2 <= 3.3.4
 
