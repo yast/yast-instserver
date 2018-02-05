@@ -1482,7 +1482,7 @@ module Yast
 
       # firewall widget using CWM
       fw_settings = {
-        "services"        => ["service:nfs-kernel-server"],
+        "services"        => ["nfs-kernel-server"],
         "display_details" => true
       }
 
@@ -1576,7 +1576,7 @@ module Yast
     def FtpDialog
       # firewall widget using CWM
       fw_settings = {
-        "services"        => ["service:vsftpd"],
+        "services"        => ["vsftpd"],
         "display_details" => true
       }
 
@@ -1676,7 +1676,7 @@ module Yast
 
       # firewall widget using CWM
       fw_settings = {
-        "services"        => ["service:apache2"],
+        "services"        => ["apache2"],
         "display_details" => true
       }
 

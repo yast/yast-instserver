@@ -8,6 +8,7 @@
 # Representation of the configuration of Installation Server.
 # Input and output routines.
 require "yast"
+require "y2firewall/firewalld"
 
 module Yast
   class InstserverClass < Module
@@ -24,7 +25,6 @@ module Yast
       Yast.import "Service"
       Yast.import "IP"
       Yast.import "Message"
-      Yast.import "SuSEFirewall"
       Yast.import "String"
 
       Yast.include self, "instserver/routines.rb"
@@ -75,6 +75,10 @@ module Yast
       # return boolean return true if abort
       @AbortFunction = Modified()
       Instserver()
+    end
+
+    def firewalld
+      Y2Firewall::Firewalld.instance
     end
 
     # Abort function
@@ -422,7 +426,7 @@ module Yast
         end
       end
 
-      SuSEFirewall.Write
+      firewalld.write
 
       true
     end
@@ -533,7 +537,7 @@ module Yast
       end
       RunSuseConfigApache(true)
 
-      SuSEFirewall.Write
+      firewalld.write
 
       Service.Enable("apache2")
       if Service.Status("apache2") == 0
@@ -601,7 +605,7 @@ module Yast
         Service.Start("nfsserver")
       end
 
-      SuSEFirewall.Write
+      firewalld.write
 
       true
     end
@@ -1205,11 +1209,7 @@ module Yast
         @FirstDialog = "settings"
       end
 
-      # disable progress for firewall
-      prg = Progress.set(false)
-      # read firewall settings
-      SuSEFirewall.Read
-      Progress.set(prg)
+      firewalld.read
 
       # read current settings
       return false if Abort()
