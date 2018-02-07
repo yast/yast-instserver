@@ -23,6 +23,7 @@ module Yast
       Yast.import "Package"
       Yast.import "Call"
       Yast.import "Service"
+      Yast.import "SystemdSocket"
       Yast.import "IP"
       Yast.import "Message"
       Yast.import "String"
@@ -311,7 +312,7 @@ module Yast
         "The FTP installation server requires an FTP server package. The vsftpd package\nwill now be installed.\n"
       )
       if !Package.InstalledAll(
-          ["xinetd", "vsftpd", "openslp-server", "yast2-inetd"]
+          ["vsftpd", "openslp-server"]
         )
         Builtins.y2milestone("some packages are not installed")
       else
@@ -319,7 +320,7 @@ module Yast
       end
 
       if !Package.InstallAll(
-          ["xinetd", "vsftpd", "openslp-server", "yast2-inetd"]
+          ["vsftpd", "openslp-server"]
         )
         Report.Error(Message.CannotContinueWithoutPackagesInstalled)
         Builtins.y2error("Error while installing packages")
@@ -370,60 +371,10 @@ module Yast
         else
           Service.Start("vsftpd")
         end
-      else
-        Builtins.y2milestone("Configuring FTP service in xinetd mode")
-        # read the current configuration
-        resource = Convert.to_map(ReadServiceSettings("inetd_auto"))
-        netdconf = []
-
-        # replace vsftpd config
-        ftpdenabled = false
-        servicefound = false
-        Builtins.foreach(Ops.get_list(resource, "netd_conf", [])) do |conf|
-          # the service is ftp with vsftpd server
-          if Ops.get_string(conf, "service", "") == "ftp" &&
-              Ops.get_string(conf, "script", "") == "vsftpd"
-            servicefound = true
-
-            # enable disabled service
-            if Ops.get_boolean(conf, "enabled", false) != true
-              Ops.set(conf, "enabled", true)
-            else
-              ftpdenabled = true
-            end
-          end
-          # add the configuration to the list
-          netdconf = Builtins.add(netdconf, conf)
-        end
-
-
-        if servicefound == false
-          # the FTP service config was not found, add it
-          vsftpdconf = {
-            "protocol" => "tcp",
-            "script"   => "vsftpd",
-            "server"   => "/usr/sbin/vsftpd",
-            "service"  => "ftp"
-          }
-          netdconf = Builtins.add(netdconf, vsftpdconf)
-        end
-
-        # ftp service was not enabled/configured
-        if ftpdenabled == false
-          # update the configuration
-          Ops.set(resource, "netd_conf", netdconf)
-
-          # write the configuration
-          ConfigureService("inetd_auto", resource)
-        end
-
-        # enable/start the service
-        Service.Enable("xinetd")
-        if Service.Status("xinetd") == 0
-          Service.Reload("xinetd")
-        else
-          Service.Start("xinetd")
-        end
+      elsif socket
+        Builtins.y2milestone("Enabling vsftpd socket")
+        socket.enable unless socket.enabled?
+        socket.start unless socket.listening?
       end
 
       firewalld.write
@@ -1079,37 +1030,7 @@ module Yast
         return ret2
       end
 
-      # read the current configuration
-      resource = Convert.to_map(ReadServiceSettings("inetd_auto"))
-
-      # check vsftpd config
-      ftpdenabled = false
-      servicefound = false
-
-      Builtins.foreach(Ops.get_list(resource, "netd_conf", [])) do |conf|
-        # the service is ftp with vsftpd server
-        if Ops.get_string(conf, "service", "") == "ftp" &&
-            Ops.get_string(conf, "script", "") == "vsftpd"
-          servicefound = true
-          # the default is true: missing tag means the service is enabled (!)
-          ftpdenabled = Ops.get_boolean(conf, "enabled", true)
-        end
-      end
-
-
-      Builtins.y2milestone(
-        "FTP service check: found: %1, enabled: %2",
-        servicefound,
-        ftpdenabled
-      )
-
-      return false if servicefound == false || ftpdenabled == false
-
-      # is the service running?
-      ret = Service.Status("xinetd") == 0
-      Builtins.y2milestone("FTP server running: %1", ret)
-
-      ret
+      socket && socket.listening?
     end
 
     def HTTPValid(config)
@@ -1475,6 +1396,11 @@ module Yast
       configSetup
 
       nil
+    end
+
+    # Convenience method for optaining the vsftpd systemd socket
+    def socket
+      Yast::SystemdSocket.find("vsftpd.socket")
     end
 
     publish :variable => :is_service_pack, :type => "boolean"
