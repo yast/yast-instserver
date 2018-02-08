@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb  8 11:54:52 UTC 2018 - knut.anderssen@suse.com
+
+- Drop xinetd configuration and use systemd sockets instead.
+  (fate#323373)
+- 4.0.2
+
+-------------------------------------------------------------------
 Mon Feb  5 13:39:28 UTC 2018 - knut.anderssen@suse.com
 
 - Replace SuSEFirewall2 by firewalld (fate#323460)
