@@ -25,3 +25,5 @@ tmp.*
 /.yardoc
 /doc
 !/doc/SPEC
+*.exp
+runtest.sh
