@@ -388,18 +388,17 @@ module Yast
             )
           end
 
-          content = ReadContentFile(Ops.add(cdpath, "/content"))
+          content_path = File.join(cdpath, "content")
+          content = ReadContentFile(content_path) if File.exist?(content_path)
           Builtins.y2milestone("Content file: %1", content)
           # don't rewrite the already read content file,
           # content file from CORE9 would rewrite already read file from SLES9
           if current_cd == 1 && content_first_CD == ""
             Builtins.y2milestone(
               "Reading content file %1",
-              Ops.add(cdpath, "/content")
+              content_path
             )
-            content_first_CD = Convert.to_string(
-              SCR.Read(path(".target.string"), Ops.add(cdpath, "/content"))
-            )
+            content_first_CD = File.read(content_path) if File.exist?(content_path)
             Builtins.y2debug("content file: %1", content_first_CD)
           end
           if Ops.get(media, 2, "") != "" &&
