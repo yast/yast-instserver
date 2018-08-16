@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        4.0.4
+Version:        4.1.0
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -27,14 +27,15 @@ Source1:        inst_server.conf.in
 url:            http://github.com/yast/yast-instserver
 Group:	        System/YaST
 License:        GPL-2.0-or-later
+
 # Yast2::Systemd::Socket
-BuildRequires:  yast2 >= 4.1.1
+BuildRequires:  yast2 >= 4.1.3
+Requires:       yast2 >= 4.1.3
+
 BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  rubygem(rspec)
 BuildRequires:  rubygem(yast-rake)
 
-# Yast2::Systemd::Socket
-Requires:	yast2 > 4.1.1
 # file conflict, move of ag_content
 Conflicts:      yast2 <= 3.3.4
 
