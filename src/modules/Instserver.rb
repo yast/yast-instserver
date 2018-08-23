@@ -9,6 +9,7 @@
 # Input and output routines.
 require "yast"
 require "y2firewall/firewalld"
+require "yast2/systemd/socket"
 
 module Yast
   class InstserverClass < Module
@@ -23,7 +24,6 @@ module Yast
       Yast.import "Package"
       Yast.import "Call"
       Yast.import "Service"
-      Yast.import "SystemdSocket"
       Yast.import "IP"
       Yast.import "Message"
       Yast.import "String"
@@ -1400,7 +1400,7 @@ module Yast
 
     # Convenience method for optaining the vsftpd systemd socket
     def socket
-      Yast::SystemdSocket.find("vsftpd.socket")
+      Yast2::Systemd::Socket.find("vsftpd.socket")
     end
 
     publish :variable => :is_service_pack, :type => "boolean"
