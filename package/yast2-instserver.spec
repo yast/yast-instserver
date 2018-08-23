@@ -26,7 +26,7 @@ Source1:        inst_server.conf.in
 
 url:            http://github.com/yast/yast-instserver
 Group:	        System/YaST
-License:        GPL-2.0+
+License:        GPL-2.0-or-later
 # SuSEFirewall2 replaced by firewalld (fate#323460)
 BuildRequires:  yast2 >= 4.0.39
 BuildRequires:  yast2-devtools >= 3.1.10
