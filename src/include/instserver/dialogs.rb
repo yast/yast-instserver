@@ -1,11 +1,13 @@
 # encoding: utf-8
 
-# File:	include/instserver/dialogs.ycp
+# File:	include/instserver/dialogs.rb
 # Package:	Configuration of instserver
 # Summary:	Dialogs definitions
 # Authors:	Anas Nashif <nashif@suse.de>
 #
-# $Id$
+
+require "fileutils"
+
 module Yast
   module InstserverDialogsInclude
     def initialize_instserver_dialogs(include_target)
@@ -341,6 +343,11 @@ module Yast
           elsif pop == :abort
             return :abort
           end
+        end
+
+        # make sure the mount point exists
+        if !File.exist?(Installation.sourcedir)
+          ::FileUtils.mkdir_p(Installation.sourcedir)
         end
 
         # try to mount device
