@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Oct 11 13:33:27 UTC 2018 - lslezak@suse.cz
+
+- Create the mount point directory if it does not exist yet
+  (bsc#1110037)
+- 4.0.5
+
+-------------------------------------------------------------------
 Wed Aug 15 13:42:35 UTC 2018 - lslezak@suse.cz
 
 - Do not crash when importing a SLE15 installation medium
