@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Oct 11 13:33:27 UTC 2018 - lslezak@suse.cz
+
+- Create the mount point directory if it does not exist yet
+  (bsc#1110037)
+- 4.1.1
+
+-------------------------------------------------------------------
 Thu Aug 23 10:21:29 UTC 2018 - dgonzalez@suse.com
 
 - Update calls to YaST2 systemd classes (related to fate#319428)
