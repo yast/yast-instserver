@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Oct 16 11:58:29 CEST 2018 - schubi@suse.de
+
+- Fixed path to license file. . Build error in bsc#1110037.
+- 4.1.2
+
+-------------------------------------------------------------------
 Thu Oct 11 13:33:27 UTC 2018 - lslezak@suse.cz
 
 - Create the mount point directory if it does not exist yet
