@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Aug 15 13:42:35 UTC 2018 - lslezak@suse.cz
+
+- Do not crash when importing a SLE15 installation medium
+  (bsc#1103621)
+- 3.1.6
+
+-------------------------------------------------------------------
 Wed Jun  1 13:58:26 UTC 2016 - igonzalezsosa@suse.com
 
 - Drop yast2-instserver-devel-doc package (fate#320356)
