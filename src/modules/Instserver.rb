@@ -13,6 +13,8 @@ require "yast2/systemd/socket"
 
 module Yast
   class InstserverClass < Module
+    NFS_SERVER_SEVICE = "nfs-server".freeze
+
     def main
       textdomain "instserver"
 
@@ -549,11 +551,11 @@ module Yast
 
       ConfigureService("nfs_server_auto", nfs)
 
-      Service.Enable("nfsserver")
-      if Service.Status("nfsserver") == 0
-        Service.Reload("nfsserver")
+      Service.Enable(NFS_SERVER_SERVICE)
+      if Service.Status(NFS_SERVER_SERVICE) == 0
+        Service.Reload(NFS_SERVER_SERVICE)
       else
-        Service.Start("nfsserver")
+        Service.Start(NFS_SERVER_SERVICE)
       end
 
       firewalld.write
@@ -1013,7 +1015,7 @@ module Yast
       # is the directory in /etc/exports?
       return false if !NFSExported(dir)
 
-      nfsserver_running = Service.Status("nfsserver") == 0
+      nfsserver_running = Service.Status(NFS_SERVER_SERVICE) == 0
       Builtins.y2milestone("NFS server running: %1", nfsserver_running)
 
       # is the nfsserver running?
