@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        4.1.3
+Version:        4.1.4
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -83,3 +83,4 @@ mkdir -p %{buildroot}/etc/YaST2/instserver
 %doc %{yast_docdir}/CONTRIBUTING.md
 %license COPYING
 %doc %{yast_docdir}/README.md
+%{_datadir}/icons/*
