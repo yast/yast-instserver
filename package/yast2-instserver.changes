@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Sun Nov 25 02:18:52 UTC 2018 - Stasiek Michalski <hellcp@mailbox.org>
+
+- Provide icon with module (boo#1109310)
+- 4.1.3
+
+-------------------------------------------------------------------
 Wed Nov 21 16:19:19 UTC 2018 - dgonzalez@suse.com
 
 - Use the nfs-server service real name instead an alias
