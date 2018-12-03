@@ -342,14 +342,14 @@ module Yast
       # create repository directory if it doesn't exist
       SCR.Execute(
         path(".target.bash"),
-        Builtins.sformat("/bin/mkdir -p %1", dir)
+        Builtins.sformat("/usr/bin/mkdir -p %1", dir)
       )
 
       if !Builtins.issubstring(dir, ftproot)
         if ftpalias != ""
           a = ""
           a = Ops.add(Ops.add(ftproot, "/"), ftpalias)
-          SCR.Execute(path(".target.bash"), Ops.add("/bin/mkdir -p ", a))
+          SCR.Execute(path(".target.bash"), Ops.add("/usr/bin/mkdir -p ", a))
           ftproot = a
         end
         Builtins.y2milestone("binding dir")
@@ -691,7 +691,7 @@ module Yast
 
     def GetHostname
       output = Convert.to_map(
-        SCR.Execute(path(".target.bash_output"), "/bin/hostname --long")
+        SCR.Execute(path(".target.bash_output"), "/usr/bin/hostname --long")
       )
       Builtins.y2milestone("hostname --long: %1", output)
       hostname = Ops.get_string(output, "stdout", "")
@@ -917,17 +917,6 @@ module Yast
           :from => "map",
           :to   => "map <string, string>"
         )
-
-        # TODO: checking?
-        # 	// don't check the overwritten config file
-        # 	// get names of all config files except the rewritten one
-        # 	map lsout = (map)SCR::Execute(.target.bash_output, "/bin/ls /etc/slp.reg.d/* | grep -v /etc/slp.reg.d/YaST-sles9.reg");
-        # 	if (lsout["exit"]:-1 == 0)
-        # 	{
-        # 	    // merge the output into single line
-        # 	    checkfiles = mergestring(splitstring(lsout["stdout"]:"", "\n"), " ");
-        # 	    y2debug("files to check: %1", checkfiles);
-        # 	}
       end
 
       # escape invalid characters
