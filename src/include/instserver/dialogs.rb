@@ -69,7 +69,7 @@ module Yast
     def LinkTarget(source)
       ret = ""
 
-      command = Ops.add("ls -l ", source)
+      command = Ops.add("/usr/bin/ls -l ", source)
       res = Convert.to_map(SCR.Execute(path(".target.bash_output"), command))
       out = Builtins.splitstring(Ops.get_string(res, "stdout", ""), "\n")
 
@@ -499,7 +499,7 @@ module Yast
 
               found = true if IsBaseProduct(content, cont_file)
             end
-          end 
+          end
 
 
           if !found &&
@@ -512,7 +512,7 @@ module Yast
               )
             # check also subdirectories
             cmd = Builtins.sformat(
-              "cd %1; find -maxdepth 1 -type d",
+              "cd %1; /usr/bin/find -maxdepth 1 -type d",
               Ops.add(Installation.sourcedir, "/yast")
             )
             Builtins.y2milestone("find command: %1", cmd)
@@ -680,17 +680,17 @@ module Yast
         if Instserver.test
           cmds = Builtins.add(
             cmds,
-            Builtins.sformat("cp -pR %1/media.%2 %3", cdpath, current_cd, tgt)
+            Builtins.sformat("/usr/bin/cp -pR %1/media.%2 %3", cdpath, current_cd, tgt)
           )
           cmds = Builtins.add(
             cmds,
-            Builtins.sformat("cp  %1/content %2", cdpath, tgt)
+            Builtins.sformat("/usr/bin/cp  %1/content %2", cdpath, tgt)
           )
         else
           cmds = Builtins.add(
             cmds,
             Builtins.sformat(
-              "cd %1 && tar cf - . | (cd %2  && tar xBf -)",
+              "cd %1 && /usr/bin/tar cf - . | (cd %2  && /usr/bin/tar xBf -)",
               cdpath,
               tgt
             )
@@ -758,7 +758,7 @@ module Yast
 
           # workaround for flat directory structure (NLD9) - preserve the original content
           move = Builtins.sformat(
-            "cd %1; test -d boot -a ! -L boot && mv -b boot boot.old && ln -s boot.old boot",
+            "cd %1; /usr/bin/test -d boot -a ! -L boot && /usr/bin/mv -b boot boot.old && /usr/bin/ln -s boot.old boot",
             dir
           )
           SCR.Execute(path(".target.bash"), move)
@@ -770,7 +770,7 @@ module Yast
           # remove the old "boot" link
           SCR.Execute(
             path(".target.bash"),
-            Builtins.sformat("rm -rf %1/boot", dir)
+            Builtins.sformat("/usr/bin/rm -rf %1/boot", dir)
           )
 
           # if there are "root" and "rescue" images both then just create a new link
@@ -794,7 +794,7 @@ module Yast
             end
             cmds = []
           else
-            mkdir = Builtins.sformat("mkdir %1/boot", dir)
+            mkdir = Builtins.sformat("/usr/bin/mkdir %1/boot", dir)
             SCR.Execute(path(".target.bash"), mkdir)
 
             relprod = Builtins.substring(tgt, Ops.add(Builtins.size(dir), 1))
@@ -802,7 +802,7 @@ module Yast
 
             # link the new content there (link every file/directory)
             linkcommand = Builtins.sformat(
-              "cd %1/boot; ln -s ../%2/boot/* .",
+              "cd %1/boot; /usr/bin/ln -s ../%2/boot/* .",
               dir,
               relprod
             )
@@ -810,7 +810,7 @@ module Yast
 
             # add missing links from the original product
             linkcommand = Builtins.sformat(
-              "cd %1/boot; ln -s ../%2/* .",
+              "cd %1/boot; /usr/bin/ln -s ../%2/* .",
               dir,
               linktgt
             )
@@ -820,7 +820,7 @@ module Yast
             SCR.Execute(
               path(".target.bash"),
               Builtins.sformat(
-                "rm -f %1/boot/directory.yast; cd %1/boot; ls | grep -v -e '^\\.$' -e '^\\.\\.$' > %1/boot/directory.yast",
+                "/usr/bin/rm -f %1/boot/directory.yast; cd %1/boot; /usr/bin/ls | /usr/bin/grep -v -e '^\\.$' -e '^\\.\\.$' > %1/boot/directory.yast",
                 dir
               )
             )
@@ -881,7 +881,7 @@ module Yast
         SCR.Execute(
           path(".target.bash"),
           Builtins.sformat(
-            "rm -f %1/directory.yast; cd %1; ls -p | grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast",
+            "/usr/bin/rm -f %1/directory.yast; cd %1; /usr/bin/ls -p | /usr/bin/grep -v -e '^\\.$' -e '^\\.\\.$' -e 'directory.yast' > %1/directory.yast",
             dir
           )
         )
@@ -894,7 +894,7 @@ module Yast
           out = Convert.to_map(
             SCR.Execute(
               path(".target.bash_output"),
-              Builtins.sformat("find %1 -type f -name MD5SUMS", dir)
+              Builtins.sformat("/usr/bin/find %1 -type f -name MD5SUMS", dir)
             )
           )
           Builtins.foreach(
@@ -915,7 +915,7 @@ module Yast
 
               SCR.Execute(path(".target.remove"), file)
 
-              command = Builtins.sformat("cd %1; md5sum * > MD5SUMS", md5dir)
+              command = Builtins.sformat("cd %1; /usr/bin/md5sum * > MD5SUMS", md5dir)
               Builtins.y2milestone("Command: %1", command)
               SCR.Execute(path(".target.bash"), command, { "LANG" => "C" })
             end

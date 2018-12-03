@@ -102,7 +102,7 @@ module Yast
     def vsftpd_is_standalone
       ret = SCR.Execute(
         path(".target.bash"),
-        "grep -q '^listen=YES$' /etc/vsftpd.conf"
+        "/usr/bin/grep -q '^listen=YES$' /etc/vsftpd.conf"
       ) == 0
 
       Builtins.y2milestone("vsftpd in standalone mode: %1", ret)
@@ -342,14 +342,14 @@ module Yast
       # create repository directory if it doesn't exist
       SCR.Execute(
         path(".target.bash"),
-        Builtins.sformat("[ -d %1 ] || /bin/mkdir %1", dir)
+        Builtins.sformat("/bin/mkdir -p %1", dir)
       )
 
       if !Builtins.issubstring(dir, ftproot)
         if ftpalias != ""
           a = ""
           a = Ops.add(Ops.add(ftproot, "/"), ftpalias)
-          SCR.Execute(path(".target.bash"), Ops.add("mkdir -p ", a))
+          SCR.Execute(path(".target.bash"), Ops.add("/bin/mkdir -p ", a))
           ftproot = a
         end
         Builtins.y2milestone("binding dir")
@@ -955,7 +955,7 @@ module Yast
     def DetectMedia
       if Ops.get_string(@ServerSettings, "directory", "") != ""
         f = Builtins.sformat(
-          "find %1 -maxdepth 2 -name %2 | grep -v yast",
+          "/usr/bin/find %1 -maxdepth 2 -name %2 | /usr/bin/grep -v yast",
           Ops.get_string(@ServerSettings, "directory", ""),
           "content"
         )
@@ -1211,7 +1211,7 @@ module Yast
           c2
         )
         Builtins.y2milestone("removing directory: %1", dir)
-        rm = Ops.add("rm -rf ", dir)
+        rm = Ops.add("/usr/bin/rm -rf ", dir)
         SCR.Execute(path(".target.bash"), rm)
       end
 
@@ -1251,10 +1251,10 @@ module Yast
         # remove old reg file
         old_regfile = Builtins.sformat("/etc/slp.reg.d/YaST-%1.reg", orig)
         Builtins.y2milestone("removing old reg file: %1", old_regfile)
-        SCR.Execute(path(".target.bash"), Ops.add("rm -f ", old_regfile))
+        SCR.Execute(path(".target.bash"), Ops.add("/usr/bin/rm -f ", old_regfile))
         # rename the directory
         cmd = Builtins.sformat(
-          "mv %1/%2 %1/%3",
+          "/usr/bin/mv %1/%2 %1/%3",
           Ops.get_string(@ServerSettings, "directory", ""),
           orig,
           new
