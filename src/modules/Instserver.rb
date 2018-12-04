@@ -10,6 +10,7 @@
 require "yast"
 require "y2firewall/firewalld"
 require "yast2/systemd/socket"
+require "shellwords"
 
 module Yast
   class InstserverClass < Module
@@ -102,7 +103,7 @@ module Yast
     def vsftpd_is_standalone
       ret = SCR.Execute(
         path(".target.bash"),
-        "grep -q '^listen=YES$' /etc/vsftpd.conf"
+        "/usr/bin/grep -q '^listen=YES$' /etc/vsftpd.conf"
       ) == 0
 
       Builtins.y2milestone("vsftpd in standalone mode: %1", ret)
@@ -342,14 +343,14 @@ module Yast
       # create repository directory if it doesn't exist
       SCR.Execute(
         path(".target.bash"),
-        Builtins.sformat("[ -d %1 ] || /bin/mkdir %1", dir)
+        "/usr/bin/mkdir -p #{dir.shellescape}"
       )
 
       if !Builtins.issubstring(dir, ftproot)
         if ftpalias != ""
           a = ""
           a = Ops.add(Ops.add(ftproot, "/"), ftpalias)
-          SCR.Execute(path(".target.bash"), Ops.add("mkdir -p ", a))
+          SCR.Execute(path(".target.bash"), "/usr/bin/mkdir -p #{a.shellescape}")
           ftproot = a
         end
         Builtins.y2milestone("binding dir")
@@ -691,7 +692,7 @@ module Yast
 
     def GetHostname
       output = Convert.to_map(
-        SCR.Execute(path(".target.bash_output"), "/bin/hostname --long")
+        SCR.Execute(path(".target.bash_output"), "/usr/bin/hostname --long")
       )
       Builtins.y2milestone("hostname --long: %1", output)
       hostname = Ops.get_string(output, "stdout", "")
@@ -917,17 +918,6 @@ module Yast
           :from => "map",
           :to   => "map <string, string>"
         )
-
-        # TODO: checking?
-        # 	// don't check the overwritten config file
-        # 	// get names of all config files except the rewritten one
-        # 	map lsout = (map)SCR::Execute(.target.bash_output, "/bin/ls /etc/slp.reg.d/* | grep -v /etc/slp.reg.d/YaST-sles9.reg");
-        # 	if (lsout["exit"]:-1 == 0)
-        # 	{
-        # 	    // merge the output into single line
-        # 	    checkfiles = mergestring(splitstring(lsout["stdout"]:"", "\n"), " ");
-        # 	    y2debug("files to check: %1", checkfiles);
-        # 	}
       end
 
       # escape invalid characters
@@ -955,9 +945,8 @@ module Yast
     def DetectMedia
       if Ops.get_string(@ServerSettings, "directory", "") != ""
         f = Builtins.sformat(
-          "find %1 -maxdepth 2 -name %2 | grep -v yast",
-          Ops.get_string(@ServerSettings, "directory", ""),
-          "content"
+          "/usr/bin/find %1 -maxdepth 2 -name content | /usr/bin/grep -v yast",
+          @ServerSettings["directory"].shellescape
         )
         ret = Convert.to_map(SCR.Execute(path(".target.bash_output"), f))
         found = Builtins.splitstring(Ops.get_string(ret, "stdout", ""), "\n")
@@ -1211,7 +1200,7 @@ module Yast
           c2
         )
         Builtins.y2milestone("removing directory: %1", dir)
-        rm = Ops.add("rm -rf ", dir)
+        rm = Ops.add("/usr/bin/rm -rf ", dir.shellescape)
         SCR.Execute(path(".target.bash"), rm)
       end
 
@@ -1251,13 +1240,13 @@ module Yast
         # remove old reg file
         old_regfile = Builtins.sformat("/etc/slp.reg.d/YaST-%1.reg", orig)
         Builtins.y2milestone("removing old reg file: %1", old_regfile)
-        SCR.Execute(path(".target.bash"), Ops.add("rm -f ", old_regfile))
+        SCR.Execute(path(".target.bash"), "/usr/bin/rm -f #{old_regfile.shellescape}")
         # rename the directory
         cmd = Builtins.sformat(
-          "mv %1/%2 %1/%3",
-          Ops.get_string(@ServerSettings, "directory", ""),
-          orig,
-          new
+          "/usr/bin/mv %1/%2 %1/%3",
+          Ops.get_string(@ServerSettings, "directory", "").shellescape,
+          orig.shellescape,
+          new.shellescape
         )
         Builtins.y2milestone("moving directory: %1", cmd)
         if SCR.Execute(path(".target.bash"), cmd) != 0
