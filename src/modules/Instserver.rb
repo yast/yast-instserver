@@ -10,6 +10,7 @@
 require "yast"
 require "y2firewall/firewalld"
 require "yast2/systemd/socket"
+require "shellwords"
 
 module Yast
   class InstserverClass < Module
@@ -342,14 +343,14 @@ module Yast
       # create repository directory if it doesn't exist
       SCR.Execute(
         path(".target.bash"),
-        Builtins.sformat("/usr/bin/mkdir -p %1", dir)
+        "/usr/bin/mkdir -p #{dir.shellescape}"
       )
 
       if !Builtins.issubstring(dir, ftproot)
         if ftpalias != ""
           a = ""
           a = Ops.add(Ops.add(ftproot, "/"), ftpalias)
-          SCR.Execute(path(".target.bash"), Ops.add("/usr/bin/mkdir -p ", a))
+          SCR.Execute(path(".target.bash"), "/usr/bin/mkdir -p #{a.shellescape}")
           ftproot = a
         end
         Builtins.y2milestone("binding dir")
@@ -944,9 +945,8 @@ module Yast
     def DetectMedia
       if Ops.get_string(@ServerSettings, "directory", "") != ""
         f = Builtins.sformat(
-          "/usr/bin/find %1 -maxdepth 2 -name %2 | /usr/bin/grep -v yast",
-          Ops.get_string(@ServerSettings, "directory", ""),
-          "content"
+          "/usr/bin/find %1 -maxdepth 2 -name content | /usr/bin/grep -v yast",
+          Ops.get_string(@ServerSettings, "directory", "").shellescape
         )
         ret = Convert.to_map(SCR.Execute(path(".target.bash_output"), f))
         found = Builtins.splitstring(Ops.get_string(ret, "stdout", ""), "\n")
@@ -1200,7 +1200,7 @@ module Yast
           c2
         )
         Builtins.y2milestone("removing directory: %1", dir)
-        rm = Ops.add("/usr/bin/rm -rf ", dir)
+        rm = Ops.add("/usr/bin/rm -rf ", dir.shellescape)
         SCR.Execute(path(".target.bash"), rm)
       end
 
@@ -1240,13 +1240,13 @@ module Yast
         # remove old reg file
         old_regfile = Builtins.sformat("/etc/slp.reg.d/YaST-%1.reg", orig)
         Builtins.y2milestone("removing old reg file: %1", old_regfile)
-        SCR.Execute(path(".target.bash"), Ops.add("/usr/bin/rm -f ", old_regfile))
+        SCR.Execute(path(".target.bash"), "/usr/bin/rm -f #{old_regfile.shellescape}")
         # rename the directory
         cmd = Builtins.sformat(
           "/usr/bin/mv %1/%2 %1/%3",
-          Ops.get_string(@ServerSettings, "directory", ""),
-          orig,
-          new
+          Ops.get_string(@ServerSettings, "directory", "").shellescape,
+          orig.shellescape,
+          new.shellescape
         )
         Builtins.y2milestone("moving directory: %1", cmd)
         if SCR.Execute(path(".target.bash"), cmd) != 0
