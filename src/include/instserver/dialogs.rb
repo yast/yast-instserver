@@ -430,12 +430,12 @@ module Yast
             end
           end
 
-          Builtins.foreach(media) do |m|
-            if Builtins.substring(m, 0, 5) == "MEDIA"
-              m = Builtins.substring(m, 7)
+          Builtins.foreach(media) do |medium|
+            if Builtins.substring(medium, 0, 5) == "MEDIA"
+              medium = Builtins.substring(medium, 7)
 
-              if !Builtins.contains(medianames, m)
-                medianames = Builtins.add(medianames, m)
+              if !Builtins.contains(medianames, medium)
+                medianames = Builtins.add(medianames, medium)
               end
             end
           end
@@ -512,10 +512,8 @@ module Yast
                 0
               )
             # check also subdirectories
-            cmd = Builtins.sformat(
-              "cd %1; /usr/bin/find -maxdepth 1 -type d",
-              Ops.add(Installation.sourcedir, "/yast").shellescape
-            )
+            yast_subdir = File.join(Installation.sourcedir, "yast")
+            cmd = "cd #{yast_subdir.shellescape}; /usr/bin/find -maxdepth 1 -type d",
             Builtins.y2milestone("find command: %1", cmd)
             out = Convert.to_map(SCR.Execute(path(".target.bash_output"), cmd))
 
@@ -526,10 +524,7 @@ module Yast
             Builtins.y2milestone("found product subdirectories: %1", dirs)
 
             Builtins.foreach(dirs) do |d|
-              cont_file = Ops.add(
-                Ops.add(Ops.add(Installation.sourcedir, "/yast/"), d),
-                "/content"
-              )
+              cont_file = File.join(yast_subdir, d, "content")
               Builtins.y2milestone("Trying content file: %1", cont_file)
               found = true if IsBaseProduct(content, cont_file)
             end
@@ -1140,7 +1135,7 @@ module Yast
             )
           else
             # copying has been aborted, remove the repository
-            cmd = Ops.add("/bin/rm -rf ", target.shellescape)
+            cmd = "/bin/rm -rf #{target.shellescape}"
             Builtins.y2milestone("Removing directory %1", target)
 
             if SCR.Execute(path(".target.bash"), cmd) != 0
@@ -1242,7 +1237,7 @@ module Yast
             next
           # create directory only for a new repository
           elsif Instserver.Config == {}
-            mkdircmd = Ops.add("mkdir -p ", target.shellescape)
+            mkdircmd = "mkdir -p #{target.shellescape}"
 
             Builtins.y2debug("executing: %1", mkdircmd)
             if SCR.Execute(path(".target.bash"), mkdircmd) != 0

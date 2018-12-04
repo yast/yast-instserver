@@ -946,7 +946,7 @@ module Yast
       if Ops.get_string(@ServerSettings, "directory", "") != ""
         f = Builtins.sformat(
           "/usr/bin/find %1 -maxdepth 2 -name content | /usr/bin/grep -v yast",
-          Ops.get_string(@ServerSettings, "directory", "").shellescape
+          @ServerSettings["directory"].shellescape
         )
         ret = Convert.to_map(SCR.Execute(path(".target.bash_output"), f))
         found = Builtins.splitstring(Ops.get_string(ret, "stdout", ""), "\n")
