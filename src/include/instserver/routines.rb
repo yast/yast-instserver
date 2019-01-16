@@ -38,6 +38,8 @@ module Yast
     # space separated by ':' optionally followed by a ',' and an arbitrary
     # product name.
     #
+    # For the CPE format specs see http://cpe.mitre.org.
+    #
     def distro_split(distro)
       distro.match(/((?:[^:\s]*:)+[^,]*),?(.*)?/) do |m|
         return m[1, 2]

@@ -30,6 +30,18 @@ describe "Yast::InstserverRoutinesInclude" do
           "name" => "SLES12, Mini edition"})
     end
 
+    it "works also when CPE fields contain commas" do
+      expect(subject.distro_map("cpe:/o:novell,inc:sles:12,SLES12, Mini edition")).
+        to eq({"cpeid" => "cpe:/o:novell,inc:sles:12",
+          "name" => "SLES12, Mini edition"})
+    end
+
+    it "the number of CPE fields may vary" do
+      expect(subject.distro_map("cpe:/o:novell,inc:sles:12:sp5,SLES12 SP5")).
+        to eq({"cpeid" => "cpe:/o:novell,inc:sles:12:sp5",
+          "name" => "SLES12 SP5"})
+    end
+
     it "returns nil if input is nil" do
       expect(subject.distro_map(nil)).to be_nil
     end
