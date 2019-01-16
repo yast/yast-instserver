@@ -25,6 +25,27 @@ module Yast
       end
     end
 
+    # Split at the *last* comma (cf. bsc#1122003), resulting in 2 parts maximum.
+    # @param [String] distro "DISTRO" value from content file
+    # @return [Array<String,String>]
+    #
+    # The distro arg could look like
+    #   "cpe:/o:suse:sles:12,SUSE Linux Enterprise Server 12"
+    #   "cpe:/o:suse:sles:12:sp3,SUSE Linux Enterprise Server 12 SP3"
+    #   "cpe:/o:novell,inc:sles:12:sp3,SUSE Linux Enterprise Server 12 SP3"
+    #
+    # The match below assumes the cpe string are fields containing no white
+    # space separated by ':' optionally followed by a ',' and an arbitrary
+    # product name.
+    #
+    def distro_split(distro)
+      distro.match(/((?:[^:\s]*:)+[^,]*),?(.*)?/) do |m|
+        return m[1, 2]
+      end
+
+      [distro, '']
+    end
+
     # Split CPE ID and distro label (separated by comma)
     # @param [String] distro "DISTRO" value from content file
     # @return [Hash<String,String>,nil] parsed value, map: { "name" => <string>, "cpeid" => <string> }
@@ -35,10 +56,9 @@ module Yast
         return nil
       end
 
-      # split at the first comma, resulting in 2 parts at max.
-      cpeid, name = distro.split(",", 2)
+      cpeid, name = distro_split(distro)
 
-      if !name
+      if name.empty?
         log.warn "Cannot parse DISTRO value: #{distro}"
         return nil
       end
