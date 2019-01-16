@@ -25,7 +25,8 @@ module Yast
       end
     end
 
-    # Split at the *last* comma (cf. bsc#1122003), resulting in 2 parts maximum.
+    # Split CPE id and distro label (separated by comma)
+    # Be extra careful as there might be commas in the CPE string itself (bsc#1122003).
     # @param [String] distro "DISTRO" value from content file
     # @return [Array<String,String>]
     #
