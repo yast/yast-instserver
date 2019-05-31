@@ -68,7 +68,7 @@ mkdir -p %{buildroot}/etc/YaST2/instserver
 %{yast_clientdir}
 %{yast_moduledir}
 %{yast_desktopdir}
-%{yast2_metainfodir}
+%{yast_metainfodir}
 %{yast_scrconfdir}
 %{yast_agentdir}
 %{_sysconfdir}/YaST2/instserver
