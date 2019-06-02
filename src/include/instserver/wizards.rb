@@ -130,7 +130,7 @@ module Yast
       }
 
       Wizard.CreateDialog
-      Wizard.SetDesktopTitleAndIcon("org.openSUSE.YaST.InstServer")
+      Wizard.SetDesktopTitleAndIcon("org.opensuse.yast.InstServer")
 
       ret = Sequencer.Run(aliases, sequence)
 
