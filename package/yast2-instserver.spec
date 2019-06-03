@@ -29,7 +29,7 @@ Source1:        inst_server.conf.in
 
 # Yast2::Systemd::Socket
 BuildRequires:  yast2 >= 4.1.3
-BuildRequires:  yast2-devtools >= 3.1.10
+BuildRequires:  yast2-devtools >= 4.2.2
 BuildRequires:  rubygem(rspec)
 BuildRequires:  rubygem(yast-rake)
 
