@@ -17,6 +17,7 @@ X-SuSE-YaST-Keywords=installation,server
 Icon=yast-instserver
 Exec=xdg-su -c "/sbin/yast2 instserver"
 
-Name=Installation Server
-GenericName=Configure and manage installation servers
+Name=YaST Installation Server
+GenericName=Installation Server
+Comment=Configure and manage installation servers
 StartupNotify=true

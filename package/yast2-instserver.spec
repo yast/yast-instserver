@@ -12,40 +12,36 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
+# Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
 
 Name:           yast2-instserver
-Version:        4.1.5
+Version:        4.2.0
 Release:        0
+Summary:        YaST2 - Installation Server Configuration and Management
+Url:            https://github.com/yast/yast-instserver
+Group:          System/YaST
+License:        GPL-2.0-or-later
 
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        inst_server.conf.in
 
-url:            http://github.com/yast/yast-instserver
-Group:	        System/YaST
-License:        GPL-2.0-or-later
-
 # Yast2::Systemd::Socket
 BuildRequires:  yast2 >= 4.1.3
-Requires:       yast2 >= 4.1.3
-
-BuildRequires:  yast2-devtools >= 3.1.10
+BuildRequires:  yast2-devtools >= 4.2.2
 BuildRequires:  rubygem(rspec)
 BuildRequires:  rubygem(yast-rake)
+
+Requires:       yast2 >= 4.1.3
+Requires:       yast2-ruby-bindings >= 1.0.0
 
 # file conflict, move of ag_content
 Conflicts:      yast2 <= 3.3.4
 
-BuildArch:	noarch
-
-Requires:       yast2-ruby-bindings >= 1.0.0
-
 Obsoletes:      yast2-instserver-devel-doc
 
-Summary:	YaST2 - Installation Server Configuration and Management
+BuildArch:      noarch
 
 %description
 This package allows you to configure an installation server suitable
@@ -53,34 +49,32 @@ for installaing SUSE Linux over the network. Currently FTP, HTTP and
 NFS sources are supported.
 
 %prep
-%setup -n %{name}-%{version}
+%setup -q
 
 %check
-rake test:unit
+%yast_check
 
 %build
 
 %install
-rake install DESTDIR="%{buildroot}"
+%yast_install
 install -D %{SOURCE1} %{buildroot}/etc/apache2/conf.d/inst_server.conf.in
 mkdir -p %{buildroot}/etc/YaST2/instserver
+%yast_metainfo
 
 
 %files
-%defattr(-,root,root)
-%dir %{yast_yncludedir}/instserver
-%{yast_yncludedir}/instserver/*
-%{yast_clientdir}/instserver.rb
-%{yast_moduledir}/Instserver.*
-%{yast_desktopdir}/instserver.desktop
-%{yast_scrconfdir}/*
-%{yast_agentdir}/ag_*
-/etc/YaST2/instserver
-/etc/apache2/conf.d/inst_server.conf.in
-%dir /etc/apache2
-%dir /etc/apache2/conf.d
-%dir %{yast_docdir}
-%doc %{yast_docdir}/CONTRIBUTING.md
+%{yast_yncludedir}
+%{yast_clientdir}
+%{yast_moduledir}
+%{yast_desktopdir}
+%{yast_metainfodir}
+%{yast_scrconfdir}
+%{yast_agentdir}
+%{_sysconfdir}/YaST2/instserver
+%{_sysconfdir}/apache2
 %license COPYING
-%doc %{yast_docdir}/README.md
-%{_datadir}/icons/*
+%doc %{yast_docdir}
+%{yast_icondir}
+
+%changelog
