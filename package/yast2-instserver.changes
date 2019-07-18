@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jul 18 09:10:01 UTC 2019 - David Diaz <dgonzalez@suse.com>
+
+- Do not crash when starting the Installation Server (bsc#1141963).
+- 4.2.1
+
+-------------------------------------------------------------------
+
 Fri May 31 12:31:14 UTC 2019 - Stasiek Michalski <hellcp@mailbox.org>
 
 - Add metainfo (fate#319035)
