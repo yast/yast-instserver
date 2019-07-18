@@ -14,7 +14,7 @@ require "shellwords"
 
 module Yast
   class InstserverClass < Module
-    NFS_SERVER_SEVICE = "nfs-server".freeze
+    NFS_SERVER_SERVICE = "nfs-server".freeze
 
     def main
       textdomain "instserver"
