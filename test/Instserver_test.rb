@@ -8,7 +8,48 @@ Yast.import "Instserver"
 
 describe "Yast::Instserver" do
   subject { Yast::Instserver }
-  
+
+  describe "#SetupNFS" do
+    let(:nfs_service_status) { 0 }
+
+    before do
+      allow(Yast::Package).to receive(:InstallAll).and_return(true)
+      allow(Yast::Ops).to receive(:greater_than).and_return(false)
+      allow(Yast::Service).to receive(:Enable)
+      allow(Yast::Service).to receive(:Reload)
+      allow(Yast::Service).to receive(:Start)
+      allow(Yast::Service).to receive(:Status).with("nfs-server").and_return(nfs_service_status)
+      allow(Y2Firewall::Firewalld).to receive(:read)
+      allow(Y2Firewall::Firewalld).to receive(:write)
+    end
+
+    it "enables nfs-server service" do
+      expect(Yast::Service).to receive(:Enable).with("nfs-server")
+
+      subject.SetupNFS("/tmp", {})
+    end
+
+    context "when nfs-service is already active" do
+      let(:nfs_service_status) { 0 }
+
+      it "reload it" do
+        expect(Yast::Service).to receive(:Reload).with("nfs-server")
+
+        subject.SetupNFS("/tmp", {})
+      end
+    end
+
+    context "when nfs-service is not active yet" do
+      let(:nfs_service_status) { -1 }
+
+      it "start it" do
+        expect(Yast::Service).to receive(:Start).with("nfs-server")
+
+        subject.SetupNFS("/tmp", {})
+      end
+    end
+  end
+
   describe "#Modified" do
     it "returns false initially" do
       expect(subject.Modified).to eq false
