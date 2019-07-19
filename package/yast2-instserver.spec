@@ -27,6 +27,7 @@ License:        GPL-2.0-or-later
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        inst_server.conf.in
 
+BuildRequires:  update-desktop-files
 # Yast2::Systemd::Socket
 BuildRequires:  yast2 >= 4.1.3
 BuildRequires:  yast2-devtools >= 4.2.2
