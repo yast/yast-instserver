@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        4.2.1
+Version:        4.2.2
 Release:        0
 Summary:        YaST2 - Installation Server Configuration and Management
 Url:            https://github.com/yast/yast-instserver
