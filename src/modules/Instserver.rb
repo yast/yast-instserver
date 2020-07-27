@@ -14,6 +14,8 @@ require "shellwords"
 
 module Yast
   class InstserverClass < Module
+    include Yast::Logger
+
     NFS_SERVER_SERVICE = "nfs-server".freeze
 
     def main
@@ -1099,9 +1101,13 @@ module Yast
       c = {}
 
       if SCR.Read(path(".target.size"), @ConfigFile) != -1
-        c = XML.XMLToYCPFile(@ConfigFile)
-        # TRANSLATORS: Error message
-        Report.Error(_("Cannot read current settings.")) unless c
+        begin
+          c = XML.XMLToYCPFile(@ConfigFile)
+        rescue XMLDeserializationError => e
+          # TRANSLATORS: Error message
+          Report.Error(_("Cannot read current settings."))
+          log.error "Failed to parse #{@ConfigFile}: #{e.inspect}"
+        end
       end
 
       all = Ops.get_list(c, "configurations", [])
@@ -1180,10 +1186,13 @@ module Yast
 
       c = PrepareConfigs()
       xml = { "configurations" => c, "servers" => @ServerSettings }
-      ret = XML.YCPToXMLFile(:instserver, xml, @ConfigFile)
-
-      # Error message
-      Report.Error(_("Cannot write settings.")) unless ret
+      begin
+        XML.YCPToXMLFile(:instserver, xml, @ConfigFile)
+      rescue XMLSerializationError => e
+        # Error message
+        Report.Error(_("Cannot write settings."))
+        log.error "writting settings failed with #{e.inspect}"
+      end
 
       # run SuSEconfig
       return false if Abort()
