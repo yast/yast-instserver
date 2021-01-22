@@ -1,8 +1,6 @@
 #!/usr/bin/env rspec
 
-ENV["Y2DIR"] = File.expand_path("../../src", __FILE__)
-
-require "yast"
+require_relative "test_helper"
 
 Yast.import "Instserver"
 
@@ -19,8 +17,8 @@ describe "Yast::Instserver" do
       allow(Yast::Service).to receive(:Reload)
       allow(Yast::Service).to receive(:Start)
       allow(Yast::Service).to receive(:Status).with("nfs-server").and_return(nfs_service_status)
-      allow(Y2Firewall::Firewalld).to receive(:read)
-      allow(Y2Firewall::Firewalld).to receive(:write)
+      allow(Y2Firewall::Firewalld.instance).to receive(:read)
+      allow(Y2Firewall::Firewalld.instance).to receive(:write)
     end
 
     it "enables nfs-server service" do
