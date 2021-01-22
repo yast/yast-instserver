@@ -141,7 +141,7 @@ module Yast
 
 
     # Create yast directory with ordr/instorder files
-    # @param string directory
+    # @param dir [String] directory
     # @return booelan
     def createOrderFiles(dir)
       if Ops.greater_than(Builtins.size(@products), 1)
@@ -242,8 +242,8 @@ module Yast
 
 
     # Mount directory to avoid symlinks
-    # @param string directory to bind
-    # @param string bind to
+    # @param dir [String] directory to bind
+    # @param ftproot [String] bind to
     # @return [Boolean] (true means that /etc/fstab has been modified)
     def MountBind(dir, ftproot)
       Builtins.y2milestone("Calling MountBind with: %1 %2", dir, ftproot)
@@ -336,8 +336,8 @@ module Yast
     end
 
     # Setup FTP server
-    # @param string inst server root
-    # @param string ftp server root
+    # @param dir [String] inst server root
+    # @param ftproot [String] ftp server root
     # @return [Boolean]
     def SetupFTP(dir, ftproot, ftpalias)
       return false if !InstallFTPPackages()
@@ -388,7 +388,7 @@ module Yast
     end
 
     # Write Apache config
-    # @param string state : Yes/No
+    # @param enable [Boolean] state : Yes/No
     # @return [void]
     def RunSuseConfigApache(enable)
       flags = Convert.to_string(
@@ -433,8 +433,8 @@ module Yast
     end
 
     # Setup HTTP server
-    # @param string inst server root
-    # @param [String] alias
+    # @param dir [String] inst server root
+    # @param _alias [String]
     # @return [Boolean]
     def SetupHTTP(dir, _alias)
       return false if !InstallHTTPPackages()
@@ -506,8 +506,8 @@ module Yast
 
 
     # Setup NFS Server
-    # @param string directory
-    # @param [String] options
+    # @param dir [String] directory
+    # @param options [String]
     # @return [Boolean]
     def SetupNFS(dir, options)
       if !Package.InstallAll(["yast2-nfs-server"])

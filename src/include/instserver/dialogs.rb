@@ -31,8 +31,8 @@ module Yast
     end
 
     # CD Popup
-    # @param string popup message
-    # @param boolean true if ISO
+    # @param msg [String] popup message
+    # @param iso [Boolean] true if ISO
     # @return [Object]
     def CDPopup(msg, iso)
       if iso
@@ -185,10 +185,10 @@ module Yast
 
 
     # Copy CDs to local disk
-    # @param string directory
-    # @param symbol source type
-    # @param boolean true if copying using ISO files
-    # @param boolean prompt for additional CDs.
+    # @param dir [String] directory
+    # @param stype [Symbol] source type
+    # @param iso [Boolean] true if copying using ISO files
+    # @param promptmore [Boolean] prompt for additional CDs.
     # @return [Object]
     def CopyCDs(dir, stype, iso, promptmore, cddrive)
       # free mount point
