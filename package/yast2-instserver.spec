@@ -1,7 +1,7 @@
 #
 # spec file for package yast2-instserver
 #
-# Copyright (c) 2013 SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) 2023 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -20,7 +20,7 @@ Name:           yast2-instserver
 Version:        4.6.0
 Release:        0
 Summary:        YaST2 - Installation Server Configuration and Management
-Url:            https://github.com/yast/yast-instserver
+URL:            https://github.com/yast/yast-instserver
 Group:          System/YaST
 License:        GPL-2.0-or-later
 
@@ -62,7 +62,6 @@ NFS sources are supported.
 install -D %{SOURCE1} %{buildroot}/etc/apache2/conf.d/inst_server.conf.in
 mkdir -p %{buildroot}/etc/YaST2/instserver
 %yast_metainfo
-
 
 %files
 %{yast_yncludedir}
