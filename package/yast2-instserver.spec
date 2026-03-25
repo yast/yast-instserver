@@ -17,7 +17,7 @@
 
 
 Name:           yast2-instserver
-Version:        5.0.0
+Version:        5.0.1
 Release:        0
 Summary:        YaST2 - Installation Server Configuration and Management
 Url:            https://github.com/yast/yast-instserver
@@ -27,7 +27,6 @@ License:        GPL-2.0-or-later
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        inst_server.conf.in
 
-BuildRequires:  update-desktop-files
 # Yast2::Systemd::Socket
 BuildRequires:  yast2 >= 4.1.3
 BuildRequires:  yast2-devtools >= 4.2.2
